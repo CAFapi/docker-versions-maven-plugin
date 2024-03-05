@@ -45,9 +45,7 @@ public final class PopulateProjectRegistryMojoTest
             put("enforceCorrectDependencies", "true");
             put("homeDockerReleaseRegistry", "saas-docker-release.svsartifactory.swinfra.net");
             put("project.build.sourceEncoding", "UTF-8");
-            put("env.CAF_STORAGE_AWS_S3_SECRETACCESSKEY", "kBnAMotl+IE/XAQHhib5dBOIIpRmPoRhO08pBsji");
             put("git.commitDate", "UNKNOWN_COMMIT_DATE");
-            put("env.CAF_STORAGE_AWS_S3_BUCKET", "microfocus-sms-testing-va-bucket-01");
             put("netbeans.hint.jdkPlatform", "JDK_17");
             put("dockerHubPrivate", "dockerhub-private.svsartifactory.swinfra.net");
             put("git.commitsCount", "-1");
