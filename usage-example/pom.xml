@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright 2024 Open Text.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.github.cafapi.plugins.docker.versions</groupId>
+        <artifactId>docker-versions-plugin</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>docker-versions-maven-plugin-usage</artifactId>
+    <name>TestDockerVersionsMavenPlugin</name>
+    <packaging>pom</packaging>
+
+    <properties>
+        <corporateRepositoryManager>svsartifactory.swinfra.net</corporateRepositoryManager>
+        <homeDockerPrereleaseRegistry>saas-docker-prerelease.${corporateRepositoryManager}</homeDockerPrereleaseRegistry>
+        <homeDockerReleaseRegistry>saas-docker-release.${corporateRepositoryManager}</homeDockerReleaseRegistry>
+        <projectDockerRegistry>${project.name}-${project.version}.project-registries.local</projectDockerRegistry>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.cafapi.plugins.docker.versions</groupId>
+                <artifactId>docker-versions-maven-plugin</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <id>retag</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>populate-project-registry</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>untag</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>depopulate-project-registry</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <imageManagement>
+                        <image>
+                            <repository>${homeDockerPrereleaseRegistry}/apollo/view-service-base</repository>
+                            <tag>4.3.0-SNAPSHOT</tag>
+                        </image>
+                        <image>
+                            <repository>${homeDockerReleaseRegistry}/caf/search-and-analytics</repository>
+                            <tag>8.1.0</tag>
+                            <digest>sha256:8f4cb0832ac99c1163decdbd446b367e4a90a5e6380e2b0429d0273013968b38</digest>
+                        </image>
+                        <image>
+                            <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
+                            <tag>1.4.3</tag>
+                            <digest>sha256:76b8dc916151a5ede5d8a999fcd0929ca3cd3a9dbf67085f65ef98b5279359f4</digest>
+                            <!--Final retagged name 
+                            ${project.name}-${project.version}.project-registries.local/cafapi/opensuse-jre17
+                            -->
+                        </image>
+                        <image>
+                            <repository>${dockerHubPublic}/cafapi/prereleases</repository>
+                            <targetRepository>cafapi/opensuse-tomcat-jre17</targetRepository>
+                            <tag>opensuse-tomcat-jre17-2.1.0-SNAPSHOT</tag>
+                            <!--Final retagged name 
+                            ${project.name}-${project.version}.project-registries.local/cafapi/opensuse-tomcat-jre17
+                            -->
+                        </image>
+                    </imageManagement>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
