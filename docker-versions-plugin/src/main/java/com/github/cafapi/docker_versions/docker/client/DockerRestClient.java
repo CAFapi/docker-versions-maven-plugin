@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.model.AuthConfig;
+//import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
@@ -39,11 +39,6 @@ public final class DockerRestClient
     private static final int RESPONSE_TIMEOUT_SECONDS = getIntPropertyOrEnvVar("RESPONSE_TIMEOUT_SECONDS", "45");
     private static final long DOWNLOAD_IMAGE_TIMEOUT_SECONDS = getLongPropertyOrEnvVar("DOWNLOAD_IMAGE_TIMEOUT_SECONDS", "300");
 
-    private static final int MAX_CONNECTIONS = getIntPropertyOrEnvVar("MAX_CONNECTIONS", "100");
-
-    private static final String REGISTRY_USER = getPropertyOrEnvVar("DOCKER_USER", "");
-    private static final String REGISTRY_PASSWORD = getPropertyOrEnvVar("DOCKER_PASSWORD", "");
-
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerRestClient.class);
 
     final DockerClient dockerClient;
@@ -51,18 +46,11 @@ public final class DockerRestClient
     public DockerRestClient()
     {
         final DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
-               // .withDockerHost("tcp://docker.somewhere.tld:2376")
-               // .withDockerTlsVerify(true)
-               // .withDockerCertPath("/home/user/.docker")
-               // .withRegistryUsername(REGISTRY_USER)
-               // .withRegistryPassword(REGISTRY_PASSWORD)
-               // .withRegistryUrl(registryUrl)
                 .build();
 
         final DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
                 .dockerHost(config.getDockerHost())
                 .sslConfig(config.getSSLConfig())
-                .maxConnections(MAX_CONNECTIONS)
                 .connectionTimeout(Duration.ofSeconds(CONNECTION_TIMEOUT_SECONDS))
                 .responseTimeout(Duration.ofSeconds(RESPONSE_TIMEOUT_SECONDS))
                 .build();
@@ -91,13 +79,16 @@ public final class DockerRestClient
     {
         LOGGER.info("Pulling image '{}:{}'...", repository, tag);
 
+        /*
+         * Specify auth in docker config
         final AuthConfig authConfig = new AuthConfig();
         authConfig.withUsername(REGISTRY_USER);
         authConfig.withPassword(REGISTRY_PASSWORD);
+        */
 
         return dockerClient.pullImageCmd(repository)
                            .withTag(tag)
-                           .withAuthConfig(authConfig )
+                           //.withAuthConfig(authConfig )
                            .exec(new PullImageResultCallback())
                            .awaitCompletion(DOWNLOAD_IMAGE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }

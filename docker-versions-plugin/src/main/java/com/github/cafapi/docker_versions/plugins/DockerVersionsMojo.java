@@ -26,7 +26,7 @@ import org.apache.maven.project.MavenProject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class DockerVersionsMojo extends AbstractMojo
+abstract class DockerVersionsMojo extends AbstractMojo
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsMojo.class);
     private static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");

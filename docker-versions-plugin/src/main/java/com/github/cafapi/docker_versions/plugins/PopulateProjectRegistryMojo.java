@@ -15,6 +15,7 @@
  */
 package com.github.cafapi.docker_versions.plugins;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -24,7 +25,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.cafapi.docker_versions.docker.client.DockerAccessException;
 import com.github.cafapi.docker_versions.docker.client.DockerRestClient;
 import com.github.cafapi.docker_versions.docker.client.ImageTaggingException;
 import com.github.dockerjava.api.model.Image;
@@ -43,10 +43,12 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
     {
         try {
             new ExecutionImpl().executeImpl();
-        } catch (final DockerAccessException ex) {
+        } catch (final ImagePullException ex) {
             throw new MojoExecutionException("Unable to pull and retag image", ex);
         } catch (final ImageTaggingException ex) {
-            throw new MojoExecutionException("Unable to tag image", ex);
+            throw new MojoExecutionException("Unable to retag image", ex);
+        } catch (final IncorrectDigestException ex) {
+            throw new MojoExecutionException("Digest of downloaded image does not match specified digest", ex);
         }
     }
 
@@ -59,13 +61,13 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             dockerClient = new DockerRestClient();
         }
 
-        public void executeImpl() throws DockerAccessException, ImageTaggingException
+        public void executeImpl() throws ImagePullException, ImageTaggingException, IncorrectDigestException
         {
             LOGGER.info("PopulateProjectRegistryMojo with this configuration {}", imageManagement);
 
             // Pull the images if necessary, check if image is already on docker host?
             for (final ImageConfiguration imageConfig : imageManagement) {
-                final String repository = imageConfig.getRepository();
+                final String repository = imageConfig.getRepository(); // TODO: What if this is a ${}
                 final String[] repositoryInfo = repository.split("/", 2);
                 if (repositoryInfo.length != 2) {
                     throw new IllegalArgumentException("Unable to get registry information for " + repository);
@@ -75,27 +77,28 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
                 final String registry = getPropertyOrValue(repositoryInfo[0]);
                 final String name = getPropertyOrValue(repositoryInfo[1]);
                 final String digest = getPropertyOrValue(imageConfig.getDigest());
-                final String tag = getPropertyOrValue(imageConfig.getTag());
+                final String tag = getPropertyOrValue(imageConfig.getTag()); // throw error
 
-                final String imageName = registry + "/" + name + ":" + (StringUtils.isNotBlank(tag) ? tag : digest);
+                if(StringUtils.isBlank(tag)) {
+                    throw new IllegalArgumentException("Tag not specified for image " + repository);
+                }
+
+                final String imageName = registry + "/" + name + ":" + tag;
+                // Always pull if digest is not specified
+                // Avoid pull if image already exists and its digest matches specified digest, else pull image again
 
                 LOGGER.info("Check if image '{}' is already there...", imageName);
-                Optional<Image> image = dockerClient.findImage(imageName);
+                final Optional<Image> image = dockerClient.findImage(imageName);
 
-                if (image.isEmpty()) {
+                if (StringUtils.isBlank(digest) || image.isEmpty()) {
                     LOGGER.info("Image '{}' not found, pull it...", imageName);
-                    try {
-                        final boolean imagePullCompleted = dockerClient.pullImage(registry + "/" + name, tag);
-                        if (imagePullCompleted) {
-                            LOGGER.info("Check if image '{}' that was just pulled is present...", imageName);
-                            image = dockerClient.findImage(registry + "/" + name + ":" + tag);
-                            if (image.isEmpty()) {
-                                throw new DockerAccessException("Image not found after pulling it " + registry + "/" + name + ":" + tag);
-                            }
-                        }
-                        throw new DockerAccessException("Image was not pulled: " + registry + "/" + name + ":" + tag);
-                    } catch (final InterruptedException e) {
-                        throw new DockerAccessException("Image pull was interrupted " + registry + "/" + name + ":" + tag, e);
+                    pullImage(registry, name, tag, digest);
+                }
+                else {
+                    // Digest and image are both present, check if the digests match
+                    if (!verifyDigest(image.get(), digest)) {
+                        // Digest of existing image does not match the specified digest, so pull it again
+                        pullImage(registry, name, tag, digest);
                     }
                 }
 
@@ -112,6 +115,43 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
 
                 dockerClient.tagImage(imageId, projectDockerRegistryImageName, "latest");
             }
+        }
+
+        private void pullImage(
+            final String registry,
+            final String name,
+            final String tag,
+            final String digest)
+            throws ImagePullException, IncorrectDigestException
+        {
+            try {
+                final boolean imagePullCompleted = dockerClient.pullImage(registry + "/" + name, tag);
+                if (imagePullCompleted) {
+                    LOGGER.info("Check if image '{}/{}:{}' that was just pulled is present...",  registry, name, tag);
+                    final Optional<Image> image = dockerClient.findImage(registry + "/" + name + ":" + tag);
+                    if (image.isEmpty()) {
+                        throw new ImagePullException("Image not found after pulling it " + registry + "/" + name + ":" + tag);
+                    }
+                    // Check the digest of the image that was pulled
+                    if (StringUtils.isNotBlank(digest)) {
+                        if (!verifyDigest(image.get(), digest)) {
+                            throw new IncorrectDigestException(
+                                    "Digest of the pulled image does not match specified digest '" + digest + "'");
+                        }
+                    }
+                }
+                throw new ImagePullException("Image was not pulled: " + registry + "/" + name + ":" + tag);
+            } catch (final InterruptedException e) {
+                throw new ImagePullException("Image pull was interrupted " + registry + "/" + name + ":" + tag, e);
+            }
+        }
+
+        private boolean verifyDigest(
+            final Image image,
+            final String digest)
+        {
+            final String[] existingImageDigests = image.getRepoDigests();
+            return existingImageDigests != null && Arrays.asList(existingImageDigests).contains(digest);
         }
 
     }

@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.cafapi.docker_versions.docker.client;
+package com.github.cafapi.docker_versions.plugins;
 
-public final class DockerAccessException extends Exception
+final class IncorrectDigestException extends Exception
 {
-    private static final long serialVersionUID = -488859651304259873L;
+    private static final long serialVersionUID = -5124162490564937983L;
 
-    public DockerAccessException(final String message) {
+    public IncorrectDigestException(final String message) {
         super(message);
     }
 
-    public DockerAccessException(final Exception ex)
+    public IncorrectDigestException(final Exception ex)
     {
         super(ex);
     }
 
-    public DockerAccessException(final String message, final Exception ex)
+    public IncorrectDigestException(final String message, final Exception ex)
     {
         super(message, ex);
     }
-
 }

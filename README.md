@@ -79,10 +79,8 @@ The following configuration options can be set via environment variables.
 - **DOCKER_TLS_VERIFY**: Enable/disable TLS verification (switch between http and https protocol).
 - **DOCKER_CERT_PATH**: Path to the certificates needed for TLS verification.
 - **DOCKER_CONFIG**: Path for additional docker configuration files (like .dockercfg).
-- **DOCKER_USER**: User who is authorized to pull images.
-- **DOCKER_PASSWORD**: Password for user who is authorized to pull images.
 - **CONNECTION_TIMEOUT_SECONDS**: Determines the timeout until a new connection to DOCKER_HOST is fully established, default is 30s.
 - **RESPONSE_TIMEOUT_SECONDS**: Determines the timeout until arrival of a response from the DOCKER_HOST, default is 45s.
 - **DOWNLOAD_IMAGE_TIMEOUT_SECONDS**: Determines the timeout for an image pull to be completed, default is 300s.
-- **MAX_CONNECTIONS**: Maximum connections to the DOCKER_HOST, default is 100.
+
 

@@ -36,11 +36,6 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DepopulateProjectRegistryMojo.class);
 
-    public DepopulateProjectRegistryMojo()
-    {
-        super();
-    }
-
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException
     {
@@ -65,7 +60,7 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
             LOGGER.info("DepopulateProjectRegistry with this configuration {}", imageManagement);
 
             for (final ImageConfiguration imageConfig : imageManagement) {
-                final String repository = imageConfig.getRepository();
+                final String repository = imageConfig.getRepository(); // TODO: What if this is a ${}
                 final String[] repositoryInfo = repository.split("/", 2);
                 if (repositoryInfo.length != 2) {
                     throw new IllegalArgumentException("Unable to get registry information for " + repository);
@@ -94,7 +89,6 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
                 }
             }
         }
-
     }
 
 }
