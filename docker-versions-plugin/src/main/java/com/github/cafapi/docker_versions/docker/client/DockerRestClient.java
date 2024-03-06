@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dockerjava.api.DockerClient;
-//import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
@@ -65,8 +64,8 @@ public final class DockerRestClient
         final List<Image> images = dockerClient.listImagesCmd()
                                                .withReferenceFilter(imageName)
                                                .exec();
-        images.forEach(i -> LOGGER.debug("ID: {} Tags: {} Labels: {} Digests: {}",
-                             i.getId(), i.getRepoTags(), i.getLabels(), i.getRepoDigests())
+        images.forEach(i -> LOGGER.info("Found image - ID: {} Tags: {} Labels: {}",
+                             i.getId(), i.getRepoTags(), i.getLabels())
                       );
 
         return images.stream().findFirst();
@@ -79,16 +78,8 @@ public final class DockerRestClient
     {
         LOGGER.info("Pulling image '{}:{}'...", repository, tag);
 
-        /*
-         * Specify auth in docker config
-        final AuthConfig authConfig = new AuthConfig();
-        authConfig.withUsername(REGISTRY_USER);
-        authConfig.withPassword(REGISTRY_PASSWORD);
-        */
-
         return dockerClient.pullImageCmd(repository)
                            .withTag(tag)
-                           //.withAuthConfig(authConfig )
                            .exec(new PullImageResultCallback())
                            .awaitCompletion(DOWNLOAD_IMAGE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
@@ -122,7 +113,7 @@ public final class DockerRestClient
         dockerClient.removeImageCmd(image)
                     .exec();
 
-        // Verify image was untagged
+        // Verify image was untagged, TODO: check digest
         final Optional<Image> taggedImage = findImage(image);
         if (taggedImage.isPresent()) {
             final Image unTaggedImage = taggedImage.get();
@@ -150,5 +141,4 @@ public final class DockerRestClient
                 ? propertyValue
                 : (System.getenv(key) != null) ? System.getenv(key) : defaultValue;
     }
-
 }
