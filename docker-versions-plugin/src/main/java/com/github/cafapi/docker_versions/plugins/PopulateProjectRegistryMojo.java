@@ -116,14 +116,13 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             }
 
             LOGGER.info("Check if image '{}' is already there...", imageName);
-
             final Optional<Image> existingImage = dockerClient.findImage(imageName);
 
             if (existingImage.isPresent()) {
                 final Image image = existingImage.get();
                 // Digest and image are both present, check if the digests match
                 if (verifyDigest(image, digest)) {
-                    LOGGER.info("Digest of existing image '{}' matches {}.", image.getId(), digest);
+                    LOGGER.info("Digest of existing image '{}-{}' matches {}.", image.getId(), image.getRepoDigests(), digest);
                     return image;
                 }
             }
@@ -169,8 +168,8 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             final Image image,
             final String digest)
         {
-            LOGGER.info("Verifying digest '{}' for image '{}'...", digest, image.getId());
-            return digest.equals(image.getId());
+            LOGGER.info("Verifying digest '{}' for image '{}-{}'...", digest, image.getId(), image.getRepoDigests());
+            return image.getRepoDigests() == null || Arrays.asList(image.getRepoDigests()).stream().anyMatch(di -> di.endsWith(digest));
         }
     }
 }

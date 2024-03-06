@@ -16,6 +16,7 @@
 package com.github.cafapi.docker_versions.docker.client;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -62,13 +63,12 @@ public final class DockerRestClient
     {
         LOGGER.info("Checking if image '{}' is present", imageName);
         final List<Image> images = dockerClient.listImagesCmd()
-                                               .withReferenceFilter(imageName)
                                                .exec();
-        images.forEach(i -> LOGGER.info("Found image - ID: {} Tags: {} Labels: {}",
-                             i.getId(), i.getRepoTags(), i.getLabels())
+        images.forEach(i -> LOGGER.debug("Found image - ID: {}\n Tags: {}\n Labels: {}\n Digests: {}",
+                             i.getId(), i.getRepoTags(), i.getLabels(), i.getRepoDigests())
                       );
 
-        return images.stream().findFirst();
+        return images.stream().filter(i -> i.getRepoTags() != null && Arrays.asList(i.getRepoTags()).contains(imageName)).findFirst();
     }
 
     public boolean pullImage(
