@@ -29,15 +29,6 @@ The project specific name can then be used in place of the actual Docker image n
     <configuration>
         <imageManagement>
             <image>
-                <repository>${homeDockerPrereleaseRegistry}/apollo/view-service-base</repository>
-                <tag>4.2.0-SNAPSHOT</tag>
-            </image>
-            <image>
-                <repository>${homeDockerReleaseRegistry}/caf/search-and-analytics</repository>
-                <tag>8.1.0</tag>
-                <digest>sha256:8f4cb0832ac99c1163decdbd446b367e4a90a5e6380e2b0429d0273013968b38</digest>
-            </image>
-            <image>
                 <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
                 <tag>1.4.3</tag>
                 <digest>sha256:76b8dc916151a5ede5d8a999fcd0929ca3cd3a9dbf67085f65ef98b5279359f4</digest>
