@@ -66,13 +66,17 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             LOGGER.info("PopulateProjectRegistryMojo with this configuration {}", imageManagement);
 
             for (final ImageConfiguration imageConfig : imageManagement) {
-                final String repository = imageConfig.getRepository(); // TODO: What if this is a ${}
+                final String repository = getPropertyOrValue(imageConfig.getRepository());
+
+                if (StringUtils.isBlank(repository)) {
+                    throw new IllegalArgumentException("Repository not specified for image " + repository);
+                }
+
                 final String[] repositoryInfo = repository.split("/", 2);
                 if (repositoryInfo.length != 2) {
                     throw new IllegalArgumentException("Unable to get registry information for " + repository);
                 }
 
-                //final String registry = getInterpolatedValue(repositoryInfo[0]);
                 final String registry = getPropertyOrValue(repositoryInfo[0]);
                 final String name = getPropertyOrValue(repositoryInfo[1]);
                 final String digest = getPropertyOrValue(imageConfig.getDigest());
@@ -84,7 +88,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
 
                 final String imageName = registry + "/" + name + ":" + tag;
 
-                // Always pull if digest is not specified
+                // Always pull image if digest is not specified
                 // Avoid pull if image already exists and its digest matches specified digest, else pull image again
                 final Image image = getImageToTag(imageName, registry, name, tag, digest);
 
@@ -99,7 +103,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
 
                 LOGGER.info("Tagging image {} to '{}'", imageId, projectDockerRegistryImageName);
 
-                dockerClient.tagImage(imageId, projectDockerRegistryImageName, "latest");
+                dockerClient.tagImage(imageId, projectDockerRegistryImageName, PROJECT_DOCKER_REGISTRY_TAG);
             }
         }
 
@@ -115,7 +119,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
                 return pullImage(imageName, registry, name, tag, digest);
             }
 
-            LOGGER.info("Check if image '{}' is already there...", imageName);
+            LOGGER.debug("Check if image '{}' is already there...", imageName);
             final Optional<Image> existingImage = dockerClient.findImage(imageName);
 
             if (existingImage.isPresent()) {
@@ -147,8 +151,9 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
                     if (image.isEmpty()) {
                         throw new ImagePullException("Image not found after pulling it " + imageName);
                     }
+
                     final Image pulledImage = image.get();
-                    // Check the digest of the image that was pulled
+                    // Check if the digest of the image that was pulled matches the specified digest
                     if (StringUtils.isNotBlank(digest)) {
                         if (!verifyDigest(pulledImage, digest)) {
                             throw new IncorrectDigestException(
@@ -168,7 +173,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             final Image image,
             final String digest)
         {
-            LOGGER.info("Verifying digest '{}' for image '{}-{}'...", digest, image.getId(), image.getRepoDigests());
+            LOGGER.debug("Verifying digest '{}' for image '{}-{}'...", digest, image.getId(), image.getRepoDigests());
             return image.getRepoDigests() == null || Arrays.asList(image.getRepoDigests()).stream().anyMatch(di -> di.endsWith(digest));
         }
     }

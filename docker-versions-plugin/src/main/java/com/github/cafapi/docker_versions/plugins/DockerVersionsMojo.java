@@ -17,8 +17,6 @@ package com.github.cafapi.docker_versions.plugins;
 
 import java.util.List;
 import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -29,8 +27,9 @@ import org.slf4j.LoggerFactory;
 abstract class DockerVersionsMojo extends AbstractMojo
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsMojo.class);
-    private static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");
+
     protected static final String PROJECT_DOCKER_REGISTRY = "projectDockerRegistry";
+    protected static final String PROJECT_DOCKER_REGISTRY_TAG = "latest";
 
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     protected MavenProject project;
@@ -49,13 +48,13 @@ abstract class DockerVersionsMojo extends AbstractMojo
 
     protected String getPropertyOrValue(final String data)
     {
-        LOGGER.info("Finding getPropertyOrValue: {}", data);
+        LOGGER.debug("Finding getPropertyOrValue: {}", data);
 
         LOGGER.debug("Project properties: {}", getProperties().entrySet());
 
         if (data != null && data.startsWith("${")) {
             final String propName = data.substring(2, data.length() - 1);
-            LOGGER.info("Getting property: {}", propName);
+            LOGGER.debug("Getting property: {}", propName);
             return getProperties().getProperty(propName);
         }
 
@@ -63,28 +62,7 @@ abstract class DockerVersionsMojo extends AbstractMojo
 
     }
 
-    public String getInterpolatedValue(final String value) {
-        final String strippedValue
-                = value.startsWith("${")
-                ? value.substring(2, value.length() - 1)
-                : value;
-        String valueString = getProperties().getProperty(strippedValue);
-        while (valueString.contains("${")) {
-            final Matcher matcher = PROPERTY_PATTERN.matcher(valueString);
-            if (matcher.find()) {
-                final String key = matcher.group(1);
-                final String nestedValue = getProperties().getProperty(key);
-                final String nestedPlaceholder = "\\$\\{" + key + "\\}";
-                valueString = valueString.replaceAll(nestedPlaceholder, nestedValue);
-                if(nestedValue.contains("S{")) {
-                    getInterpolatedValue(valueString);
-                }
-            }
-        }
-        return valueString;
-    }
-
-    protected Properties getProperties()
+    private Properties getProperties()
     {
         if (properties == null) {
             properties = project.getProperties();

@@ -68,7 +68,9 @@ public final class DockerRestClient
                              i.getId(), i.getRepoTags(), i.getLabels(), i.getRepoDigests())
                       );
 
-        return images.stream().filter(i -> i.getRepoTags() != null && Arrays.asList(i.getRepoTags()).contains(imageName)).findFirst();
+        return images.stream()
+                     .filter(i -> i.getRepoTags() != null && Arrays.asList(i.getRepoTags()).contains(imageName))
+                     .findFirst();
     }
 
     public boolean pullImage(
@@ -98,7 +100,7 @@ public final class DockerRestClient
         // Verify image was tagged
         final Optional<Image> taggedImage = findImage(imageNameWithRepository + ":" + tag);
         if (taggedImage.isEmpty()) {
-            throw new ImageTaggingException("Image '" + imageId + "' was not tagged " + imageNameWithRepository + ":" + tag);
+            throw new ImageTaggingException("Image '" + imageId + "' was not tagged as " + imageNameWithRepository + ":" + tag);
         }
         final Image image = taggedImage.get();
         LOGGER.info("Image tagged with id '{}' as '{}:{}'...", image.getId(), image.getRepoTags());
@@ -113,7 +115,7 @@ public final class DockerRestClient
         dockerClient.removeImageCmd(image)
                     .exec();
 
-        // Verify image was untagged, TODO: check digest
+        // Verify image was untagged
         final Optional<Image> taggedImage = findImage(image);
         if (taggedImage.isPresent()) {
             final Image unTaggedImage = taggedImage.get();

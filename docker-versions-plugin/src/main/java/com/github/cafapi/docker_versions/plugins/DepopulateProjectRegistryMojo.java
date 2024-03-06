@@ -60,13 +60,17 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
             LOGGER.info("DepopulateProjectRegistry with this configuration {}", imageManagement);
 
             for (final ImageConfiguration imageConfig : imageManagement) {
-                final String repository = imageConfig.getRepository(); // TODO: What if this is a ${}
+                final String repository = getPropertyOrValue(imageConfig.getRepository());
+
+                if (StringUtils.isBlank(repository)) {
+                    throw new IllegalArgumentException("Repository not specified for image " + repository);
+                }
+
                 final String[] repositoryInfo = repository.split("/", 2);
                 if (repositoryInfo.length != 2) {
                     throw new IllegalArgumentException("Unable to get registry information for " + repository);
                 }
 
-                //final String registry = getInterpolatedValue(repositoryInfo[0]);
                 final String name = getPropertyOrValue(repositoryInfo[1]);
                 final String targetRepository = getPropertyOrValue(imageConfig.getTargetRepository());
 
@@ -77,7 +81,7 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
                             ? targetRepository
                             : name);
 
-                final String imageName = projectDockerRegistryImageName + ":latest";
+                final String imageName = projectDockerRegistryImageName + ":" + PROJECT_DOCKER_REGISTRY_TAG;
 
                 LOGGER.info("Check if image '{}' is present...", imageName);
                 final Optional<Image> taggedImage = dockerClient.findImage(imageName);
