@@ -32,5 +32,4 @@ final class ImagePullException extends Exception
     {
         super(message, ex);
     }
-
 }
