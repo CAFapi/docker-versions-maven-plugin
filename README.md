@@ -73,5 +73,3 @@ The following configuration options can be set via environment variables.
 - **CONNECTION_TIMEOUT_SECONDS**: Determines the timeout until a new connection to DOCKER_HOST is fully established, default is 30s.
 - **RESPONSE_TIMEOUT_SECONDS**: Determines the timeout until arrival of a response from the DOCKER_HOST, default is 45s.
 - **DOWNLOAD_IMAGE_TIMEOUT_SECONDS**: Determines the timeout for an image pull to be completed, default is 300s.
-
-
