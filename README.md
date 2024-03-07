@@ -3,7 +3,7 @@
 This is a maven plugin that retags the Docker images that are used by a project, to a project specific name.  
 The project specific name can then be used in place of the actual Docker image name.
 
-## Goals overview:
+## Goals overview
 
 ### populate-project-registry
 
