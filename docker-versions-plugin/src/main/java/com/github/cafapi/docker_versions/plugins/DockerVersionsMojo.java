@@ -29,7 +29,7 @@ abstract class DockerVersionsMojo extends AbstractMojo
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsMojo.class);
 
     protected static final String PROJECT_DOCKER_REGISTRY = "projectDockerRegistry";
-    protected static final String PROJECT_DOCKER_REGISTRY_TAG = "latest";
+    protected static final String LATEST_TAG = "latest";
 
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     protected MavenProject project;

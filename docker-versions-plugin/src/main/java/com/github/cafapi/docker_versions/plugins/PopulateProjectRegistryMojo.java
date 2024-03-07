@@ -103,7 +103,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
 
                 LOGGER.info("Tagging image {} to '{}'", imageId, projectDockerRegistryImageName);
 
-                dockerClient.tagImage(imageId, projectDockerRegistryImageName, PROJECT_DOCKER_REGISTRY_TAG);
+                dockerClient.tagImage(imageId, projectDockerRegistryImageName, LATEST_TAG);
             }
         }
 
