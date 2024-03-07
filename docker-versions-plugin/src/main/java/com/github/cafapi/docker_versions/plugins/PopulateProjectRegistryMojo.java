@@ -115,11 +115,11 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             final String digest) throws ImagePullException, IncorrectDigestException
         {
             if (StringUtils.isBlank(digest)) {
-                LOGGER.info("Digest not specified for image '{}', pull it...", imageName);
+                LOGGER.debug("Digest not specified for image '{}', pull it...", imageName);
                 return pullImage(imageName, registry, name, tag, digest);
             }
 
-            LOGGER.debug("Check if image '{}' is already there...", imageName);
+            LOGGER.debug("Check if image '{}' is already present...", imageName);
             final Optional<Image> existingImage = dockerClient.findImage(imageName);
 
             if (existingImage.isPresent()) {
@@ -146,7 +146,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             try {
                 final boolean imagePullCompleted = dockerClient.pullImage(registry + "/" + name, tag);
                 if (imagePullCompleted) {
-                    LOGGER.info("Pulled image '{}', verify that it is present...", imageName);
+                    LOGGER.debug("Pulled image '{}', verify that it is now present...", imageName);
                     final Optional<Image> image = dockerClient.findImage(imageName);
                     if (image.isEmpty()) {
                         throw new ImagePullException("Image not found after pulling it " + imageName);

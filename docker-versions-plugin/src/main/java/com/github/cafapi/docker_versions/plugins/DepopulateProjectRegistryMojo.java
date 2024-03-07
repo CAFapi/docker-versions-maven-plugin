@@ -83,7 +83,7 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
 
                 final String imageName = projectDockerRegistryImageName + ":" + PROJECT_DOCKER_REGISTRY_TAG;
 
-                LOGGER.info("Check if image '{}' is present...", imageName);
+                LOGGER.debug("Check if image '{}' is present...", imageName);
                 final Optional<Image> taggedImage = dockerClient.findImage(imageName);
                 if (taggedImage.isPresent()) {
                     dockerClient.untagImage(imageName);
