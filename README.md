@@ -154,10 +154,37 @@ This means that only the plugin configuration needs to be updated to update the 
 ### Configuration
 The following configuration options can be set via environment variables.  
 
-- **DOCKER_HOST**: The Docker Host URL, e.g. tcp://localhost:2376 or unix:///var/run/docker.sock.
-- **DOCKER_TLS_VERIFY**: Enable/disable TLS verification (switch between http and https protocol).
-- **DOCKER_CERT_PATH**: Path to the certificates needed for TLS verification.
-- **DOCKER_CONFIG**: Path for additional docker configuration files (like .dockercfg).
-- **CONNECTION_TIMEOUT_SECONDS**: Determines the timeout until a new connection to DOCKER_HOST is fully established, default is 30s.
-- **RESPONSE_TIMEOUT_SECONDS**: Determines the timeout until arrival of a response from the DOCKER_HOST, default is 45s.
-- **DOWNLOAD_IMAGE_TIMEOUT_SECONDS**: Determines the timeout for an image pull to be completed, default is 300s.
+<table class="table">
+  <tr>
+    <th> Name        </th>
+    <th> Description </th>
+  </tr>
+  <tr>
+    <td> DOCKER_HOST </td>
+    <td> The Docker Host URL, e.g. tcp://localhost:2376 or unix:///var/run/docker.sock. </td>
+  </tr>
+  <tr>
+    <td> DOCKER_TLS_VERIFY </td>
+    <td> Enable/disable TLS verification (switch between http and https protocol). </td>
+  </tr>
+  <tr>
+    <td> DOCKER_CERT_PATH </td>
+    <td> Path to the certificates needed for TLS verification. </td>
+  </tr>
+  <tr>
+    <td> DOCKER_CONFIG </td>
+    <td> Path for additional docker configuration files (like .dockercfg). </td>
+  </tr>
+  <tr>
+    <td> CONNECTION_TIMEOUT_SECONDS </td>
+    <td> Determines the timeout until a new connection to DOCKER_HOST is fully established, default is 30s. </td>
+  </tr>
+  <tr>
+    <td> RESPONSE_TIMEOUT_SECONDS </td>
+    <td> Determines the timeout until arrival of a response from the DOCKER_HOST, default is 45s. </td>
+  </tr>
+  <tr>
+    <td> DOWNLOAD_IMAGE_TIMEOUT_SECONDS </td>
+    <td> Determines the timeout for an image pull to be completed, default is 300s. </td>
+  </tr>
+</table>
