@@ -20,12 +20,12 @@ Retags the Docker images that are used by a project, to a project specific name.
   <tr>
     <td> &lt;repository&gt; </td>
     <td> String  </td>
-    <td> The repository and name of the docker image in the format &lt;repository&gt;/&lt;name&gt; </td>
+    <td> The repository and name of the docker image in the format &lt;repository&gt;/&lt;name&gt;. </td>
   </tr>
   <tr>
     <td> &lt;tag&gt; </td>
     <td> String </td>
-    <td> The docker image tag </td>
+    <td> The docker image tag. </td>
   </tr>
 </table>
 
@@ -45,7 +45,7 @@ Retags the Docker images that are used by a project, to a project specific name.
   <tr>
     <td> &lt;targetRepository&gt; </td>
     <td> String </td>
-    <td> This string will be used in the project specific name tag instead of the `repository` value. </td>
+    <td> This string will be used in the project specific name tag instead of the repository value. </td>
   </tr>
 </table>
 
@@ -64,7 +64,7 @@ Removes the project specific name tag from the Docker images that are used by a 
   <tr>
     <td> &lt;repository&gt; </td>
     <td> String  </td>
-    <td> The repository and name of the docker image in the format `<repository>/<name>` </td>
+    <td> The repository and name of the docker image in the format &lt;repository&gt;/&lt;name&gt;. </td>
   </tr>
 </table>
 
@@ -79,7 +79,7 @@ Removes the project specific name tag from the Docker images that are used by a 
   <tr>
     <td> &lt;targetRepository&gt; </td>
     <td> String </td>
-    <td> This string will be used in the project specific name tag instead of the `repository` value. </td>
+    <td> This string will be used in the project specific name tag instead of the repository value. </td>
   </tr>
 </table>
 
