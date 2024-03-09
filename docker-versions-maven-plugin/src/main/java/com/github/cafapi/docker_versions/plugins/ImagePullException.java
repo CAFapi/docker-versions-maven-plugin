@@ -15,20 +15,21 @@
  */
 package com.github.cafapi.docker_versions.plugins;
 
-final class IncorrectDigestException extends Exception
+final class ImagePullException extends Exception
 {
-    private static final long serialVersionUID = -5124162490564937983L;
+    private static final long serialVersionUID = -488859651304259873L;
 
-    public IncorrectDigestException(final String message) {
+    public ImagePullException(final String message)
+    {
         super(message);
     }
 
-    public IncorrectDigestException(final Exception ex)
+    public ImagePullException(final Exception ex)
     {
         super(ex);
     }
 
-    public IncorrectDigestException(final String message, final Exception ex)
+    public ImagePullException(final String message, final Exception ex)
     {
         super(message, ex);
     }

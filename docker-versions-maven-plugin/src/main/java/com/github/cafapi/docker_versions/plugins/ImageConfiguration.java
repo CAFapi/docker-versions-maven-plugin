@@ -31,45 +31,54 @@ public final class ImageConfiguration
     @Parameter
     private String targetRepository;
 
-    public String getRepository() {
+    public String getRepository()
+    {
         return repository;
     }
 
-    public void setRepository(final String repository) {
+    public void setRepository(final String repository)
+    {
         this.repository = repository;
     }
 
-    public String getTag() {
+    public String getTag()
+    {
         return tag;
     }
 
-    public void setTag(final String tag) {
+    public void setTag(final String tag)
+    {
         this.tag = tag;
     }
 
-    public String getDigest() {
+    public String getDigest()
+    {
         return digest;
     }
 
-    public void setDigest(final String digest) {
+    public void setDigest(final String digest)
+    {
         this.digest = digest;
     }
 
-    public String getTargetRepository() {
+    public String getTargetRepository()
+    {
         return targetRepository;
     }
 
-    public void setTargetRepository(final String targetRepository) {
+    public void setTargetRepository(final String targetRepository)
+    {
         this.targetRepository = targetRepository;
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "ImageConfiguration ["
-                + "repository=" + repository 
-                + ", tag=" + tag 
-                + ", digest=" + digest
-                + ", targetRepository=" + targetRepository
-                + "]";
+            + "repository=" + repository
+            + ", tag=" + tag
+            + ", digest=" + digest
+            + ", targetRepository=" + targetRepository
+            + "]";
     }
 }

@@ -29,8 +29,8 @@ import com.github.cafapi.docker_versions.docker.client.ImageTaggingException;
 import com.github.dockerjava.api.model.Image;
 
 /**
-* This is a maven plugin that untags the Docker images that were tagged with a project specific name.
-*/
+ * This is a maven plugin that untags the Docker images that were tagged with a project specific name.
+ */
 @Mojo(name = "depopulate-project-registry")
 public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
 {
@@ -57,29 +57,19 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
 
         public void executeImpl() throws ImageTaggingException
         {
-            LOGGER.info("DepopulateProjectRegistry with this configuration {}", imageManagement);
+            LOGGER.debug("DepopulateProjectRegistry with this configuration {}", imageManagement);
 
             for (final ImageConfiguration imageConfig : imageManagement) {
-                final String repository = getPropertyOrValue(imageConfig.getRepository());
+                final ImageMoniker imageMoniker = new ImageMoniker(
+                    imageConfig.getRepository(),
+                    imageConfig.getTag(),
+                    imageConfig.getDigest());
 
-                if (StringUtils.isBlank(repository)) {
-                    throw new IllegalArgumentException("Repository not specified for image " + repository);
-                }
+                final String targetRepository = StringUtils.isNotBlank(imageConfig.getTargetRepository())
+                    ? imageConfig.getTargetRepository()
+                    : imageMoniker.getRepositoryWithoutRegistry();
 
-                final String[] repositoryInfo = repository.split("/", 2);
-                if (repositoryInfo.length != 2) {
-                    throw new IllegalArgumentException("Unable to get registry information for " + repository);
-                }
-
-                final String name = getPropertyOrValue(repositoryInfo[1]);
-                final String targetRepository = getPropertyOrValue(imageConfig.getTargetRepository());
-
-                final String projectDockerRegistryImageName
-                    = getProjectDockerRegister()
-                    + "/"
-                    + (StringUtils.isNotBlank(targetRepository)
-                            ? targetRepository
-                            : name);
+                final String projectDockerRegistryImageName = getProjectDockerRegister() + "/" + targetRepository;
 
                 final String imageName = projectDockerRegistryImageName + ":" + LATEST_TAG;
 
@@ -87,9 +77,8 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
                 final Optional<Image> taggedImage = dockerClient.findImage(imageName);
                 if (taggedImage.isPresent()) {
                     dockerClient.untagImage(imageName);
-                }
-                else {
-                    LOGGER.warn("Image '{}' was not found", imageName);
+                } else {
+                    LOGGER.info("Untagging {}... unnecessary as image not found", imageName);
                 }
             }
         }

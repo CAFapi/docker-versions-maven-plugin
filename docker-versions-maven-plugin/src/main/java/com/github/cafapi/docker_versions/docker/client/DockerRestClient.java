@@ -35,6 +35,7 @@ import com.github.dockerjava.api.command.PullImageResultCallback;
 
 public final class DockerRestClient
 {
+    // TODO: Update to allow configuration in the Maven-standard way - i.e. from the pom, but still fallback to these
     private static final int CONNECTION_TIMEOUT_SECONDS = getIntPropertyOrEnvVar("CONNECTION_TIMEOUT_SECONDS", "30");
     private static final int RESPONSE_TIMEOUT_SECONDS = getIntPropertyOrEnvVar("RESPONSE_TIMEOUT_SECONDS", "45");
     private static final long DOWNLOAD_IMAGE_TIMEOUT_SECONDS = getLongPropertyOrEnvVar("DOWNLOAD_IMAGE_TIMEOUT_SECONDS", "300");
@@ -46,14 +47,14 @@ public final class DockerRestClient
     public DockerRestClient()
     {
         final DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
-                .build();
+            .build();
 
         final DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-                .dockerHost(config.getDockerHost())
-                .sslConfig(config.getSSLConfig())
-                .connectionTimeout(Duration.ofSeconds(CONNECTION_TIMEOUT_SECONDS))
-                .responseTimeout(Duration.ofSeconds(RESPONSE_TIMEOUT_SECONDS))
-                .build();
+            .dockerHost(config.getDockerHost())
+            .sslConfig(config.getSSLConfig())
+            .connectionTimeout(Duration.ofSeconds(CONNECTION_TIMEOUT_SECONDS))
+            .responseTimeout(Duration.ofSeconds(RESPONSE_TIMEOUT_SECONDS))
+            .build();
 
         dockerClient = DockerClientImpl.getInstance(config, httpClient);
     }
@@ -61,16 +62,18 @@ public final class DockerRestClient
     public Optional<Image> findImage(
         final String imageName)
     {
-        LOGGER.info("Checking if image '{}' is present", imageName);
+        // TODO: Use image inspect instead so that we don't have to cycle around all the images.
+
+        LOGGER.debug("Checking if image '{}' is present...", imageName);
         final List<Image> images = dockerClient.listImagesCmd()
-                                               .exec();
+            .exec();
         images.forEach(i -> LOGGER.debug("Found image - ID: {}\n Tags: {}\n Labels: {}\n Digests: {}",
-                             i.getId(), i.getRepoTags(), i.getLabels(), i.getRepoDigests())
-                      );
+                                         i.getId(), i.getRepoTags(), i.getLabels(), i.getRepoDigests())
+        );
 
         return images.stream()
-                     .filter(i -> i.getRepoTags() != null && Arrays.asList(i.getRepoTags()).contains(imageName))
-                     .findFirst();
+            .filter(i -> i.getRepoTags() != null && Arrays.asList(i.getRepoTags()).contains(imageName))
+            .findFirst();
     }
 
     public boolean pullImage(
@@ -78,42 +81,39 @@ public final class DockerRestClient
         final String tag)
         throws InterruptedException
     {
-        LOGGER.info("Pulling image '{}:{}'...", repository, tag);
+        LOGGER.info("Pulling {}:{}...", repository, tag);
 
         return dockerClient.pullImageCmd(repository)
-                           .withTag(tag)
-                           .exec(new PullImageResultCallback())
-                           .awaitCompletion(DOWNLOAD_IMAGE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            .withTag(tag)
+            .exec(new PullImageResultCallback())
+            .awaitCompletion(DOWNLOAD_IMAGE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
     public void tagImage(
-        final String imageId,
+        final Image image,
         final String imageNameWithRepository,
-        final String tag)
-        throws ImageTaggingException
+        final String tag
+    ) throws ImageTaggingException
     {
-        LOGGER.info("Tagging image with id '{}' as '{}:{}'...", imageId, imageNameWithRepository, tag);
+        LOGGER.info("Tagging {}:{}... current tags: {}", imageNameWithRepository, tag, image.getRepoTags());
+
+        final String imageId = image.getId();
 
         dockerClient.tagImageCmd(imageId, imageNameWithRepository, tag)
-                    .exec();
+            .exec();
 
         // Verify image was tagged
-        final Optional<Image> taggedImage = findImage(imageNameWithRepository + ":" + tag);
-        if (taggedImage.isEmpty()) {
-            throw new ImageTaggingException("Image '" + imageId + "' was not tagged as " + imageNameWithRepository + ":" + tag);
-        }
-        final Image image = taggedImage.get();
-        LOGGER.info("Image tagged with id '{}' as '{}:{}'...", image.getId(), image.getRepoTags());
+        final Image newImage = findImage(imageNameWithRepository + ":" + tag).orElseThrow(
+            () -> new ImageTaggingException("Image '" + imageId + "' was not tagged as " + imageNameWithRepository + ":" + tag));
+        LOGGER.debug("Image '{}' as '{}:{}'...", newImage.getId(), newImage.getRepoTags());
     }
 
-    public void untagImage(
-        final String image)
-        throws ImageTaggingException
+    public void untagImage(final String image) throws ImageTaggingException
     {
-        LOGGER.info("Untagging image {}...", image);
+        LOGGER.info("Untagging {}...", image);
 
         dockerClient.removeImageCmd(image)
-                    .exec();
+            .exec();
 
         // Verify image was untagged
         final Optional<Image> taggedImage = findImage(image);
@@ -140,7 +140,7 @@ public final class DockerRestClient
     {
         final String propertyValue = System.getProperty(key);
         return (propertyValue != null)
-                ? propertyValue
-                : (System.getenv(key) != null) ? System.getenv(key) : defaultValue;
+            ? propertyValue
+            : (System.getenv(key) != null) ? System.getenv(key) : defaultValue;
     }
 }

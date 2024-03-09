@@ -17,10 +17,10 @@ package com.github.cafapi.docker_versions.docker.client;
 
 public final class ImageTaggingException extends Exception
 {
-
     private static final long serialVersionUID = -883812548271368282L;
 
-    public ImageTaggingException(final String message) {
+    public ImageTaggingException(final String message)
+    {
         super(message);
     }
 

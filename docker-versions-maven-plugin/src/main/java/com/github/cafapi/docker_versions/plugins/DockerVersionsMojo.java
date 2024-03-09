@@ -16,18 +16,13 @@
 package com.github.cafapi.docker_versions.plugins;
 
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 abstract class DockerVersionsMojo extends AbstractMojo
 {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsMojo.class);
-
     protected static final String PROJECT_DOCKER_REGISTRY = "projectDockerRegistry";
     protected static final String LATEST_TAG = "latest";
 
@@ -37,36 +32,10 @@ abstract class DockerVersionsMojo extends AbstractMojo
     @Parameter
     protected List<ImageConfiguration> imageManagement;
 
-    private Properties properties;
-
     protected String getProjectDockerRegister()
     {
-        return getProperties().getProperty(
-                PROJECT_DOCKER_REGISTRY,
-                project.getName() + "." + project.getVersion() + ".project-registries.local");
-    }
-
-    protected String getPropertyOrValue(final String data)
-    {
-        LOGGER.debug("Finding getPropertyOrValue: {}", data);
-
-        LOGGER.debug("Project properties: {}", getProperties().entrySet());
-
-        if (data != null && data.startsWith("${")) {
-            final String propName = data.substring(2, data.length() - 1);
-            LOGGER.debug("Getting property: {}", propName);
-            return getProperties().getProperty(propName);
-        }
-
-        return data;
-
-    }
-
-    private Properties getProperties()
-    {
-        if (properties == null) {
-            properties = project.getProperties();
-        }
-        return properties;
+        return project.getProperties().getProperty(
+            PROJECT_DOCKER_REGISTRY,
+            project.getArtifactId() + "-" + project.getVersion() + ".project-registries.local");
     }
 }

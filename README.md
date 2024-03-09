@@ -1,4 +1,4 @@
-# docker-versions-maven-plugin
+# Docker Versions Maven Plugin
 
 This is a maven plugin that retags the Docker images that are used by a project, to a project specific name.  
 The project specific name can then be used in place of the actual Docker image name.
@@ -89,17 +89,16 @@ Removes the project specific name tag from the Docker images that are used by a 
     <groupId>com.github.cafapi.plugins.docker.versions</groupId>
     <artifactId>docker-versions-maven-plugin</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <extensions>true</extensions>
     <executions>
         <execution>
-            <id>retag</id>
-            <phase>pre-integration-test</phase>
+            <id>populate-project-registry</id>
+            <phase>initialize</phase>
             <goals>
                 <goal>populate-project-registry</goal>
             </goals>
         </execution>
         <execution>
-            <id>untag</id>
+            <id>depopulate-project-registry</id>
             <phase>post-integration-test</phase>
             <goals>
                 <goal>depopulate-project-registry</goal>
@@ -148,7 +147,7 @@ would be updated to reference the version from the project-specific registry ins
 
 `${projectDockerRegistry}/cafapi/opensuse-tomcat-jre17`
 
-**Note** The version need not be specified when referencing images in the project-specific registry.
+**Note:** The version need not be specified when referencing images in the project-specific registry.
 This means that only the plugin configuration needs to be updated to update the Docker image versions.
 
 ### Configuration

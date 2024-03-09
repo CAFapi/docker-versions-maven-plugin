@@ -16,7 +16,6 @@
     limitations under the License.
 
 -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -24,25 +23,16 @@
 
     <parent>
         <groupId>com.github.cafapi.plugins.docker.versions</groupId>
-        <artifactId>docker-versions-plugin</artifactId>
+        <artifactId>docker-versions</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>docker-versions-maven-plugin-usage</artifactId>
-    <name>TestDockerVersionsMavenPlugin</name>
     <packaging>pom</packaging>
 
     <properties>
-        <projectDockerRegistry>${project.name}-${project.version}.project-registries.local</projectDockerRegistry>
+        <projectDockerRegistry>PluginUsageExample-${project.version}.project-registries.local</projectDockerRegistry>
     </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-    </dependencies>
 
     <build>
         <plugins>
@@ -52,14 +42,14 @@
                 <version>1.0.0-SNAPSHOT</version>
                 <executions>
                     <execution>
-                        <id>retag</id>
-                        <phase>pre-integration-test</phase>
+                        <id>populate-project-registry</id>
+                        <phase>initialize</phase>
                         <goals>
                             <goal>populate-project-registry</goal>
                         </goals>
                     </execution>
                     <execution>
-                        <id>untag</id>
+                        <id>depopulate-project-registry</id>
                         <phase>post-integration-test</phase>
                         <goals>
                             <goal>depopulate-project-registry</goal>
@@ -72,25 +62,15 @@
                             <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
                             <tag>1.4.3</tag>
                             <digest>sha256:76b8dc916151a5ede5d8a999fcd0929ca3cd3a9dbf67085f65ef98b5279359f4</digest>
-                            <!--Final retagged name 
-                            ${project.name}-${project.version}.project-registries.local/cafapi/opensuse-jre17
-                            -->
                         </image>
                         <image>
                             <repository>${dockerHubPublic}/rabbitmq</repository>
+                            <targetRepository>messaging/rabbitmq</targetRepository>
                             <tag>3-management</tag>
                         </image>
                         <image>
                             <repository>${dockerHubPublic}/cafapi/opensuse-jre8</repository>
                             <tag>3.9.3</tag>
-                        </image>
-                        <image>
-                            <repository>${dockerHubPublic}/cafapi/prereleases</repository>
-                            <targetRepository>cafapi/opensuse-tomcat-jre17</targetRepository>
-                            <tag>opensuse-tomcat-jre17-2.1.0-SNAPSHOT</tag>
-                            <!--Final retagged name 
-                            ${project.name}-${project.version}.project-registries.local/cafapi/opensuse-tomcat-jre17
-                            -->
                         </image>
                     </imageManagement>
                 </configuration>
