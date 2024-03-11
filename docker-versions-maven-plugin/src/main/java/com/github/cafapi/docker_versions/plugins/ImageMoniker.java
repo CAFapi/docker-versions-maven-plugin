@@ -37,24 +37,35 @@ final class ImageMoniker
             throw new IllegalArgumentException("Repository not specified for image: " + repository);
         }
 
-        // TODO: This assumes that registry is always present
-        // https://ktomk.github.io/pipelines/doc/DOCKER-NAME-TAG.html
-        // https://docs.docker.com/reference/cli/docker/image/tag/
         final String[] repositoryInfo = repository.split("/", 2);
-        if (repositoryInfo.length != 2) {
-            throw new IllegalArgumentException("Unable to get registry information for " + repository);
+
+        if (repositoryInfo.length == 1) {
+            registry = null;
+            repositorySansRegistry = repositoryInfo[0];
+        }
+        else {
+            if (isRegistry(repositoryInfo[0])) {
+                registry = repositoryInfo[0];
+                repositorySansRegistry = repositoryInfo[1];
+            }
+            else {
+                registry = null;
+                repositorySansRegistry = repository;
+            }
         }
 
         if (StringUtils.isBlank(tag)) {
             throw new IllegalArgumentException("Tag not specified for image " + repository);
         }
 
-        this.registry = repositoryInfo[0];
-        this.repositorySansRegistry = repositoryInfo[1];
         this.tag = tag;
         this.digest = digest;
         this.fullImageNameWithTag = repository + ":" + tag;
         this.fullImageNameWithoutTag = repository;
+    }
+
+    private static boolean isRegistry(final String part) {
+        return part.contains(".") || part.contains(":");
     }
 
     public String getRegistry()

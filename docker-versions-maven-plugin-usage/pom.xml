@@ -69,7 +69,7 @@
                             <tag>3-management</tag>
                         </image>
                         <image>
-                            <repository>${dockerHubPublic}/cafapi/opensuse-jre8</repository>
+                            <repository>cafapi/opensuse-jre8</repository>
                             <tag>3.9.3</tag>
                         </image>
                     </imageManagement>
