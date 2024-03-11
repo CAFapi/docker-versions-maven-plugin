@@ -16,22 +16,20 @@
 package com.github.cafapi.docker_versions.docker.client;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
+import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.PullImageResultCallback;
+import com.github.dockerjava.api.exception.NotFoundException;
 
 public final class DockerRestClient
 {
@@ -59,21 +57,18 @@ public final class DockerRestClient
         dockerClient = DockerClientImpl.getInstance(config, httpClient);
     }
 
-    public Optional<Image> findImage(
+    public InspectImageResponse findImage(
         final String imageName)
+        throws ImageNotFoundException
     {
-        // TODO: Use image inspect instead so that we don't have to cycle around all the images.
-
         LOGGER.debug("Checking if image '{}' is present...", imageName);
-        final List<Image> images = dockerClient.listImagesCmd()
+        try {
+            return dockerClient.inspectImageCmd(imageName)
             .exec();
-        images.forEach(i -> LOGGER.debug("Found image - ID: {}\n Tags: {}\n Labels: {}\n Digests: {}",
-                                         i.getId(), i.getRepoTags(), i.getLabels(), i.getRepoDigests())
-        );
-
-        return images.stream()
-            .filter(i -> i.getRepoTags() != null && Arrays.asList(i.getRepoTags()).contains(imageName))
-            .findFirst();
+        }
+        catch(final NotFoundException e) {
+            throw new ImageNotFoundException(e);
+        }
     }
 
     public boolean pullImage(
@@ -90,7 +85,7 @@ public final class DockerRestClient
     }
 
     public void tagImage(
-        final Image image,
+        final InspectImageResponse image,
         final String imageNameWithRepository,
         final String tag
     ) throws ImageTaggingException
@@ -103,9 +98,12 @@ public final class DockerRestClient
             .exec();
 
         // Verify image was tagged
-        final Image newImage = findImage(imageNameWithRepository + ":" + tag).orElseThrow(
-            () -> new ImageTaggingException("Image '" + imageId + "' was not tagged as " + imageNameWithRepository + ":" + tag));
-        LOGGER.debug("Image '{}' as '{}:{}'...", newImage.getId(), newImage.getRepoTags());
+        try {
+            final InspectImageResponse newImage = findImage(imageNameWithRepository + ":" + tag);
+            LOGGER.debug("Image '{}' as '{}:{}'...", newImage.getId(), newImage.getRepoTags());
+        } catch (final ImageNotFoundException e) {
+            throw new ImageTaggingException("Image '" + imageId + "' was not tagged as " + imageNameWithRepository + ":" + tag);
+        }
     }
 
     public void untagImage(final String image) throws ImageTaggingException
@@ -116,11 +114,12 @@ public final class DockerRestClient
             .exec();
 
         // Verify image was untagged
-        final Optional<Image> taggedImage = findImage(image);
-        if (taggedImage.isPresent()) {
-            final Image unTaggedImage = taggedImage.get();
-            LOGGER.error("Image with id '{}' still tagged '{}:{}'...", unTaggedImage.getId(), unTaggedImage.getRepoTags());
+        try {
+            final InspectImageResponse taggedImage = findImage(image);
+            LOGGER.error("Image with id '{}' still tagged '{}:{}'...", taggedImage.getId(), taggedImage.getRepoTags());
             throw new ImageTaggingException("Image '" + image + "' was not un-tagged");
+        } catch (final ImageNotFoundException e) {
+            // Image has been untagged
         }
     }
 

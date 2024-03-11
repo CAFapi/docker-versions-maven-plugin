@@ -15,9 +15,6 @@
  */
 package com.github.cafapi.docker_versions.plugins;
 
-import java.util.Arrays;
-import java.util.Optional;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -26,8 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.cafapi.docker_versions.docker.client.DockerRestClient;
+import com.github.cafapi.docker_versions.docker.client.ImageNotFoundException;
 import com.github.cafapi.docker_versions.docker.client.ImageTaggingException;
-import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.command.InspectImageResponse;
 
 /**
  * This is a maven plugin that retags the Docker images that are used by a project, to a project specific name. The project specific name
@@ -76,7 +74,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
 
                 // Always pull image if digest is not specified
                 // Avoid pull if image already exists and its digest matches specified digest, else pull image again
-                final Image image = getImageToTag(imageMoniker);
+                final InspectImageResponse image = getImageToTag(imageMoniker);
 
                 final String targetRepository = StringUtils.isNotBlank(imageConfig.getTargetRepository())
                     ? imageConfig.getTargetRepository()
@@ -88,7 +86,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             }
         }
 
-        private Image getImageToTag(final ImageMoniker imageMoniker)
+        private InspectImageResponse getImageToTag(final ImageMoniker imageMoniker)
             throws ImagePullException, IncorrectDigestException, InterruptedException
         {
             if (!imageMoniker.hasDigest()) {
@@ -99,23 +97,23 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             final String imageName = imageMoniker.getFullImageNameWithTag();
 
             LOGGER.debug("Check if image '{}' is already present...", imageName);
-            final Optional<Image> existingImage = dockerClient.findImage(imageName);
-
-            if (existingImage.isPresent()) {
-                final Image image = existingImage.get();
+            try {
+                final InspectImageResponse image = dockerClient.findImage(imageName);
                 // Digest and image are both present, check if the digests match
                 final String digest = imageMoniker.getDigest();
                 if (doesDigestMatchImage(image, digest)) {
                     LOGGER.debug("Digest of existing image '{}-{}' matches {}.", image.getId(), image.getRepoDigests(), digest);
                     return image;
                 }
+            } catch(final ImageNotFoundException e) {
+                // image needs to be pulled
             }
 
             // Image is not present or digest of existing image does not match the specified digest, so pull it again
             return pullImage(imageMoniker);
         }
 
-        private Image pullImage(final ImageMoniker imageMoniker)
+        private InspectImageResponse pullImage(final ImageMoniker imageMoniker)
             throws ImagePullException, IncorrectDigestException, InterruptedException
         {
             final boolean imagePullCompleted = dockerClient.pullImage(
@@ -129,30 +127,28 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             }
 
             LOGGER.debug("Pulled image '{}', verify that it is now present...", imageName);
-            final Optional<Image> image = dockerClient.findImage(imageName);
-            if (image.isEmpty()) {
+            try {
+                final InspectImageResponse pulledImage = dockerClient.findImage(imageName);
+
+                // Check if the digest of the image that was pulled matches the specified digest
+                final String digest = imageMoniker.getDigest();
+                if (StringUtils.isNotBlank(digest) && !doesDigestMatchImage(pulledImage, digest)) {
+                    throw new IncorrectDigestException(
+                        "Digest of the pulled image '" + imageName + "' does not match specified digest '" + digest + "'");
+                }
+                return pulledImage;
+            } catch (final ImageNotFoundException e) {
                 throw new ImagePullException("Image not found after pulling it: " + imageName);
             }
-
-            final Image pulledImage = image.get();
-
-            // Check if the digest of the image that was pulled matches the specified digest
-            final String digest = imageMoniker.getDigest();
-            if (StringUtils.isNotBlank(digest) && !doesDigestMatchImage(pulledImage, digest)) {
-                throw new IncorrectDigestException(
-                    "Digest of the pulled image '" + imageName + "' does not match specified digest '" + digest + "'");
-            }
-
-            return pulledImage;
         }
 
         private boolean doesDigestMatchImage(
-            final Image image,
+            final InspectImageResponse image,
             final String digest)
         {
             LOGGER.debug("Verifying digest '{}' for image '{}-{}'...", digest, image.getId(), image.getRepoDigests());
             return image.getRepoDigests() != null
-                && Arrays.asList(image.getRepoDigests()).stream().anyMatch(di -> di.endsWith("@" + digest));
+                && image.getRepoDigests().stream().anyMatch(di -> di.endsWith("@" + digest));
         }
     }
 }
