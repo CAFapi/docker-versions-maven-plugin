@@ -32,6 +32,9 @@ abstract class DockerVersionsMojo extends AbstractMojo
     @Parameter
     protected List<ImageConfiguration> imageManagement;
 
+    @Parameter
+    protected HttpConfiguration httpConfiguration;
+
     protected String getProjectDockerRegister()
     {
         return project.getProperties().getProperty(

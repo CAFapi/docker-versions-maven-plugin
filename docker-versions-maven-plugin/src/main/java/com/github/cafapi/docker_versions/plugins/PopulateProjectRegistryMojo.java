@@ -59,7 +59,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
 
         public ExecutionImpl()
         {
-            dockerClient = new DockerRestClient();
+            dockerClient = new DockerRestClient(httpConfiguration);
         }
 
         public void executeImpl() throws ImagePullException, ImageTaggingException, IncorrectDigestException, InterruptedException

@@ -50,7 +50,7 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
 
         public ExecutionImpl()
         {
-            dockerClient = new DockerRestClient();
+            dockerClient = new DockerRestClient(httpConfiguration);
         }
 
         public void executeImpl() throws ImageTaggingException

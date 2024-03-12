@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.cafapi.docker_versions.plugins.HttpConfiguration;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
@@ -33,25 +34,28 @@ import com.github.dockerjava.api.exception.NotFoundException;
 
 public final class DockerRestClient
 {
-    // TODO: Update to allow configuration in the Maven-standard way - i.e. from the pom, but still fallback to these
-    private static final int CONNECTION_TIMEOUT_SECONDS = getIntPropertyOrEnvVar("CONNECTION_TIMEOUT_SECONDS", "30");
-    private static final int RESPONSE_TIMEOUT_SECONDS = getIntPropertyOrEnvVar("RESPONSE_TIMEOUT_SECONDS", "45");
-    private static final long DOWNLOAD_IMAGE_TIMEOUT_SECONDS = getLongPropertyOrEnvVar("DOWNLOAD_IMAGE_TIMEOUT_SECONDS", "300");
-
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerRestClient.class);
 
-    final DockerClient dockerClient;
+    private final long downloadImageTimeout;
+    private final DockerClient dockerClient;
 
-    public DockerRestClient()
+    public DockerRestClient(final HttpConfiguration httpConfiguration)
     {
+        HttpConfiguration httpConfig = httpConfiguration;
+        if (httpConfig == null)
+        {
+            httpConfig = new HttpConfiguration();
+        }
+        LOGGER.info("HttpConfig: {}", httpConfig);
+        downloadImageTimeout = httpConfig.getDownloadImageTimout();
         final DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
             .build();
 
         final DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
             .dockerHost(config.getDockerHost())
             .sslConfig(config.getSSLConfig())
-            .connectionTimeout(Duration.ofSeconds(CONNECTION_TIMEOUT_SECONDS))
-            .responseTimeout(Duration.ofSeconds(RESPONSE_TIMEOUT_SECONDS))
+            .connectionTimeout(Duration.ofSeconds(httpConfig.getConnectionTimout()))
+            .responseTimeout(Duration.ofSeconds(httpConfig.getResponseTimout()))
             .build();
 
         dockerClient = DockerClientImpl.getInstance(config, httpClient);
@@ -81,7 +85,7 @@ public final class DockerRestClient
         return dockerClient.pullImageCmd(repository)
             .withTag(tag)
             .exec(new PullImageResultCallback())
-            .awaitCompletion(DOWNLOAD_IMAGE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            .awaitCompletion(downloadImageTimeout, TimeUnit.SECONDS);
     }
 
     public void tagImage(
@@ -123,23 +127,4 @@ public final class DockerRestClient
         }
     }
 
-    private static int getIntPropertyOrEnvVar(final String key, final String defaultValue)
-    {
-        final String propertyValue = getPropertyOrEnvVar(key, defaultValue);
-        return Integer.parseInt(propertyValue);
-    }
-
-    private static long getLongPropertyOrEnvVar(final String key, final String defaultValue)
-    {
-        final String propertyValue = getPropertyOrEnvVar(key, defaultValue);
-        return Long.parseLong(propertyValue);
-    }
-
-    private static String getPropertyOrEnvVar(final String key, final String defaultValue)
-    {
-        final String propertyValue = System.getProperty(key);
-        return (propertyValue != null)
-            ? propertyValue
-            : (System.getenv(key) != null) ? System.getenv(key) : defaultValue;
-    }
 }

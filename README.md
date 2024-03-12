@@ -151,6 +151,16 @@ would be updated to reference the version from the project-specific registry ins
 This means that only the plugin configuration needs to be updated to update the Docker image versions.
 
 ### Configuration
+Http connection timeout can be set in the plugin configuration. This configuration is optional and the values indicate time in seconds.
+
+```
+<httpConfiguration>
+    <connectionTimout>30</connectionTimout>
+    <responseTimout>45</responseTimout>
+    <downloadImageTimout>100</downloadImageTimout>
+</httpConfiguration>
+```
+
 The following configuration options can be set via environment variables.  
 
 <table class="table">
