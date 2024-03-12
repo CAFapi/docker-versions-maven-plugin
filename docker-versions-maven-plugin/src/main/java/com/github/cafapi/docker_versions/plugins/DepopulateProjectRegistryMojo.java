@@ -75,8 +75,7 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
                 try {
                     dockerClient.findImage(imageName);
                     dockerClient.untagImage(imageName);
-                }
-                catch (final ImageNotFoundException e) {
+                } catch (final ImageNotFoundException e) {
                     LOGGER.info("Untagging {}... unnecessary as image not found", imageName);
                 }
             }

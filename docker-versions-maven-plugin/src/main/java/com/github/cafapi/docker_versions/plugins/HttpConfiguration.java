@@ -32,15 +32,18 @@ public final class HttpConfiguration
     @Parameter()
     private long downloadImageTimout = DOWNLOAD_IMAGE_TIMEOUT_SECONDS;
 
-    public int getConnectionTimout() {
+    public int getConnectionTimout()
+    {
         return connectionTimout;
     }
 
-    public int getResponseTimout() {
+    public int getResponseTimout()
+    {
         return responseTimout;
     }
 
-    public long getDownloadImageTimout() {
+    public long getDownloadImageTimout()
+    {
         return downloadImageTimout;
     }
 

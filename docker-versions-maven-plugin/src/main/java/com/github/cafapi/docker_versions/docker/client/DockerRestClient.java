@@ -42,8 +42,7 @@ public final class DockerRestClient
     public DockerRestClient(final HttpConfiguration httpConfiguration)
     {
         HttpConfiguration httpConfig = httpConfiguration;
-        if (httpConfig == null)
-        {
+        if (httpConfig == null) {
             httpConfig = new HttpConfiguration();
         }
         LOGGER.info("HttpConfig: {}", httpConfig);
