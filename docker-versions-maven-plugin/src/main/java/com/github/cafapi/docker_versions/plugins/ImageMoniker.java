@@ -19,6 +19,8 @@ import org.apache.commons.lang3.StringUtils;
 
 final class ImageMoniker
 {
+    private static final String DEFAULT_REGISTRY = "hub.docker.com";
+
     private final String registry;
 
     private final String repositorySansRegistry;
@@ -40,7 +42,7 @@ final class ImageMoniker
         final String[] repositoryInfo = repository.split("/", 2);
 
         if (repositoryInfo.length == 1) {
-            registry = null;
+            registry = DEFAULT_REGISTRY;
             repositorySansRegistry = repositoryInfo[0];
         }
         else {
@@ -49,7 +51,7 @@ final class ImageMoniker
                 repositorySansRegistry = repositoryInfo[1];
             }
             else {
-                registry = null;
+                registry = DEFAULT_REGISTRY;
                 repositorySansRegistry = repository;
             }
         }
