@@ -17,10 +17,11 @@ package com.github.cafapi.docker_versions.plugins;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.github.dockerjava.core.NameParser;
+import com.github.dockerjava.core.NameParser.HostnameReposName;
+
 final class ImageMoniker
 {
-    private static final String DEFAULT_REGISTRY = "hub.docker.com";
-
     private final String registry;
 
     private final String repositorySansRegistry;
@@ -39,22 +40,9 @@ final class ImageMoniker
             throw new IllegalArgumentException("Repository not specified for image: " + repository);
         }
 
-        final String[] repositoryInfo = repository.split("/", 2);
-
-        if (repositoryInfo.length == 1) {
-            registry = DEFAULT_REGISTRY;
-            repositorySansRegistry = repositoryInfo[0];
-        }
-        else {
-            if (isRegistry(repositoryInfo[0])) {
-                registry = repositoryInfo[0];
-                repositorySansRegistry = repositoryInfo[1];
-            }
-            else {
-                registry = DEFAULT_REGISTRY;
-                repositorySansRegistry = repository;
-            }
-        }
+        final HostnameReposName hostRepoName = NameParser.resolveRepositoryName(repository);
+        registry = hostRepoName.hostname;
+        repositorySansRegistry = hostRepoName.reposName;
 
         if (StringUtils.isBlank(tag)) {
             throw new IllegalArgumentException("Tag not specified for image " + repository);
@@ -64,10 +52,6 @@ final class ImageMoniker
         this.digest = digest;
         this.fullImageNameWithTag = repository + ":" + tag;
         this.fullImageNameWithoutTag = repository;
-    }
-
-    private static boolean isRegistry(final String part) {
-        return part.contains(".") || part.contains(":");
     }
 
     public String getRegistry()
@@ -103,5 +87,17 @@ final class ImageMoniker
     public String getFullImageNameWithoutTag()
     {
         return fullImageNameWithoutTag;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "ImageMoniker [registry=" + registry
+            + ", repositorySansRegistry=" + repositorySansRegistry
+            + ", tag=" + tag
+            + ", digest=" + digest
+            + ", fullImageNameWithTag=" + fullImageNameWithTag
+            + ", fullImageNameWithoutTag=" + fullImageNameWithoutTag
+            + "]";
     }
 }
