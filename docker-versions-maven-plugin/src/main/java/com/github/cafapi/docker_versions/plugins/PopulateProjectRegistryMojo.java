@@ -15,17 +15,17 @@
  */
 package com.github.cafapi.docker_versions.plugins;
 
+import com.github.cafapi.docker_versions.docker.client.DockerRestClient;
+import com.github.cafapi.docker_versions.docker.client.ImageTaggingException;
+import com.github.dockerjava.api.command.InspectImageResponse;
+import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.github.cafapi.docker_versions.docker.client.DockerRestClient;
-import com.github.cafapi.docker_versions.docker.client.ImageNotFoundException;
-import com.github.cafapi.docker_versions.docker.client.ImageTaggingException;
-import com.github.dockerjava.api.command.InspectImageResponse;
 
 /**
  * This is a maven plugin that retags the Docker images that are used by a project, to a project specific name. The project specific name
@@ -97,16 +97,16 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             final String imageName = imageMoniker.getFullImageNameWithTag();
 
             LOGGER.debug("Check if image '{}' is already present...", imageName);
-            try {
-                final InspectImageResponse image = dockerClient.findImage(imageName);
+            final Optional<InspectImageResponse> existingImage = dockerClient.findImage(imageName);
+
+            if (existingImage.isPresent()) {
+                final InspectImageResponse image = existingImage.get();
                 // Digest and image are both present, check if the digests match
                 final String digest = imageMoniker.getDigest();
                 if (doesDigestMatchImage(image, digest)) {
                     LOGGER.debug("Digest of existing image '{}-{}' matches {}.", image.getId(), image.getRepoDigests(), digest);
                     return image;
                 }
-            } catch(final ImageNotFoundException e) {
-                // image needs to be pulled
             }
 
             // Image is not present or digest of existing image does not match the specified digest, so pull it again
@@ -127,28 +127,30 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             }
 
             LOGGER.debug("Pulled image '{}', verify that it is now present...", imageName);
-            try {
-                final InspectImageResponse pulledImage = dockerClient.findImage(imageName);
-
-                // Check if the digest of the image that was pulled matches the specified digest
-                final String digest = imageMoniker.getDigest();
-                if (StringUtils.isNotBlank(digest) && !doesDigestMatchImage(pulledImage, digest)) {
-                    throw new IncorrectDigestException(
-                        "Digest of the pulled image '" + imageName + "' does not match specified digest '" + digest + "'");
-                }
-                return pulledImage;
-            } catch (final ImageNotFoundException e) {
+            final Optional<InspectImageResponse> image = dockerClient.findImage(imageName);
+            if (image.isEmpty()) {
                 throw new ImagePullException("Image not found after pulling it: " + imageName);
             }
+
+            final InspectImageResponse pulledImage = image.get();
+
+            // Check if the digest of the image that was pulled matches the specified digest
+            final String digest = imageMoniker.getDigest();
+            if (StringUtils.isNotBlank(digest) && !doesDigestMatchImage(pulledImage, digest)) {
+                throw new IncorrectDigestException(
+                    "Digest of the pulled image '" + imageName + "' does not match specified digest '" + digest + "'");
+            }
+            return pulledImage;
         }
 
         private boolean doesDigestMatchImage(
             final InspectImageResponse image,
             final String digest)
         {
-            LOGGER.debug("Verifying digest '{}' for image '{}-{}'...", digest, image.getId(), image.getRepoDigests());
-            return image.getRepoDigests() != null
-                && image.getRepoDigests().stream().anyMatch(di -> di.endsWith("@" + digest));
+            final List<String> repoDigests = image.getRepoDigests();
+            LOGGER.debug("Verifying digest '{}' for image '{}-{}'...", digest, image.getId(), repoDigests);
+            return repoDigests != null
+                && repoDigests.stream().anyMatch(di -> di.endsWith("@" + digest));
         }
     }
 }

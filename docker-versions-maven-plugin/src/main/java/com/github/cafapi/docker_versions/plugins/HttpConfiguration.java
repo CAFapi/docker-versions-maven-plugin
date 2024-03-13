@@ -47,20 +47,13 @@ public final class HttpConfiguration
         return downloadImageTimout;
     }
 
-    public HttpConfiguration()
-    {
-        System.out.println("Default ctor..");
-    }
-
     @Override
-    public String toString() {
-        return "HttpConfiguration [ connectionTimout="
-            + connectionTimout
-            + "s, responseTimout="
-            + responseTimout
-            + "s, downloadImageTimout="
-            + downloadImageTimout
-            + "s ]";
+    public String toString()
+    {
+        return "HttpConfiguration [ "
+            + "connectionTimout=" + connectionTimout + "s, "
+            + "responseTimout=" + responseTimout + "s, "
+            + "downloadImageTimout=" + downloadImageTimout + "s ]";
     }
 
     private static int getIntPropertyOrEnvVar(final String key, final String defaultValue)

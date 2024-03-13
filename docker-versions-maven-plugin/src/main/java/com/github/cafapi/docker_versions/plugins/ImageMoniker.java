@@ -15,10 +15,9 @@
  */
 package com.github.cafapi.docker_versions.plugins;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.NameParser.HostnameReposName;
+import org.apache.commons.lang3.StringUtils;
 
 final class ImageMoniker
 {
@@ -40,14 +39,14 @@ final class ImageMoniker
             throw new IllegalArgumentException("Repository not specified for image: " + repository);
         }
 
-        final HostnameReposName hostRepoName = NameParser.resolveRepositoryName(repository);
-        registry = hostRepoName.hostname;
-        repositorySansRegistry = hostRepoName.reposName;
-
         if (StringUtils.isBlank(tag)) {
             throw new IllegalArgumentException("Tag not specified for image " + repository);
         }
 
+        final HostnameReposName hostRepoName = NameParser.resolveRepositoryName(repository);
+
+        this.registry = hostRepoName.hostname;
+        this.repositorySansRegistry = hostRepoName.reposName;
         this.tag = tag;
         this.digest = digest;
         this.fullImageNameWithTag = repository + ":" + tag;

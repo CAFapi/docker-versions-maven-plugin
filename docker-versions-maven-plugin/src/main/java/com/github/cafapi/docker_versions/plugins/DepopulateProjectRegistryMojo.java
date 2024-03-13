@@ -15,16 +15,16 @@
  */
 package com.github.cafapi.docker_versions.plugins;
 
+import com.github.cafapi.docker_versions.docker.client.DockerRestClient;
+import com.github.cafapi.docker_versions.docker.client.ImageTaggingException;
+import com.github.dockerjava.api.command.InspectImageResponse;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.github.cafapi.docker_versions.docker.client.DockerRestClient;
-import com.github.cafapi.docker_versions.docker.client.ImageNotFoundException;
-import com.github.cafapi.docker_versions.docker.client.ImageTaggingException;
 
 /**
  * This is a maven plugin that untags the Docker images that were tagged with a project specific name.
@@ -72,10 +72,10 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
                 final String imageName = projectDockerRegistryImageName + ":" + LATEST_TAG;
 
                 LOGGER.debug("Check if image '{}' is present...", imageName);
-                try {
-                    dockerClient.findImage(imageName);
+                final Optional<InspectImageResponse> taggedImage = dockerClient.findImage(imageName);
+                if (taggedImage.isPresent()) {
                     dockerClient.untagImage(imageName);
-                } catch (final ImageNotFoundException e) {
+                } else {
                     LOGGER.info("Untagging {}... unnecessary as image not found", imageName);
                 }
             }
