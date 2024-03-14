@@ -28,7 +28,7 @@ abstract class DockerVersionsMojo extends AbstractMojo
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     protected MavenProject project;
 
-    @Parameter
+    @Parameter(required = true)
     protected List<ImageConfiguration> imageManagement;
 
     @Parameter
