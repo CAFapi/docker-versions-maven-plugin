@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright 2024 Open Text.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.github.cafapi.plugins.docker.versions</groupId>
+        <artifactId>docker-versions</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>docker-versions-maven-plugin-usage</artifactId>
+    <packaging>pom</packaging>
+
+    <properties>
+        <projectDockerRegistry>PluginUsageExample-${project.version}.project-registries.local</projectDockerRegistry>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.cafapi.plugins.docker.versions</groupId>
+                <artifactId>docker-versions-maven-plugin</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <id>populate-project-registry</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>populate-project-registry</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>depopulate-project-registry</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>depopulate-project-registry</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <imageManagement>
+                        <image>
+                            <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
+                            <tag>1.4.3</tag>
+                            <digest>sha256:76b8dc916151a5ede5d8a999fcd0929ca3cd3a9dbf67085f65ef98b5279359f4</digest>
+                        </image>
+                        <image>
+                            <repository>${dockerHubPublic}/rabbitmq</repository>
+                            <targetRepository>messaging/rabbitmq</targetRepository>
+                            <tag>3-management</tag>
+                        </image>
+                        <image>
+                            <repository>cafapi/opensuse-jre8</repository>
+                            <tag>3.9.3</tag>
+                        </image>
+                    </imageManagement>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
