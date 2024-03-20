@@ -18,6 +18,8 @@ package com.github.cafapi.docker_versions.plugins;
 import com.github.cafapi.docker_versions.docker.client.DockerRestClient;
 import com.github.cafapi.docker_versions.docker.client.ImageTaggingException;
 import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.model.AuthConfig;
+
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -116,9 +118,14 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
         private InspectImageResponse pullImage(final ImageMoniker imageMoniker)
             throws ImagePullException, IncorrectDigestException, InterruptedException
         {
+            // Get auth config
+            final AuthConfig authConfig = AuthHelper.createAuthConfigFromMavenSettings(settings, null, imageMoniker.getRegistry());
+            LOGGER.info("Got Auth for registry {} from settings: {}", imageMoniker.getRegistry(), authConfig);
+
             final boolean imagePullCompleted = dockerClient.pullImage(
                 imageMoniker.getFullImageNameWithoutTag(),
-                imageMoniker.getTag());
+                imageMoniker.getTag(),
+                authConfig);
 
             final String imageName = imageMoniker.getFullImageNameWithTag();
 

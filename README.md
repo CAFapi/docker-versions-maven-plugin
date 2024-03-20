@@ -150,6 +150,17 @@ would be updated to reference the version from the project-specific registry ins
 **Note:** The version need not be specified when referencing images in the project-specific registry.
 This means that only the plugin configuration needs to be updated to update the Docker image versions.
 
+### Authentication
+The authentication information for the docker registeries is looked up in these two places, in order:  
+1. From the Maven settings stored typically in ~/.m2/settings.xml
+2. From the Docker settings stored in ~/.docker/config.json
+
+The following properties are evaluated:
+- username: User to authenticate
+- password: Password to authenticate
+- email: Optional email address which is sent to the registry
+- auth: Optional authentication token, which can be set instead of username and password
+
 ### Configuration
 Http connection timeout can be set in the plugin configuration. This configuration is optional and the values indicate time in seconds.
 
