@@ -121,7 +121,6 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             throws ImagePullException, IncorrectDigestException, InterruptedException
         {
             final AuthConfig authConfig = mavenAuthConfig.getAuthConfig(imageMoniker.getRegistry());
-            LOGGER.info("Got Auth for registry {} from settings: {}", imageMoniker.getRegistry(), authConfig);
 
             final boolean imagePullCompleted = dockerClient.pullImage(
                 imageMoniker.getFullImageNameWithoutTag(),
