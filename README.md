@@ -4,6 +4,11 @@ This is a maven plugin that retags the Docker images that are used by a project,
 The project specific name can then be used in place of the actual Docker image name.
 
 ## Goals overview
+The `docker-versions` plugin has the following goals.
+
+- docker-versions:populate-project-registry
+- docker-versions:depopulate-project-registry
+- docker-versions:help
 
 ### populate-project-registry
 
@@ -82,6 +87,10 @@ Removes the project specific name tag from the Docker images that are used by a 
     <td> This string will be used in the project specific name tag instead of the repository value. </td>
   </tr>
 </table>
+
+### help
+
+Displays the help information.
 
 ### For example:
 ```
