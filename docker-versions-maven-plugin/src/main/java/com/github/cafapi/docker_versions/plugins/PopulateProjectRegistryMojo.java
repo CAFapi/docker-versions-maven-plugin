@@ -58,10 +58,12 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
     private final class ExecutionImpl
     {
         final DockerRestClient dockerClient;
+        final MavenSettingsAuthConfig mavenAuthConfig;
 
         public ExecutionImpl()
         {
             dockerClient = new DockerRestClient(httpConfiguration);
+            mavenAuthConfig = new MavenSettingsAuthConfig(settings);
         }
 
         public void executeImpl() throws ImagePullException, ImageTaggingException, IncorrectDigestException, InterruptedException
@@ -118,8 +120,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
         private InspectImageResponse pullImage(final ImageMoniker imageMoniker)
             throws ImagePullException, IncorrectDigestException, InterruptedException
         {
-            // Get auth config
-            final AuthConfig authConfig = AuthHelper.createAuthConfigFromMavenSettings(settings, null, imageMoniker.getRegistry());
+            final AuthConfig authConfig = mavenAuthConfig.getAuthConfig(imageMoniker.getRegistry());
             LOGGER.info("Got Auth for registry {} from settings: {}", imageMoniker.getRegistry(), authConfig);
 
             final boolean imagePullCompleted = dockerClient.pullImage(

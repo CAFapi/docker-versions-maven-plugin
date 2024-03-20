@@ -151,7 +151,7 @@ would be updated to reference the version from the project-specific registry ins
 This means that only the plugin configuration needs to be updated to update the Docker image versions.
 
 ### Authentication
-The authentication information for the docker registeries is looked up in these two places, in order:  
+The authentication information for the docker registries is looked up two places in this order:  
 1. From the [Maven settings](https://maven.apache.org/settings.html#servers) stored typically in ~/.m2/settings.xml
 2. From the [Docker settings](https://docs.docker.com/engine/reference/commandline/cli/#credential-store-options) stored in ~/.docker/config.json
 
