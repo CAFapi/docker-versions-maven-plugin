@@ -4,6 +4,11 @@ This is a maven plugin that retags the Docker images that are used by a project,
 The project specific name can then be used in place of the actual Docker image name.
 
 ## Goals overview
+The `docker-versions` plugin has the following goals.
+
+- docker-versions:populate-project-registry
+- docker-versions:depopulate-project-registry
+- docker-versions:help
 
 ### populate-project-registry
 
@@ -83,6 +88,10 @@ Removes the project specific name tag from the Docker images that are used by a 
   </tr>
 </table>
 
+### help
+
+Displays the help information.
+
 ### For example:
 ```
 <plugin>
@@ -149,6 +158,17 @@ would be updated to reference the version from the project-specific registry ins
 
 **Note:** The version need not be specified when referencing images in the project-specific registry.
 This means that only the plugin configuration needs to be updated to update the Docker image versions.
+
+### Authentication
+The authentication information for the docker registries is looked up two places in this order:  
+1. From the [Maven settings](https://maven.apache.org/settings.html#servers) stored typically in ~/.m2/settings.xml
+2. From the [Docker settings](https://docs.docker.com/engine/reference/commandline/cli/#credential-store-options) stored in ~/.docker/config.json
+
+The following properties are read:
+- username: User to authenticate
+- password: Password to authenticate
+- email: Optional email address which is sent to the registry
+- auth: Optional base64 encoded 'username:password' string, which can be set instead of username and password
 
 ### Configuration
 Http connection timeout can be set in the plugin configuration. This configuration is optional and the values indicate time in seconds.

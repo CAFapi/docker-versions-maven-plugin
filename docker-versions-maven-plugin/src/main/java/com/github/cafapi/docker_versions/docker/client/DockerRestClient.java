@@ -18,8 +18,10 @@ package com.github.cafapi.docker_versions.docker.client;
 import com.github.cafapi.docker_versions.plugins.HttpConfiguration;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -74,12 +76,18 @@ public final class DockerRestClient
 
     public boolean pullImage(
         final String repository,
-        final String tag
+        final String tag,
+        final AuthConfig authConfig
     ) throws InterruptedException
     {
         LOGGER.info("Pulling {}:{}...", repository, tag);
+        final PullImageCmd pullCommand = dockerClient.pullImageCmd(repository);
 
-        return dockerClient.pullImageCmd(repository)
+        if (authConfig != null) {
+            pullCommand.withAuthConfig(authConfig);
+        }
+
+        return pullCommand
             .withTag(tag)
             .exec(new PullImageResultCallback())
             .awaitCompletion(downloadImageTimeout, TimeUnit.SECONDS);

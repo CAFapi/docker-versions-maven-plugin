@@ -19,6 +19,7 @@ import java.util.List;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.Settings;
 
 abstract class DockerVersionsMojo extends AbstractMojo
 {
@@ -27,6 +28,9 @@ abstract class DockerVersionsMojo extends AbstractMojo
 
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     protected MavenProject project;
+
+    @Parameter(defaultValue = "${settings}", readonly = true)
+    protected Settings settings;
 
     @Parameter(required = true)
     protected List<ImageConfiguration> imageManagement;
