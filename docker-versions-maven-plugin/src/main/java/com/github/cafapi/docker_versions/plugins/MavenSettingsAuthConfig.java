@@ -15,38 +15,29 @@
  */
 package com.github.cafapi.docker_versions.plugins;
 
-import java.util.Hashtable;
-import java.util.Map;
-
+import com.github.dockerjava.api.model.AuthConfig;
+import java.util.Optional;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.shared.utils.xml.Xpp3Dom;
 
-import com.github.dockerjava.api.model.AuthConfig;
-
 final class MavenSettingsAuthConfig
 {
-    private final Map<String, AuthConfig> authConfigs = new Hashtable<>();
-
-    MavenSettingsAuthConfig(final Settings settings)
+    private MavenSettingsAuthConfig()
     {
-        loadConfig(settings);
     }
 
-    public AuthConfig getAuthConfig(final String registry)
+    public static AuthConfig getAuthConfig(final Settings settings, final String registry)
     {
-        return authConfigs.get(registry);
-    }
-
-    private void loadConfig(final Settings settings)
-    {
-        settings.getServers().forEach(server -> authConfigs.put(server.getId(), createAuthConfigFromServer(server)));
+        return Optional.ofNullable(settings.getServer(registry))
+            .map(MavenSettingsAuthConfig::createAuthConfigFromServer)
+            .orElse(null);
     }
 
     private static AuthConfig createAuthConfigFromServer(final Server server)
     {
         final Object serverConfig = server.getConfiguration();
-        final AuthConfig authConfig =  new AuthConfig();
+        final AuthConfig authConfig = new AuthConfig();
         authConfig.withUsername(server.getUsername())
             .withPassword(server.getPassword())
             .withEmail(getProperty(serverConfig, "email"))
@@ -65,5 +56,4 @@ final class MavenSettingsAuthConfig
         }
         return null;
     }
-
 }

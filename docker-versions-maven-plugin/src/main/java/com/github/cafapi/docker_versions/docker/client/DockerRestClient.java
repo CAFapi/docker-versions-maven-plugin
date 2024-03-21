@@ -30,7 +30,6 @@ import com.github.dockerjava.transport.DockerHttpClient;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -19,7 +19,6 @@ import com.github.cafapi.docker_versions.docker.client.DockerRestClient;
 import com.github.cafapi.docker_versions.docker.client.ImageTaggingException;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.model.AuthConfig;
-
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -58,12 +57,10 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
     private final class ExecutionImpl
     {
         final DockerRestClient dockerClient;
-        final MavenSettingsAuthConfig mavenAuthConfig;
 
         public ExecutionImpl()
         {
             dockerClient = new DockerRestClient(httpConfiguration);
-            mavenAuthConfig = new MavenSettingsAuthConfig(settings);
         }
 
         public void executeImpl() throws ImagePullException, ImageTaggingException, IncorrectDigestException, InterruptedException
@@ -120,7 +117,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
         private InspectImageResponse pullImage(final ImageMoniker imageMoniker)
             throws ImagePullException, IncorrectDigestException, InterruptedException
         {
-            final AuthConfig authConfig = mavenAuthConfig.getAuthConfig(imageMoniker.getRegistry());
+            final AuthConfig authConfig = MavenSettingsAuthConfig.getAuthConfig(settings, imageMoniker.getRegistry());
 
             final boolean imagePullCompleted = dockerClient.pullImage(
                 imageMoniker.getFullImageNameWithoutTag(),
