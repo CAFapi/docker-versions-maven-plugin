@@ -53,7 +53,7 @@ import com.google.common.io.BaseEncoding;
 public final class DockerRegistryRestClient
 {
     private static final Pattern AUTH_URL_PATTERN = Pattern.compile("Bearer realm=\"(.*?)\",service=\"(.*?)\"");
-    private static final Pattern LINK_HEADER_PATTERN = Pattern.compile("<(.*)>;.*");
+    private static final Pattern LINK_HEADER_PATTERN = Pattern.compile("<(.*)>; rel=\"next\"");
 
     private static final String BASE = "%s/v2";
     private static final String MANIFEST = "%s/manifests/%s";
@@ -165,7 +165,7 @@ public final class DockerRegistryRestClient
 
     private Map<String, String> getPageOfTags(
         final String url,
-        Map<String, String> nextPageParams,
+        final Map<String, String> nextPageParams,
         final String authHeaderValue,
         final List<String> allTags)
         throws DockerRegistryException, URISyntaxException
@@ -203,7 +203,7 @@ public final class DockerRegistryRestClient
         // Parse the linkHeader to extract the next page params
         // link header format: <my-registry.io/v2/_catalog?n=1&last=centos>; rel="next"
 
-        if (linkHeaderValue == null || !linkHeaderValue.endsWith("; rel=\"next\"")) {
+        if (linkHeaderValue == null) {
             return null;
         }
 
@@ -215,19 +215,21 @@ public final class DockerRegistryRestClient
             return null;
         }
 
-        final URI uri = new URI(m.group(1));
+        final String url = m.group(1);
+        LOGGER.info("Next page of tags: {}", url);
+        final URI uri = new URI(url);
         final String query = uri.getQuery();
 
         // Extract the 'n' and 'last' parameters
         final String[] params = query.split("&");
-        for (String param : params) {
+        for (final String param : params) {
             final String[] keyValue = param.split("=", 2);
             if (keyValue.length == 2) {
                 nextPageParams.put(keyValue[0], keyValue[1]);
             }
         }
 
-        return null;
+        return nextPageParams;
     }
 
     private static int getBase(final String endpoint)
