@@ -207,19 +207,16 @@ public final class DockerRegistryRestClient
             return null;
         }
 
-        final Map<String, String> nextPageParams = new HashMap<>();
-
         // Extract the URL from the link header
         final Matcher m = LINK_HEADER_PATTERN.matcher(linkHeaderValue);
         if (!m.matches()) {
             return null;
         }
 
-        final String url = m.group(1);
-        LOGGER.info("Next page of tags: {}", url);
-        final URI uri = new URI(url);
+        final URI uri = new URI(m.group(1));
         final String query = uri.getQuery();
 
+        final Map<String, String> nextPageParams = new HashMap<>();
         // Extract the 'n' and 'last' parameters
         final String[] params = query.split("&");
         for (final String param : params) {
