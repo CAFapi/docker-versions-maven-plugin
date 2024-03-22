@@ -52,10 +52,12 @@ import com.google.common.io.BaseEncoding;
 
 public final class DockerRegistryRestClient
 {
+    private static final Pattern AUTH_URL_PATTERN = Pattern.compile("Bearer realm=\"(.*?)\",service=\"(.*?)\"");
+    private static final Pattern LINK_HEADER_PATTERN = Pattern.compile("<(.*)>;.*");
+
     private static final String BASE = "%s/v2";
     private static final String MANIFEST = "%s/manifests/%s";
     private static final String TAGS = "%s/tags/list";
-    private static final Pattern AUTH_URL_PATTERN = Pattern.compile("Bearer realm=\"(.*?)\",service=\"(.*?)\"");
 
     private static final String SCHEMA_HTTP = "http";
     private static final String SCHEMA_HTTPS = "https";
@@ -168,6 +170,7 @@ public final class DockerRegistryRestClient
         final List<String> allTags)
         throws DockerRegistryException, URISyntaxException
     {
+        LOGGER.info("Getting page of tags: {}", nextPageParams);
         final URIBuilder uriBuilder = new URIBuilder(new URI(url));
         nextPageParams.entrySet().forEach( entry -> uriBuilder.addParameter(entry.getKey(), entry.getValue()));
 
@@ -207,9 +210,12 @@ public final class DockerRegistryRestClient
         final Map<String, String> nextPageParams = new HashMap<>();
 
         // Extract the URL from the link header
-        final String url = linkHeaderValue.split(";")[0].trim();
+        final Matcher m = LINK_HEADER_PATTERN.matcher(linkHeaderValue);
+        if (!m.matches()) {
+            return null;
+        }
 
-        final URI uri = new URI(url);
+        final URI uri = new URI(m.group(1));
         final String query = uri.getQuery();
 
         // Extract the 'n' and 'last' parameters
