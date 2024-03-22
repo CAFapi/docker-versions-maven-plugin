@@ -179,16 +179,20 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         final ImageMoniker imageMoniker,
         final List<String> relevantTags,
         final String digestOfLatestVersion)
-        throws DockerRegistryException, ImageNotFoundException
+        throws DockerRegistryException
     {
         final List<String> latestVersionTags = new ArrayList<>();
         for (final String rTag : relevantTags) {
-            final String tagDigest = dockerRegistryClient.getDigest(
-                authConfig, imageMoniker.getRegistry(), imageMoniker.getRepositoryWithoutRegistry(), rTag);
-            LOGGER.info("Match digest of tag {} : latest, {} : {}", rTag, tagDigest, digestOfLatestVersion);
-            // Find all the ones that match the digest of the image with 'latest' tag
-            if (tagDigest.equals(digestOfLatestVersion)) {
-                latestVersionTags.add(rTag);
+            try {
+                final String tagDigest = dockerRegistryClient.getDigest(
+                    authConfig, imageMoniker.getRegistry(), imageMoniker.getRepositoryWithoutRegistry(), rTag);
+                LOGGER.info("Match digest of tag {} : latest, {} : {}", rTag, tagDigest, digestOfLatestVersion);
+                // Find all the ones that match the digest of the image with 'latest' tag
+                if (tagDigest.equals(digestOfLatestVersion)) {
+                    latestVersionTags.add(rTag);
+                }
+            } catch(final ImageNotFoundException e) {
+                LOGGER.trace("Cannot find image digest for {}:{}", imageMoniker.getRepositoryWithoutRegistry(), rTag, e);
             }
         }
         latestVersionTags.sort(Comparator.comparingInt(String::length));
