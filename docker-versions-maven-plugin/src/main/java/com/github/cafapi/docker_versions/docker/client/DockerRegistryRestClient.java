@@ -52,7 +52,6 @@ import com.google.common.io.BaseEncoding;
 
 public final class DockerRegistryRestClient
 {
-    private static final Pattern AUTH_URL_PATTERN = Pattern.compile("Bearer realm=\"(.*?)\",service=\"(.*?)\"");
     private static final Pattern LINK_HEADER_PATTERN = Pattern.compile("<(.*)>; rel=\"next\"");
 
     private static final String BASE = "%s/v2";
@@ -78,6 +77,7 @@ public final class DockerRegistryRestClient
 
     public String getDigest(
         final AuthConfig authConfiguration,
+        final String registrySchema,
         final String registry,
         final String repository,
         final String tag)
@@ -96,9 +96,9 @@ public final class DockerRegistryRestClient
         final String basictoken = getBasicRegistryAuth(registryAuth);
 
         final String url = String.format("%s://%s/%s",
-                                            getSchema(registryWithoutTrailingSlash),
-                                            String.format(BASE, registryWithoutTrailingSlash),
-                                            String.format(MANIFEST, repository, tag));
+            registrySchema,
+            String.format(BASE, registryWithoutTrailingSlash),
+            String.format(MANIFEST, repository, tag));
 
         final HttpHead httpHead = new HttpHead(url);
 
@@ -128,6 +128,7 @@ public final class DockerRegistryRestClient
 
     public List<String> getTags(
         final AuthConfig authConfiguration,
+        final String registrySchema,
         final String registry,
         final String repository)
         throws DockerRegistryException
@@ -138,13 +139,13 @@ public final class DockerRegistryRestClient
 
         final AuthConfig registryAuth =
             authConfiguration == null
-            ? authConfis.get(registry)
-            : authConfiguration;
+                ? authConfis.get(registry)
+                : authConfiguration;
 
         final String token = getBasicRegistryAuth(registryAuth);
 
         final String url = String.format("%s://%s/%s",
-            getSchema(registryWithoutTrailingSlash),
+            registrySchema,
             String.format(BASE, registryWithoutTrailingSlash),
             String.format(TAGS, repository));
 
@@ -217,6 +218,7 @@ public final class DockerRegistryRestClient
         final String query = uri.getQuery();
 
         final Map<String, String> nextPageParams = new HashMap<>();
+
         // Extract the 'n' and 'last' parameters
         final String[] params = query.split("&");
         for (final String param : params) {
@@ -229,66 +231,65 @@ public final class DockerRegistryRestClient
         return nextPageParams;
     }
 
-    private static int getBase(final String endpoint)
-        throws IOException, ProtocolException
+    public static String getSchema(final String endpoint)
     {
-        final HttpHead httpHead = new HttpHead(String.format(BASE, endpoint));
-        try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
-            try (final CloseableHttpResponse response = httpclient.execute(httpHead)) {
-                final int code = response.getCode();
-                if (code != HttpStatus.SC_UNAUTHORIZED) {
-                    return code;
-                }
-                final String auth = response.getHeader("Www-Authenticate") == null
-                    ? null
-                    : response.getHeader("Www-Authenticate").getValue();
-                if (auth == null) {
-                    return code;
-                }
-                final Matcher matcher = AUTH_URL_PATTERN.matcher(auth);
-                if (!matcher.find()) {
-                    return code;
-                }
-                final String url = matcher.group(1);
-                final String service = matcher.group(2);
-                LOGGER.info("Registry base url: {} for service: {}", url, service);
-                // Authenticator.instance().setAuthUrl(new Authenticator.AuthUrl(url, service));
-                return code;
-            }
-        }
-    }
-
-    private static String getSchema(final String endpoint)
-    {
+        LOGGER.info("Get schema for: {}", endpoint);
         try {
-            // Try "https"
-            getBase(String.format("%s://%s", SCHEMA_HTTPS, endpoint));
-            return SCHEMA_HTTPS;
-        } catch (final SSLException | ProtocolException e) {
             // Try "http"
+            final int code = getBase(String.format("%s://%s", SCHEMA_HTTP, endpoint));
+            LOGGER.info("Tried '{}' got code: {}", SCHEMA_HTTP, code);
+            if (code == HttpStatus.SC_OK) {
+                LOGGER.info("Use '{}' for: {}", SCHEMA_HTTP, endpoint);
+                return SCHEMA_HTTP;
+            }
+        } catch (final SSLException | ProtocolException e) {
+            // Try "https"
         } catch (final IOException e) {
             throw new RuntimeException("No response from the registry server.");
         }
 
         try {
-            getBase(String.format("%s://%s", SCHEMA_HTTP, endpoint));
-            return SCHEMA_HTTP;
+            final int code = getBase(String.format("%s://%s", SCHEMA_HTTPS, endpoint));
+            LOGGER.info("Use '{}' for: {} , got code : {}", SCHEMA_HTTPS, endpoint, code);
+            return SCHEMA_HTTPS;
         } catch (final IOException | ProtocolException e) {
             throw new RuntimeException("No response from the registry server.");
         }
     }
 
-    private static String getBasicRegistryAuth(final AuthConfig authConfig) {
-        final String plainAuthString = String.format(
-            "%s:%s",
-            authConfig.getUsername() == null ? "" : authConfig.getUsername(),
-            authConfig.getPassword() == null
-                ? authConfig.getAuth() == null
-                    ? "" 
-                    : authConfig.getAuth()
-                : authConfig.getPassword());
+    private static int getBase(final String endpoint)
+        throws IOException, ProtocolException
+    {
+        final HttpGet httpGet = new HttpGet(String.format(BASE, endpoint) + "/");
+        try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
+            try (final CloseableHttpResponse response = httpclient.execute(httpGet)) {
+                final int code = response.getCode();
+                if (code == HttpStatus.SC_UNAUTHORIZED) {
+                    final String authMethods = response.getHeader("Www-Authenticate") == null
+                        ? null
+                        : response.getHeader("Www-Authenticate").getValue();
+                    // https://distribution.github.io/distribution/spec/api/
+                    LOGGER.info("Registry base url: {}, authentication methods: {}", endpoint, authMethods);
+                }
+                return code;
+            }
+        }
+    }
 
-        return "Basic " + BaseEncoding.base64Url().encode(plainAuthString.getBytes());
+    private static String getBasicRegistryAuth(final AuthConfig authConfig) {
+        final String username = authConfig.getUsername() != null
+            ? authConfig.getUsername()
+            : "";
+
+        final String password = authConfig.getPassword() != null
+            ? authConfig.getPassword()
+            : authConfig.getAuth() != null
+                ? authConfig.getAuth()
+                : "";
+
+        final String authString = username + ":" + password;
+
+        return "Basic " + BaseEncoding.base64Url().encode(authString.getBytes());
     }
 
     private static String getRegistryName(final String registry)
