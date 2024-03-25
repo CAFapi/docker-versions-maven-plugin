@@ -207,8 +207,9 @@ Http connection timeout can be set in the plugin configuration. This configurati
 </httpConfiguration>
 ```
 
-When using the `use-latest-releases` goal an optional `imageVersions` configuration can be added to ignore images that are tagged with names  
-that match the `regex` or the `exact` value specified.
+When using the `use-latest-releases` goal an optional `imageVersions` configuration can be added.
+When finding the latest static tag for the image any tag that matches the `regex` or the `exact` value specified will be ignored.
+
 ```
 <ignoreVersions>
     <ignoreVersion>
