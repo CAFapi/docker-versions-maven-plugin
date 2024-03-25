@@ -8,6 +8,7 @@ The `docker-versions` plugin has the following goals.
 
 - docker-versions:populate-project-registry
 - docker-versions:depopulate-project-registry
+- docker-versions:use-latest-releases
 - docker-versions:help
 
 ### populate-project-registry
@@ -85,6 +86,31 @@ Removes the project specific name tag from the Docker images that are used by a 
     <td> &lt;targetRepository&gt; </td>
     <td> String </td>
     <td> This string will be used in the project specific name tag instead of the repository value. </td>
+  </tr>
+</table>
+
+### use-latest-releases
+
+Replaces any Docker image release version with the latest static version of the image in the plugin configuration.  
+This goal will not replace versions of images which use SNAPSHOT versions.
+
+#### Required Parameters
+
+<table class="table">
+  <tr>
+    <th> Name        </th>
+    <th> Type        </th>
+    <th> Description </th>
+  </tr>
+  <tr>
+    <td> &lt;repository&gt; </td>
+    <td> String  </td>
+    <td> The repository and name of the docker image in the format &lt;repository&gt;/&lt;name&gt;. </td>
+  </tr>
+  <tr>
+    <td> &lt;tag&gt; </td>
+    <td> String </td>
+    <td> The docker image tag. </td>
   </tr>
 </table>
 
@@ -179,6 +205,21 @@ Http connection timeout can be set in the plugin configuration. This configurati
     <responseTimout>45</responseTimout>
     <downloadImageTimout>100</downloadImageTimout>
 </httpConfiguration>
+```
+
+When using the `use-latest-releases` goal an optional `imageVersions` configuration can be added to ignore images that are tagged with names  
+that match the `regex` or the `exact` value specified.
+```
+<ignoreVersions>
+    <ignoreVersion>
+        <type>regex</type>
+        <version>(?i).*alpha.*</version>
+    </ignoreVersion>
+    <ignoreVersion>
+        <type>exact</type>
+        <version>3.8.26-alpine</version>
+    </ignoreVersion>
+</ignoreVersions>
 ```
 
 The following configuration options can be set via environment variables.  
