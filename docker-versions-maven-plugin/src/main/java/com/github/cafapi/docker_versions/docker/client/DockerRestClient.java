@@ -49,7 +49,7 @@ public final class DockerRestClient
 
         final DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
             .build();
-        LOGGER.info("Default auth configs : {}...", config.getAuthConfigurations().getConfigs());
+
         final DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
             .dockerHost(config.getDockerHost())
             .sslConfig(config.getSSLConfig())
@@ -80,7 +80,7 @@ public final class DockerRestClient
         final AuthConfig authConfig
     ) throws InterruptedException
     {
-        LOGGER.info("Pulling {}:{} default auth:{}...", repository, tag, dockerClient.authConfig());
+        LOGGER.info("Pulling {}:{}...", repository, tag);
         final PullImageCmd pullCommand = dockerClient.pullImageCmd(repository);
 
         if (authConfig != null) {
