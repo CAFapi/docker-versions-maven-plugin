@@ -29,19 +29,6 @@ final class MavenSettingsAuthConfig
 
     public static AuthConfig getAuthConfig(final Settings settings, final String registry)
     {
-        System.out.println("---- Looking up registry auth " + registry);
-        settings.getServers().forEach(
-            s -> System.out.println(" Server id : "
-                + s.getId()
-                + " username: " 
-                + s.getUsername()
-                + " has pwd : " 
-                + (s.getPassword() != null)
-                + " has passphrase : " 
-                + (s.getPassphrase() != null)
-                + " has pvt key : " 
-                + (s.getPrivateKey() != null)));
-
         return Optional.ofNullable(settings.getServer(registry))
             .map(MavenSettingsAuthConfig::createAuthConfigFromServer)
             .orElse(null);
