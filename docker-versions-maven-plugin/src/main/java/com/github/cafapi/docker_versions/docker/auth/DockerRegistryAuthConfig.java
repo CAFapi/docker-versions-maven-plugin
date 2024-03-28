@@ -16,7 +16,6 @@
 package com.github.cafapi.docker_versions.docker.auth;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -47,17 +46,6 @@ public final class DockerRegistryAuthConfig
 
     private final String authEncoded;
 
-    public DockerRegistryAuthConfig(final Map<String, String> params)
-    {
-        this(params.get(AUTH_USERNAME), params.get(AUTH_PASSWORD), params.get(AUTH_EMAIL), params.get(AUTH_AUTH),
-            params.get(AUTH_IDENTITY_TOKEN));
-    }
-
-    public DockerRegistryAuthConfig(final String username, final String password, final String email, final String auth)
-    {
-        this(username, password, email, auth, null);
-    }
-
     public DockerRegistryAuthConfig(
         final String username,
         final String password,
@@ -73,25 +61,14 @@ public final class DockerRegistryAuthConfig
         authEncoded = createAuthEncoded();
     }
 
-    /**
-     * Constructor which takes a base64 encoded credentials in the form 'user:password'
-     *
-     * @param credentialsEncoded the docker encoded user and password
-     * @param email the email to use for authentication
-     */
-    public DockerRegistryAuthConfig(final String credentialsEncoded, final String email)
+    public DockerRegistryAuthConfig(final String username, final String password, final String email, final String auth)
     {
-        this(credentialsEncoded, email, null);
+        this(username, password, email, auth, null);
     }
 
-    /**
-     * Constructor which takes a base64 encoded credentials in the form 'user:password'
-     *
-     * @param credentialsEncoded the docker encoded user and password
-     * @param email the email to use for authentication
-     */
     public DockerRegistryAuthConfig(final String credentialsEncoded, final String email, final String identityToken)
     {
+        // credentialsEncoded would be base64 encoded credentials in the form 'user:password'
         final String credentials = new String(Base64.decodeBase64(credentialsEncoded));
         final String[] parsedCreds = credentials.split(":", 2);
         username = parsedCreds[0];
@@ -174,13 +151,6 @@ public final class DockerRegistryAuthConfig
         return encodeBase64ChunkedURLSafeString(value.getBytes(StandardCharsets.UTF_8));
     }
 
-    /**
-     * Encodes the given binaryData in a format that is compatible with the Docker Engine API.
-     * That is, base64 encoded, padded, and URL safe.
-     *
-     * @param binaryData data to encode
-     * @return encoded data
-     */
     private static String encodeBase64ChunkedURLSafeString(final byte[] binaryData)
     {
         return Base64.encodeBase64String(binaryData).replace('+', '-').replace('/', '_');
@@ -193,14 +163,6 @@ public final class DockerRegistryAuthConfig
         }
     }
 
-    /**
-     * This method returns registry authentication URL.
-     * In most cases it will be the same as registry, but for some it could be different.
-     * For example for "docker.io" the authentication URL should be exactly "https://index.docker.io/v1/"
-     *
-     * @param registry registry or null. If registry is null the default one is used (see REGISTRY_DEFAULT).
-     * @return authentication URL for the given registry.
-     */
     private static String getRegistryUrl(final String registry)
     {
         final String reg = registry != null ? registry : REGISTRY_DEFAULT;
