@@ -56,11 +56,11 @@ final class DockerVersionsHelperTest
 
         final List<Xpp3Dom> imagesConfig = new ArrayList<>();
         imagesConfig.add(createImage(
-            "dockerhub-public.svsartifactory.swinfra.net/cafapi/opensuse-jre17",
+            "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre17",
             "1.5.0",
             "sha256:6308e00f71d9c3fe6b5181aafe08abe72824301fd917887b8b644436f0de9740"));
         imagesConfig.add(createImage(
-            "dockerhub-public.svsartifactory.swinfra.net/cafapi/opensuse-jre8",
+            "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre8",
             "3.10.0",
             "sha256:7fb9a3aecb3e8112e61569f5510a602b9a18a5712c5e90497f77feaedec2c66c"));
 

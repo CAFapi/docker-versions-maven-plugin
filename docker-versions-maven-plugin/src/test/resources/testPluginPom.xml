@@ -28,9 +28,9 @@
     <packaging>pom</packaging>
 
     <properties>
-        <corporateRepositoryManager>svsartifactory.swinfra.net</corporateRepositoryManager>
-        <homeDockerPrereleaseRegistry>saas-docker-prerelease.${corporateRepositoryManager}</homeDockerPrereleaseRegistry>
-        <homeDockerReleaseRegistry>saas-docker-release.${corporateRepositoryManager}</homeDockerReleaseRegistry>
+        <corporateRepositoryManager>artifactory.acme.net</corporateRepositoryManager>
+        <homeDockerPrereleaseRegistry>acme-docker-prerelease.${corporateRepositoryManager}</homeDockerPrereleaseRegistry>
+        <homeDockerReleaseRegistry>acme-docker-release.${corporateRepositoryManager}</homeDockerReleaseRegistry>
         <snapshotTag>SNAPSHOT</snapshotTag>
         <viewServiceBaseImage>${homeDockerPrereleaseRegistry}/apollo/view-service-base</viewServiceBaseImage>
     </properties>
