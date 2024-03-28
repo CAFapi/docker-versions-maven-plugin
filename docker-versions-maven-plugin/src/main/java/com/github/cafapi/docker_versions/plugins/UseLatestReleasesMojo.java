@@ -31,10 +31,11 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.cafapi.docker_versions.docker.auth.DockerRegistryAuthConfig;
+import com.github.cafapi.docker_versions.docker.auth.AuthHelper;
 import com.github.cafapi.docker_versions.docker.client.DockerRegistryException;
 import com.github.cafapi.docker_versions.docker.client.DockerRegistryRestClient;
 import com.github.cafapi.docker_versions.docker.client.ImageNotFoundException;
-import com.github.dockerjava.api.model.AuthConfig;
 
 /**
 * This is a maven plugin that replaces any Docker image release versions with the latest static version of the image in the
@@ -45,13 +46,6 @@ import com.github.dockerjava.api.model.AuthConfig;
 public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(UseLatestReleasesMojo.class);
-
-    private final DockerRegistryRestClient dockerRegistryClient;
-
-    protected UseLatestReleasesMojo()
-    {
-        dockerRegistryClient = new DockerRegistryRestClient();
-    }
 
     @Override
     protected void update(final ModifiedPomXMLEventReader pom)
@@ -76,10 +70,10 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
 
             final String latestImageName = imageMoniker.getFullImageNameWithoutTag() + ":" + LATEST_TAG;
 
-            final AuthConfig authConfig = MavenSettingsAuthConfig.getAuthConfig(settings, imageMoniker.getRegistry());
+            final DockerRegistryAuthConfig authConfig = AuthHelper.getRegistryAuthConfig(settings, imageMoniker.getRegistry());
             final String registrySchema = DockerRegistryRestClient.getSchema(imageMoniker.getRegistry());
 
-            final String latestDigest = dockerRegistryClient.getDigest(
+            final String latestDigest = DockerRegistryRestClient.getDigest(
                 authConfig, registrySchema, imageMoniker.getRegistry(), imageMoniker.getRepositoryWithoutRegistry(), LATEST_TAG);
 
             final String tag = imageMoniker.getTag();
@@ -106,7 +100,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
 
                 final String imageNameWithStaticTag = imageMoniker.getFullImageNameWithoutTag() + ":" + staticTag;
 
-                final String staticDigest = dockerRegistryClient.getDigest(
+                final String staticDigest = DockerRegistryRestClient.getDigest(
                     authConfig, registrySchema, imageMoniker.getRegistry(), imageMoniker.getRepositoryWithoutRegistry(), staticTag);
                 LOGGER.info("Got digest for {} -- {}" , imageNameWithStaticTag, staticDigest);
 
@@ -136,13 +130,13 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
     }
 
     private String getLatestStaticTag(
-        final AuthConfig authConfig,
+        final DockerRegistryAuthConfig authConfig,
         final String registrySchema,
         final ImageMoniker imageMoniker,
         final String digestOfLatestVersion)
         throws DockerRegistryException
     {
-        final List<String> tags = dockerRegistryClient.getTags(
+        final List<String> tags = DockerRegistryRestClient.getTags(
             authConfig, registrySchema, imageMoniker.getRegistry(), imageMoniker.getRepositoryWithoutRegistry());
 
         LOGGER.info("Tags for latest image: {}-{}", imageMoniker.getFullImageNameWithTag(), tags);
@@ -177,8 +171,8 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         return latestStaticTag;
     }
 
-    private List<String> getLatestVersionTags(
-        final AuthConfig authConfig,
+    private static List<String> getLatestVersionTags(
+        final DockerRegistryAuthConfig authConfig,
         final String registrySchema,
         final ImageMoniker imageMoniker,
         final List<String> relevantTags,
@@ -188,7 +182,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         final List<String> latestVersionTags = new ArrayList<>();
         for (final String rTag : relevantTags) {
             try {
-                final String tagDigest = dockerRegistryClient.getDigest(
+                final String tagDigest = DockerRegistryRestClient.getDigest(
                     authConfig, registrySchema, imageMoniker.getRegistry(), imageMoniker.getRepositoryWithoutRegistry(), rTag);
                 LOGGER.info("Match digest of tag {} : latest, {} : {}", rTag, tagDigest, digestOfLatestVersion);
                 // Find all the ones that match the digest of the image with 'latest' tag

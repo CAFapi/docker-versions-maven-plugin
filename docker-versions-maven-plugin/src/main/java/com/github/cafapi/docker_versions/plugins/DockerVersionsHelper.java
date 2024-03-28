@@ -149,7 +149,7 @@ public final class DockerVersionsHelper
                     if (needsUpdate && !hasDigest) {
                         final StringBuffer builder = new StringBuffer("    <digest>");
                         builder.append(newDigest).append("</digest>").append('\n');
-
+// TODO
                         final int endTagLocation = event.asEndElement().getLocation().getColumnNumber();
                         final String endTag = "</image>";
                         final String endImageTag = endTagLocation <= 0

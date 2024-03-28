@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,9 +31,11 @@ import javax.net.ssl.SSLException;
 
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpHead;
+import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpStatus;
@@ -43,11 +46,10 @@ import org.apache.hc.core5.net.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.dockerjava.api.model.AuthConfig;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
-import com.github.dockerjava.core.DockerClientConfig;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.github.cafapi.docker_versions.docker.auth.DockerRegistryAuthConfig;
+import com.github.cafapi.docker_versions.docker.auth.Constants;
 import com.google.common.io.BaseEncoding;
 
 public final class DockerRegistryRestClient
@@ -63,20 +65,8 @@ public final class DockerRegistryRestClient
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerRegistryRestClient.class);
 
-    private final ObjectMapper mapper;
-
-    private final Map<String, AuthConfig> authConfis;
-
-    public DockerRegistryRestClient()
-    {
-        final DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-
-        authConfis = config.getAuthConfigurations().getConfigs();
-        mapper = config.getObjectMapper();
-    }
-
-    public String getDigest(
-        final AuthConfig authConfiguration,
+    public static String getDigest(
+        final DockerRegistryAuthConfig authConfiguration,
         final String registrySchema,
         final String registry,
         final String repository,
@@ -89,11 +79,7 @@ public final class DockerRegistryRestClient
 
         LOGGER.info("Getting digest for image '{}'", imageNameWithTag);
 
-        final AuthConfig registryAuth =
-            authConfiguration == null
-            ? authConfis.get(registry)
-            : authConfiguration;
-        final String basictoken = getBasicRegistryAuth(registryAuth);
+        final String basictoken = getAuthToken(registry, repository, authConfiguration);
 
         final String url = String.format("%s://%s/%s",
             registrySchema,
@@ -106,13 +92,14 @@ public final class DockerRegistryRestClient
 
         httpHead.addHeader(HttpHeaders.ACCEPT, "application/vnd.docker.distribution.manifest.v2+json");
 
-        try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
+        try (final CloseableHttpClient httpclient = HttpClients.custom().setRedirectStrategy(new DefaultRedirectStrategy()).build()) {
             try (final CloseableHttpResponse response = httpclient.execute(httpHead)) {
                 if (response.getCode() == HttpStatus.SC_OK) {
-                    if (response.getHeader("Docker-Content-Digest") == null ) {
+                    final Header digestHeader = response.getHeader("Docker-Content-Digest");
+                    if (digestHeader == null ) {
                         throw new DockerRegistryException("Docker-Content-Digest header was not set in the response");
                     }
-                    return response.getHeader("Docker-Content-Digest").getValue();
+                    return digestHeader.getValue();
                 }
                 if (response.getCode() == HttpStatus.SC_NOT_FOUND) {
                     throw new ImageNotFoundException("Image not found in registry " + imageNameWithTag);
@@ -126,8 +113,8 @@ public final class DockerRegistryRestClient
         throw new DockerRegistryException("Digest not found for " + imageNameWithTag);
     }
 
-    public List<String> getTags(
-        final AuthConfig authConfiguration,
+    public static List<String> getTags(
+        final DockerRegistryAuthConfig authConfiguration,
         final String registrySchema,
         final String registry,
         final String repository)
@@ -137,12 +124,7 @@ public final class DockerRegistryRestClient
         final String registryWithoutTrailingSlash = getRegistryName(registry);
         LOGGER.info("Finding image tags '{}/{}'", registryWithoutTrailingSlash, repository);
 
-        final AuthConfig registryAuth =
-            authConfiguration == null
-                ? authConfis.get(registry)
-                : authConfiguration;
-
-        final String token = getBasicRegistryAuth(registryAuth);
+        final String token = getAuthToken(registry, repository, authConfiguration);
 
         final String url = String.format("%s://%s/%s",
             registrySchema,
@@ -164,10 +146,10 @@ public final class DockerRegistryRestClient
         }
     }
 
-    private Map<String, String> getPageOfTags(
+    private static Map<String, String> getPageOfTags(
         final String url,
         final Map<String, String> nextPageParams,
-        final String authHeaderValue,
+        final String authToken,
         final List<String> allTags)
         throws DockerRegistryException, URISyntaxException
     {
@@ -177,14 +159,15 @@ public final class DockerRegistryRestClient
 
         final HttpGet httpGet = new HttpGet(uriBuilder.build());
 
-        Optional.ofNullable(authHeaderValue).ifPresent(t -> httpGet.addHeader(HttpHeaders.AUTHORIZATION, t));
+        Optional.ofNullable(authToken).ifPresent(t -> httpGet.addHeader(HttpHeaders.AUTHORIZATION, t));
 
         try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
             try (final CloseableHttpResponse response = httpclient.execute(httpGet)) {
                 if (response.getCode() == HttpStatus.SC_OK) {
                     final HttpEntity entity = response.getEntity();
                     final String resultContent = EntityUtils.toString(entity);
-                    allTags.addAll(mapper.readValue(resultContent, TagsResponse.class).getTags());
+                    final JsonParser jsonParser = new JsonFactory().createParser(resultContent);
+                    allTags.addAll(Constants.MAPPER.readValue(jsonParser, TagsResponse.class).getTags());
                     final String nextPageLink = response.getHeader("link") == null ? null : response.getHeader("link").getValue();
                     return extractNextPageParams(nextPageLink);
                 }
@@ -202,7 +185,7 @@ public final class DockerRegistryRestClient
     private static Map<String, String> extractNextPageParams(final String linkHeaderValue) throws URISyntaxException
     {
         // Parse the linkHeader to extract the next page params
-        // link header format: <my-registry.io/v2/_catalog?n=1&last=centos>; rel="next"
+        // Link header format: <<url>?n=<last n value>&last=<last entry from response>>; rel="next"
 
         if (linkHeaderValue == null) {
             return null;
@@ -233,13 +216,21 @@ public final class DockerRegistryRestClient
 
     public static String getSchema(final String endpoint)
     {
+        // TODO
         LOGGER.info("Get schema for: {}", endpoint);
+        final List<String> list = new ArrayList<>(Arrays.asList(endpoint.split("/")));
+        String host;
+        if (list.size() > 1 && (list.get(0).contains(":") || list.get(0).contains("."))) {
+            host = list.remove(0);
+        } else {
+            host = "registry-1.docker.io";
+        }
         try {
             // Try "http"
-            final int code = getBase(String.format("%s://%s", SCHEMA_HTTP, endpoint));
+            final int code = getBase(String.format("%s://%s", SCHEMA_HTTP, host));
             LOGGER.info("Tried '{}' got code: {}", SCHEMA_HTTP, code);
             if (code == HttpStatus.SC_OK) {
-                LOGGER.info("Use '{}' for: {}", SCHEMA_HTTP, endpoint);
+                LOGGER.info("Use '{}' for: {}", SCHEMA_HTTP, host);
                 return SCHEMA_HTTP;
             }
         } catch (final SSLException | ProtocolException e) {
@@ -249,8 +240,8 @@ public final class DockerRegistryRestClient
         }
 
         try {
-            final int code = getBase(String.format("%s://%s", SCHEMA_HTTPS, endpoint));
-            LOGGER.info("Use '{}' for: {} , got code : {}", SCHEMA_HTTPS, endpoint, code);
+            final int code = getBase(String.format("%s://%s", SCHEMA_HTTPS, host));
+            LOGGER.info("Use '{}' for: {} , got code : {}", SCHEMA_HTTPS, host, code);
             return SCHEMA_HTTPS;
         } catch (final IOException | ProtocolException e) {
             throw new RuntimeException("No response from the registry server.");
@@ -260,6 +251,7 @@ public final class DockerRegistryRestClient
     private static int getBase(final String endpoint)
         throws IOException, ProtocolException
     {
+        // lightweight version checks and to validate registry authentication
         final HttpGet httpGet = new HttpGet(String.format(BASE, endpoint) + "/");
         try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
             try (final CloseableHttpResponse response = httpclient.execute(httpGet)) {
@@ -269,6 +261,7 @@ public final class DockerRegistryRestClient
                         ? null
                         : response.getHeader("Www-Authenticate").getValue();
                     // https://distribution.github.io/distribution/spec/api/
+                    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
                     LOGGER.info("Registry base url: {}, authentication methods: {}", endpoint, authMethods);
                 }
                 return code;
@@ -276,25 +269,100 @@ public final class DockerRegistryRestClient
         }
     }
 
-    private static String getBasicRegistryAuth(final AuthConfig authConfig) {
-        final String username = authConfig.getUsername() != null
-            ? authConfig.getUsername()
-            : "";
-
-        final String password = authConfig.getPassword() != null
-            ? authConfig.getPassword()
-            : authConfig.getAuth() != null
-                ? authConfig.getAuth()
+    private static String getBasicRegistryAuth(final DockerRegistryAuthConfig authConfig)
+    {
+        final String authString;
+        if (authConfig.getAuth() != null) {
+            authString = authConfig.getAuth();
+        } else {
+            final String username = authConfig.getUsername() != null
+                ? authConfig.getUsername()
                 : "";
 
-        final String authString = username + ":" + password;
+            final String password = authConfig.getPassword() != null
+                ? authConfig.getPassword()
+                : "";
 
-        return "Basic " + BaseEncoding.base64Url().encode(authString.getBytes());
+            final String usernameAndPwd = username + ":" + password;
+
+            authString = BaseEncoding.base64Url().encode(usernameAndPwd.getBytes());
+        }
+
+        return "Basic " + authString;
+    }
+
+    private static URI getAuthUrl(final String repository) throws DockerRegistryException
+    {
+        try {
+            final String url = "https://auth.docker.io/token";
+            final String service = "registry.docker.io";
+
+            final URIBuilder uriBuilder = new URIBuilder(new URI(url));
+            uriBuilder.addParameter("service", service);
+            uriBuilder.addParameter("scope", "repository:" + repository + ":pull");
+            return uriBuilder.build();
+        } catch(final URISyntaxException e) {
+            throw new DockerRegistryException(e);
+        }
     }
 
     private static String getRegistryName(final String registry)
     {
+        if (isDockerHub(registry)) {
+            return "registry-1.docker.io";
+        }
        return  registry.endsWith("/") ? registry.substring(0, registry.length() - 1) : registry;
+    }
+
+    private static String getAuthToken(
+        final String registry,
+        final String repository,
+        final DockerRegistryAuthConfig registryAuth)
+        throws DockerRegistryException
+    {
+        if (isDockerHub(registry)) {
+            return "Bearer " + getRegistryAuthToken(repository, registryAuth);
+        }
+        return getBasicRegistryAuth(registryAuth);
+    }
+
+    private static boolean isDockerHub(final String registry)
+    {
+        return registry.equals(Constants.DEFAULT_DOCKER_REGISTRY);
+    }
+
+    private static String getRegistryAuthToken(final String repository, final DockerRegistryAuthConfig authConfig) throws DockerRegistryException
+    {
+        // https://distribution.github.io/distribution/spec/auth/token/
+        final URI authUrl = getAuthUrl(repository);
+        final HttpGet httpGet = new HttpGet(authUrl);
+
+        if (authConfig != null) {
+            LOGGER.info("Getting docker hub auth token from {} for user {}", authConfig);
+            httpGet.addHeader(HttpHeaders.AUTHORIZATION, getBasicRegistryAuth(authConfig));
+        }
+        else {
+            LOGGER.info("Getting docker hub auth token from {} without credentials");
+        }
+
+        try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
+            try (final CloseableHttpResponse response = httpclient.execute(httpGet)) {
+                if (response.getCode() == HttpStatus.SC_OK) {
+                    final HttpEntity entity = response.getEntity();
+                    final String resultContent = EntityUtils.toString(entity);
+                    final DockerAuthResponse resp = Constants.MAPPER.readValue(resultContent, DockerAuthResponse.class);
+                    return resp.getToken();
+                }
+                else if (response.getCode() == HttpStatus.SC_UNAUTHORIZED) {
+                    throw new DockerRegistryException("Unauthorized access : " + authUrl);
+                }
+            } catch (final IOException | ParseException e) {
+                throw new DockerRegistryException("Error making getToken request:" + e.getMessage());
+            }
+        } catch (final IOException ex) {
+            throw new DockerRegistryException("Error creating http client for getting auth token", ex);
+        }
+        throw new DockerRegistryException("Unauthorized access : " + authUrl);
     }
 
 }
