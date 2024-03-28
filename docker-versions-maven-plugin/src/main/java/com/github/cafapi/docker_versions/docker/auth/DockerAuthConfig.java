@@ -51,27 +51,12 @@ final class DockerAuthConfig
             return null;
         }
         final String registryToLookup;
-        if (registry != null && Arrays.stream(Constants.DEFAULT_REGISTRIES).noneMatch(r -> r.equalsIgnoreCase(registry))) {
+        if (registry != null
+            && Arrays.stream(Constants.DEFAULT_REGISTRIES).noneMatch(r -> r.equalsIgnoreCase(registry))) {
             registryToLookup = registry;
         } else {
             registryToLookup = Constants.DEFAULT_DOCKER_REGISTRY;
         }
-
-        /*
-        if (dockerConfig.has("credHelpers") || dockerConfig.has("credsStore")) {
-            if (dockerConfig.has("credHelpers")) {
-                final JsonNode credHelpers = dockerConfig.get("credHelpers");
-                if (credHelpers.has(registryToLookup)) {
-                    return extractAuthConfigFromCredentialsHelper(registryToLookup,
-                        credHelpers.get(registryToLookup).asText());
-                }
-            }
-            if (dockerConfig.has("credsStore")) {
-                return extractAuthConfigFromCredentialsHelper(registryToLookup,
-                    dockerConfig.get("credsStore").asText());
-            }
-        }
-        */
 
         if (dockerConfig.has("auths")) {
             return extractAuthConfigFromDockerConfigAuths(registryToLookup, dockerConfig.get("auths"));
@@ -79,20 +64,6 @@ final class DockerAuthConfig
 
         return null;
     }
-
-    /*
-    private static DockerRegistryAuthConfig extractAuthConfigFromCredentialsHelper(
-        final String registryToLookup,
-        final String credConfig)
-        throws DockerRegistryException
-    {
-        final CredentialHelperClient credentialHelper = new CredentialHelperClient(credConfig);
-        final String version = credentialHelper.getVersion();
-        LOGGER.info("AuthConfig: credentials from credential helper/store {}{}", credentialHelper.getName(),
-            version != null ? " version " + version : "");
-        return credentialHelper.getAuthConfig(registryToLookup);
-    }
-    */
 
     private static DockerRegistryAuthConfig extractAuthConfigFromDockerConfigAuths(
         final String registryToLookup,
