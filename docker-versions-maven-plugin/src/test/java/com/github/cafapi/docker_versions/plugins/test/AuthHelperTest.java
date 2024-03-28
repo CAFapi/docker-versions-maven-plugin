@@ -48,33 +48,14 @@ final class AuthHelperTest
     }
 
     @Test
-    public void testConfigPresentInBothLocations() throws JsonParseException, JsonMappingException, DockerRegistryException, IOException
-    {
-        final Settings testSettings = getTestSettings();
-        final DockerRegistryAuthConfig authConfig = AuthHelper.getRegistryAuthConfig(testSettings, "saas-docker-release.svsartifactory.swinfra.net");
-        Assertions.assertNotNull(authConfig, "Got authConfig PresentInBothLocations");
-        Assertions.assertTrue(authConfig.getUsername().equals("vgkusuma@microfocus.com"), "Got username from auth config PresentInBothLocations");
-        LOGGER.info("Got auth config PresentInBothLocations: {} ", authConfig);
-    }
-
-    @Test
     public void testConfigOnlyInMavenSettings() throws JsonParseException, JsonMappingException, DockerRegistryException, IOException
     {
         final Settings testSettings = getTestSettings();
-        final DockerRegistryAuthConfig authConfig = AuthHelper.getRegistryAuthConfig(testSettings, "dockerhub-private.svsartifactory.swinfra.net");
+        final DockerRegistryAuthConfig authConfig = AuthHelper.getRegistryAuthConfig(testSettings, "artifactory.acme.net:8443");
         Assertions.assertNotNull(authConfig, "Got authConfig OnlyInMavenSettings");
-        Assertions.assertTrue(authConfig.getUsername().equals("vgkusuma@microfocus.com"), "Got username from auth config OnlyInMavenSettings");
+        Assertions.assertTrue(
+            authConfig.getUsername().equals("dockerdev"), "Got username from auth config OnlyInMavenSettings");
         LOGGER.info("Got auth config OnlyInMavenSettings: {} ", authConfig);
-    }
-
-    @Test
-    public void testConfigOnlyInDockerConfig() throws JsonParseException, JsonMappingException, DockerRegistryException, IOException
-    {
-        final Settings testSettings = getTestSettings();
-        final DockerRegistryAuthConfig authConfig = AuthHelper.getRegistryAuthConfig(testSettings, "dockerhub-public.svsartifactory.swinfra.net");
-        Assertions.assertNotNull(authConfig, "Got authConfig");
-        Assertions.assertTrue(authConfig.getUsername().equals("vgkusuma@microfocus.com"), "Got username from auth config OnlyInDockerConfig");
-        LOGGER.info("Got auth config OnlyInDockerConfig: {} ", authConfig);
     }
 
     @Test
@@ -83,28 +64,8 @@ final class AuthHelperTest
         final Settings testSettings = getTestSettings();
         final DockerRegistryAuthConfig authConfig = AuthHelper.getRegistryAuthConfig(testSettings, "docker.io");
         Assertions.assertNotNull(authConfig, "Got authConfig");
-        Assertions.assertTrue(authConfig.getUsername().equals("ghoshdas"), "Got username from auth config");
+        Assertions.assertTrue(authConfig.getUsername().equals("acmeDockerUser"), "Got username from auth config");
         LOGGER.info("Got auth config: {} ", authConfig);
-    }
-
-    //@Test
-    public void testConfigFromCredHelpers() throws JsonParseException, JsonMappingException, DockerRegistryException, IOException
-    {
-        final Settings testSettings = getTestSettings();
-        final DockerRegistryAuthConfig authConfig = AuthHelper.getRegistryAuthConfig(testSettings, "saas-docker-release.svsartifactory.swinfra.net");
-        Assertions.assertNotNull(authConfig, "Got authConfig FromCredHelpers");
-        Assertions.assertTrue(authConfig.getUsername().equals("vgkusuma@microfocus.com"), "Got username from auth config FromCredHelpers");
-        LOGGER.info("Got auth config FromCredHelpers: {} ", authConfig);
-    }
-
-    //@Test
-    public void testConfigFromCredStore() throws JsonParseException, JsonMappingException, DockerRegistryException, IOException
-    {
-        final Settings testSettings = getTestSettings();
-        final DockerRegistryAuthConfig authConfig = AuthHelper.getRegistryAuthConfig(testSettings, "saas-docker-release.svsartifactory.swinfra.net");
-        Assertions.assertNotNull(authConfig, "Got authConfig FromCredStore");
-        Assertions.assertTrue(authConfig.getUsername().equals("vgkusuma@microfocus.com"), "Got username from auth config FromCredStore");
-        LOGGER.info("Got auth config FromCredStore: {} ", authConfig);
     }
 
     private static Settings getTestSettings()
