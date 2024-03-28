@@ -206,7 +206,6 @@
                 <version>2.0.12</version>
             </dependency>
         </dependencies>
-
     </dependencyManagement>
 
 </project>
