@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public final class DockerRegistryAuthConfig
 {
-    public static final DockerRegistryAuthConfig EMPTY_AUTH_CONFIG = new DockerRegistryAuthConfig("", "", "", "");
     public static final String REGISTRY_DOCKER_IO = "docker.io";
 
     private final String username;

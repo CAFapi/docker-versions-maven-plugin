@@ -19,7 +19,6 @@ import org.apache.maven.settings.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.cafapi.docker_versions.docker.client.DockerRegistryException;
 import com.github.dockerjava.api.model.AuthConfig;
 
 public final class AuthConfigHelper
@@ -33,7 +32,6 @@ public final class AuthConfigHelper
     public static AuthConfig getAuthConfig(
         final Settings settings,
         final String registry)
-        throws DockerRegistryException
     {
         final DockerRegistryAuthConfig authConfig = getRegistryAuthConfig(settings, registry);
 
@@ -52,7 +50,6 @@ public final class AuthConfigHelper
     }
 
     public static DockerRegistryAuthConfig getRegistryAuthConfig(final Settings settings, final String registry)
-        throws DockerRegistryException
     {
         // Check maven settings stored typically in ~/.m2/settings.xml
         DockerRegistryAuthConfig ret = MavenSettingsAuthConfig.getRegistryAuthConfig(settings, registry);

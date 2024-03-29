@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.cafapi.docker_versions.docker.client.DockerRegistryException;
 
 final class DockerAuthConfig
 {
@@ -38,13 +37,13 @@ final class DockerAuthConfig
     }
 
     public static DockerRegistryAuthConfig getRegistryAuthConfig(final String registry)
-        throws DockerRegistryException
     {
         final ObjectNode dockerConfig;
         try {
             dockerConfig = readDockerConfig();
         } catch (final IOException e) {
-            throw new DockerRegistryException("Error reading docker config", e);
+            LOGGER.warn("Error reading docker config", e);
+            return null;
         }
         LOGGER.info("getAuthConfigFromDockerConfig...{}", dockerConfig);
         if (dockerConfig == null) {

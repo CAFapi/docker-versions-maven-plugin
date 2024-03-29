@@ -74,13 +74,13 @@ final class MavenSettingsAuthConfig
         return null;
     }
 
-    private static String convertToHostname(final String server)
+    private static String convertToHostname(final String registry)
     {
-        String stripped = server;
-        if (server.startsWith("http://")) {
-            stripped = server.substring(7);
-        } else if (server.startsWith("https://")) {
-            stripped = server.substring(8);
+        String stripped = registry;
+        if (registry.startsWith("http://")) {
+            stripped = registry.substring(7);
+        } else if (registry.startsWith("https://")) {
+            stripped = registry.substring(8);
         }
         final String[] numParts = stripped.split("/", 2);
         return numParts[0];
