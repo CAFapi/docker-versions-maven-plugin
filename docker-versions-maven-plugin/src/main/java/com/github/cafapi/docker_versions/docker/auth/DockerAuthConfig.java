@@ -123,7 +123,6 @@ final class DockerAuthConfig
             try {
                 return new FileReader(file);
             } catch (final FileNotFoundException e) {
-                // Unexpected
                 throw new IllegalStateException("Cannot find " + file, e);
             }
         }
@@ -135,7 +134,7 @@ final class DockerAuthConfig
         return new File(getUserHome());
     }
 
-    public static String getUserHome()
+    private static String getUserHome()
     {
         String homeDir = System.getenv("HOME");
         if (homeDir == null) {
