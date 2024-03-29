@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.cafapi.docker_versions.docker.auth.DockerRegistryAuthConfig;
-import com.github.cafapi.docker_versions.docker.auth.AuthHelper;
+import com.github.cafapi.docker_versions.docker.auth.AuthConfigHelper;
 import com.github.cafapi.docker_versions.docker.client.DockerRegistryException;
 import com.github.cafapi.docker_versions.docker.client.DockerRegistryRestClient;
 import com.github.cafapi.docker_versions.docker.client.ImageNotFoundException;
@@ -68,13 +68,17 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
                 continue;
             }
 
-            final String latestImageName = imageMoniker.getFullImageNameWithoutTag() + ":" + LATEST_TAG;
+            final String latestTag = imageConfig.getLatestTag() != null
+                ? imageConfig.getLatestTag()
+                : LATEST_TAG;
 
-            final DockerRegistryAuthConfig authConfig = AuthHelper.getRegistryAuthConfig(settings, imageMoniker.getRegistry());
+            final String latestImageName = imageMoniker.getFullImageNameWithoutTag() + ":" + latestTag;
+
+            final DockerRegistryAuthConfig authConfig = AuthConfigHelper.getRegistryAuthConfig(settings, imageMoniker.getRegistry());
             final String registrySchema = DockerRegistryRestClient.getSchema(imageMoniker.getRegistry());
 
             final String latestDigest = DockerRegistryRestClient.getDigest(
-                authConfig, registrySchema, imageMoniker.getRegistry(), imageMoniker.getRepositoryWithoutRegistry(), LATEST_TAG);
+                authConfig, registrySchema, imageMoniker.getRegistry(), imageMoniker.getRepositoryWithoutRegistry(), latestTag);
 
             final String tag = imageMoniker.getTag();
 
@@ -82,7 +86,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
 
             // Lookup the latest 'static' tag of the repository
             // The longest value would be the 'static' tag
-            final String staticTag = getLatestStaticTag(authConfig, registrySchema, imageMoniker, latestDigest);
+            final String staticTag = getLatestStaticTag(authConfig, registrySchema, imageMoniker, latestTag, latestDigest);
 
             final Xpp3Dom imageToUpdate = DockerVersionsHelper.findRepository(imageMoniker.getRepositoryWithoutRegistry(), imagesConfig)
                 .orElseThrow(() ->
@@ -133,6 +137,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         final DockerRegistryAuthConfig authConfig,
         final String registrySchema,
         final ImageMoniker imageMoniker,
+        final String latestTag,
         final String digestOfLatestVersion)
         throws DockerRegistryException
     {
@@ -160,7 +165,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         }
 
         String latestStaticTag = tagsOfLatestVersion.get(tagsOfLatestVersion.size() - 1);
-        if(LATEST_TAG.equalsIgnoreCase(latestStaticTag)) {
+        if (latestTag.equalsIgnoreCase(latestStaticTag)) {
             try {
                 latestStaticTag = tagsOfLatestVersion.get(tagsOfLatestVersion.size() - 2);
             } catch (final IndexOutOfBoundsException e) {

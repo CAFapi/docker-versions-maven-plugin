@@ -29,6 +29,9 @@ public final class ImageConfiguration
     private String digest;
 
     @Parameter
+    private String latestTag;
+
+    @Parameter
     private String targetRepository;
 
     public String getRepository()
@@ -61,6 +64,16 @@ public final class ImageConfiguration
         this.digest = digest;
     }
 
+    public String getLatestTag()
+    {
+        return latestTag;
+    }
+
+    public void setLatestTag(final String latestTag)
+    {
+        this.latestTag = latestTag;
+    }
+
     public String getTargetRepository()
     {
         return targetRepository;
@@ -78,6 +91,7 @@ public final class ImageConfiguration
             + "repository=" + repository
             + ", tag=" + tag
             + ", digest=" + digest
+            + ", latestTag=" + latestTag
             + ", targetRepository=" + targetRepository
             + "]";
     }
