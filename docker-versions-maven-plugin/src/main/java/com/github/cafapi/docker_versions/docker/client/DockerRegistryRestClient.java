@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +65,7 @@ public final class DockerRegistryRestClient
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerRegistryRestClient.class);
 
     public static String getDigest(
-        final DockerRegistryAuthConfig authConfiguration,
+        final String authToken,
         final String registrySchema,
         final String registry,
         final String repository,
@@ -79,8 +78,6 @@ public final class DockerRegistryRestClient
 
         LOGGER.info("Getting digest for image '{}'", imageNameWithTag);
 
-        final String basictoken = getAuthToken(registry, repository, authConfiguration);
-
         final String url = String.format("%s://%s/%s",
             registrySchema,
             String.format(BASE, registryWithoutTrailingSlash),
@@ -88,7 +85,7 @@ public final class DockerRegistryRestClient
 
         final HttpHead httpHead = new HttpHead(url);
 
-        Optional.ofNullable(basictoken).ifPresent(t -> httpHead.addHeader(HttpHeaders.AUTHORIZATION, t));
+        Optional.ofNullable(authToken).ifPresent(t -> httpHead.addHeader(HttpHeaders.AUTHORIZATION, t));
 
         httpHead.addHeader(HttpHeaders.ACCEPT, "application/vnd.docker.distribution.manifest.v2+json");
 
@@ -114,7 +111,7 @@ public final class DockerRegistryRestClient
     }
 
     public static List<String> getTags(
-        final DockerRegistryAuthConfig authConfiguration,
+        final String authToken,
         final String registrySchema,
         final String registry,
         final String repository)
@@ -124,8 +121,6 @@ public final class DockerRegistryRestClient
         final String registryWithoutTrailingSlash = getRegistryName(registry);
         LOGGER.info("Finding image tags '{}/{}'", registryWithoutTrailingSlash, repository);
 
-        final String token = getAuthToken(registry, repository, authConfiguration);
-
         final String url = String.format("%s://%s/%s",
             registrySchema,
             String.format(BASE, registryWithoutTrailingSlash),
@@ -133,11 +128,11 @@ public final class DockerRegistryRestClient
 
         try {
             // Make the initial request to get the first page of 100 tags
-            Map<String, String> nextPageParams = getPageOfTags(url, Map.of("n", "100"), token, allTags);
+            Map<String, String> nextPageParams = getPageOfTags(url, Map.of("n", "100"), authToken, allTags);
 
             // Fetch subsequent pages until there are no more tags
             while (nextPageParams != null) {
-                nextPageParams = getPageOfTags(url, nextPageParams, token, allTags);
+                nextPageParams = getPageOfTags(url, nextPageParams, authToken, allTags);
             }
 
             return allTags;
@@ -214,17 +209,24 @@ public final class DockerRegistryRestClient
         return nextPageParams;
     }
 
-    public static String getSchema(final String endpoint)
+    public static String getSchema(final String registry)
     {
-        // TODO
-        LOGGER.info("Get schema for: {}", endpoint);
-        final List<String> list = new ArrayList<>(Arrays.asList(endpoint.split("/")));
-        String host;
-        if (list.size() > 1 && (list.get(0).contains(":") || list.get(0).contains("."))) {
-            host = list.remove(0);
-        } else {
+        LOGGER.info("Get schema for: {}", registry);
+        String host = registry;
+        if(isDockerHub(registry)) {
             host = "registry-1.docker.io";
         }
+        try {
+            LOGGER.info("Trying https...");
+            final int code = getBase(String.format("%s://%s", SCHEMA_HTTPS, host));
+            LOGGER.info("Use '{}' for: {} , got code : {}", SCHEMA_HTTPS, host, code);
+            return SCHEMA_HTTPS;
+        } catch (final SSLException e){
+            // Try "http"
+        } catch (final IOException | ProtocolException e) {
+            throw new RuntimeException("No response from the registry server.", e);
+        }
+
         try {
             // Try "http"
             final int code = getBase(String.format("%s://%s", SCHEMA_HTTP, host));
@@ -233,19 +235,10 @@ public final class DockerRegistryRestClient
                 LOGGER.info("Use '{}' for: {}", SCHEMA_HTTP, host);
                 return SCHEMA_HTTP;
             }
-        } catch (final SSLException | ProtocolException e) {
-            // Try "https"
-        } catch (final IOException e) {
-            throw new RuntimeException("No response from the registry server.");
-        }
-
-        try {
-            final int code = getBase(String.format("%s://%s", SCHEMA_HTTPS, host));
-            LOGGER.info("Use '{}' for: {} , got code : {}", SCHEMA_HTTPS, host, code);
-            return SCHEMA_HTTPS;
         } catch (final IOException | ProtocolException e) {
-            throw new RuntimeException("No response from the registry server.");
+            LOGGER.debug("Error fnding schema for host {}", host, e);
         }
+        throw new RuntimeException("No response from the registry Server.");
     }
 
     private static int getBase(final String endpoint)
@@ -314,7 +307,7 @@ public final class DockerRegistryRestClient
        return  registry.endsWith("/") ? registry.substring(0, registry.length() - 1) : registry;
     }
 
-    private static String getAuthToken(
+    public static String getAuthToken(
         final String registry,
         final String repository,
         final DockerRegistryAuthConfig registryAuth)
@@ -345,7 +338,7 @@ public final class DockerRegistryRestClient
             httpGet.addHeader(HttpHeaders.AUTHORIZATION, getBasicRegistryAuth(authConfig));
         }
         else {
-            LOGGER.info("Getting docker hub auth token from {} without credentials");
+            LOGGER.info("Getting docker hub auth token without credentials");
         }
 
         try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
