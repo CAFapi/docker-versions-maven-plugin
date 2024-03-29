@@ -24,6 +24,12 @@ public final class Constants
     public static final String DEFAULT_DOCKER_REGISTRY = "https://index.docker.io/v1/";
     public static final String[] DEFAULT_REGISTRIES = new String[] { "docker.io", "index.docker.io", "registry.hub.docker.com" };
 
+    public static final String AUTH_USERNAME = "username";
+    public static final String AUTH_PASSWORD = "password";
+    public static final String AUTH_EMAIL = "email";
+    public static final String AUTH_AUTH = "auth";
+    public static final String AUTH_IDENTITY_TOKEN = "identityToken"; //TODO identitytoken ??
+
     public final static ObjectMapper MAPPER = new ObjectMapper()
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);

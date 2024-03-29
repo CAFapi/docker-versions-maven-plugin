@@ -74,9 +74,9 @@ public final class DockerVersionsHelper
         LOGGER.info("Set image version in plugin configuration...");
         final Map<String, String> implicitProperties = new HashMap<>();
 
-        for (final Map.Entry<Object, Object> entry : properties.entrySet()) {
+        properties.entrySet().forEach(entry -> {
             implicitProperties.put((String) entry.getKey(), (String) entry.getValue());
-        }
+        });
 
         final Stack<String> stack = new Stack<>();
         String path = "";

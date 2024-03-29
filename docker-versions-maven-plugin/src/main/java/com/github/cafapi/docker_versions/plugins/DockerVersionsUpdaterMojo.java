@@ -73,7 +73,11 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
             final File outFile = projectToUpdate.getFile();
 
             process(outFile);
-        } catch (final Exception e) {
+        } catch (final DockerRegistryException
+            | ImageNotFoundException
+            | IncorrectDigestException
+            | IOException
+            | XMLStreamException e) {
             throw new MojoExecutionException("Error updating image versions", e);
         }
     }

@@ -105,7 +105,7 @@ public final class DockerRegistryRestClient
                     throw new ImageNotFoundException("Image not found in registry " + imageNameWithTag);
                 }
             } catch (final IOException | ProtocolException e) {
-                new DockerRegistryException("Error getting digest", e);
+                throw new DockerRegistryException("Error getting digest", e);
             }
         } catch (final IOException ex) {
             throw new DockerRegistryException("Error creating http client for getting digest", ex);
@@ -331,7 +331,10 @@ public final class DockerRegistryRestClient
         return registry.equals(Constants.DEFAULT_DOCKER_REGISTRY);
     }
 
-    private static String getRegistryAuthToken(final String repository, final DockerRegistryAuthConfig authConfig) throws DockerRegistryException
+    private static String getRegistryAuthToken(
+        final String repository,
+        final DockerRegistryAuthConfig authConfig)
+        throws DockerRegistryException
     {
         // https://distribution.github.io/distribution/spec/auth/token/
         final URI authUrl = getAuthUrl(repository);

@@ -58,8 +58,8 @@ final class MavenSettingsAuthConfig
         return new DockerRegistryAuthConfig(
             server.getUsername(),
             server.getPassword(),
-            getProperty(serverConfig, "email"),
-            getProperty(serverConfig, "auth"));
+            getProperty(serverConfig, Constants.AUTH_EMAIL),
+            getProperty(serverConfig, Constants.AUTH_AUTH));
     }
 
     private static String getProperty(final Object configuration, final String property)

@@ -26,16 +26,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public final class DockerRegistryAuthConfig
 {
     public static final DockerRegistryAuthConfig EMPTY_AUTH_CONFIG = new DockerRegistryAuthConfig("", "", "", "");
-
-    public static final String AUTH_USERNAME = "username";
-    public static final String AUTH_PASSWORD = "password";
-    public static final String AUTH_EMAIL = "email";
-    public static final String AUTH_AUTH = "auth";
-    public static final String AUTH_IDENTITY_TOKEN = "identityToken";
-
     public static final String REGISTRY_DOCKER_IO = "docker.io";
-    public static final String REGISTRY_DOCKER_IO_URL = "https://index.docker.io/v1/";
-    public static final String REGISTRY_DEFAULT = REGISTRY_DOCKER_IO;
 
     private final String username;
     private final String password;
@@ -135,18 +126,18 @@ public final class DockerRegistryAuthConfig
     {
         final ObjectNode ret = Constants.MAPPER.createObjectNode();
         if (identityToken != null) {
-            putNonNull(ret, AUTH_IDENTITY_TOKEN, identityToken);
+            putNonNull(ret, Constants.AUTH_IDENTITY_TOKEN, identityToken);
         } else {
-            putNonNull(ret, AUTH_USERNAME, username);
-            putNonNull(ret, AUTH_PASSWORD, password);
-            putNonNull(ret, AUTH_EMAIL, email);
-            putNonNull(ret, AUTH_AUTH, auth);
+            putNonNull(ret, Constants.AUTH_USERNAME, username);
+            putNonNull(ret, Constants.AUTH_PASSWORD, password);
+            putNonNull(ret, Constants.AUTH_EMAIL, email);
+            putNonNull(ret, Constants.AUTH_AUTH, auth);
         }
 
         return encodeBase64(ret.toString());
     }
 
-    private static String encodeBase64(String value)
+    private static String encodeBase64(final String value)
     {
         return encodeBase64ChunkedURLSafeString(value.getBytes(StandardCharsets.UTF_8));
     }
@@ -165,9 +156,9 @@ public final class DockerRegistryAuthConfig
 
     private static String getRegistryUrl(final String registry)
     {
-        final String reg = registry != null ? registry : REGISTRY_DEFAULT;
+        final String reg = registry != null ? registry : Constants.DEFAULT_DOCKER_REGISTRY;
         if (REGISTRY_DOCKER_IO.equals(StringUtils.substringBefore(reg, "/"))) {
-            return REGISTRY_DOCKER_IO_URL;
+            return Constants.DEFAULT_DOCKER_REGISTRY;
         }
         return reg;
     }

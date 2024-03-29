@@ -22,11 +22,11 @@ import org.slf4j.LoggerFactory;
 import com.github.cafapi.docker_versions.docker.client.DockerRegistryException;
 import com.github.dockerjava.api.model.AuthConfig;
 
-public final class AuthHelper
+public final class AuthConfigHelper
 {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthConfigHelper.class);
 
-    private AuthHelper()
+    private AuthConfigHelper()
     {
     }
 

@@ -75,15 +75,15 @@ final class DockerAuthConfig
             return null;
         }
 
-        final String username = getNodeValue(credentials, "username");
+        final String username = getNodeValue(credentials, Constants.AUTH_USERNAME);
 
-        final String password = getNodeValue(credentials, "password");
+        final String password = getNodeValue(credentials, Constants.AUTH_PASSWORD);
 
-        final String auth = getNodeValue(credentials, "auth");
+        final String auth = getNodeValue(credentials, Constants.AUTH_AUTH);
 
-        final String identityToken = getNodeValue(credentials, "identitytoken");
+        final String identityToken = getNodeValue(credentials, Constants.AUTH_IDENTITY_TOKEN);
 
-        final String email = getNodeValue(credentials, "email");
+        final String email = getNodeValue(credentials, Constants.AUTH_EMAIL);
 
         return new DockerRegistryAuthConfig(username, password, email, auth, identityToken);
     }
