@@ -114,6 +114,21 @@ This goal will not replace versions of images which use SNAPSHOT versions.
   </tr>
 </table>
 
+#### Optional Parameters
+
+<table class="table">
+  <tr>
+    <th> Name        </th>
+    <th> Type        </th>
+    <th> Description </th>
+  </tr>
+  <tr>
+    <td> &lt;latestTag&gt; </td>
+    <td> String </td>
+    <td> This is the tag that the version will be updated to. If it is not specified the image will be updated to the `latest` tag. </td>
+  </tr>
+</table>
+
 ### help
 
 Displays the help information.
