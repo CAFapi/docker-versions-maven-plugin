@@ -25,8 +25,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public final class DockerRegistryAuthConfig
 {
-    public static final String REGISTRY_DOCKER_IO = "docker.io";
-
     private final String username;
     private final String password;
     private final String email;
@@ -156,7 +154,7 @@ public final class DockerRegistryAuthConfig
     private static String getRegistryUrl(final String registry)
     {
         final String reg = registry != null ? registry : Constants.DEFAULT_DOCKER_REGISTRY;
-        if (REGISTRY_DOCKER_IO.equals(StringUtils.substringBefore(reg, "/"))) {
+        if (Constants.REGISTRY_DOCKER_IO.equals(StringUtils.substringBefore(reg, "/"))) {
             return Constants.DEFAULT_DOCKER_REGISTRY;
         }
         return reg;

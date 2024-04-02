@@ -20,6 +20,7 @@ import java.util.List;
 final class TagsResponse
 {
     private String name;
+    private List<String> tags;
 
     public String getName() {
         return name;
@@ -36,6 +37,4 @@ final class TagsResponse
     public void setTags(final List<String> tags) {
         this.tags = tags;
     }
-
-    private List<String> tags;
 }
