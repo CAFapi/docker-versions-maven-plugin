@@ -95,11 +95,11 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
         update(pomToUpdate);
 
         if (pomToUpdate.isModified()) {
-            LOGGER.info("Pom is modified...");
+            LOGGER.debug("Pom is modified...");
             DockerVersionsHelper.writeFile(outFile, input);
         }
         else {
-            LOGGER.info("Pom is unmodified");
+            LOGGER.debug("Pom is unmodified");
         }
     }
 
