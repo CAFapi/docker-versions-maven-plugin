@@ -71,7 +71,7 @@ public final class DockerVersionsHelper
         final Properties properties)
         throws XMLStreamException
     {
-        LOGGER.info("Set image version in plugin configuration...");
+        LOGGER.debug("Set image version in plugin configuration...");
         final Map<String, String> implicitProperties = new HashMap<>();
 
         properties.entrySet().forEach(entry -> {
@@ -106,7 +106,7 @@ public final class DockerVersionsHelper
                             needsUpdate = false;
                         }
                         else {
-                            LOGGER.info("Updating repo : {}", repository);
+                            LOGGER.debug("Updating repo : {}", repository);
                             needsUpdate = true;
                             final Xpp3Dom repoToUpdate = repo.get();
 
@@ -149,7 +149,6 @@ public final class DockerVersionsHelper
                     if (needsUpdate && !hasDigest) {
                         final StringBuffer builder = new StringBuffer("    <digest>");
                         builder.append(newDigest).append("</digest>").append('\n');
-// TODO
                         final int endTagLocation = event.asEndElement().getLocation().getColumnNumber();
                         final String endTag = "</image>";
                         final String endImageTag = endTagLocation <= 0
@@ -165,7 +164,7 @@ public final class DockerVersionsHelper
                 path = stack.pop();
             }
         }
-        LOGGER.info("Completed image version updates in plugin configuration. Made {}replacements.", madeReplacement ? "" : "no ");
+        LOGGER.debug("Completed image version updates in plugin configuration. Made {}replacements.", madeReplacement ? "" : "no ");
         return madeReplacement;
     }
 
@@ -190,7 +189,7 @@ public final class DockerVersionsHelper
     }
 
     public static StringBuilder readFile(final File inFile) throws IOException {
-        LOGGER.info("Reading pom : {}", inFile);
+        LOGGER.debug("Reading pom : {}", inFile);
         try (final Reader reader = new XmlStreamReader(inFile)) {
             return new StringBuilder(IOUtil.toString(reader));
         }
@@ -198,7 +197,7 @@ public final class DockerVersionsHelper
 
     public static void writeFile(final File outFile, final StringBuilder input) throws IOException
     {
-        LOGGER.info("Writing updated pom to: {}", outFile);
+        LOGGER.debug("Writing updated pom to: {}", outFile);
         try (final Writer writer = new XmlStreamWriter(outFile)) {
             IOUtil.copy(input.toString(), writer);
         }

@@ -118,17 +118,17 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
         Plugin plugin = getPlugin(rootProject);
 
         if (plugin != null) {
-            LOGGER.info("Found plugin in aggregator project");
+            LOGGER.debug("Found plugin in aggregator project");
             return plugin;
         }
 
-        LOGGER.info("Plugin not found in aggregator project, look in the project");
+        LOGGER.debug("Plugin not found in aggregator project, look in the project");
 
         projectToUpdate = project;
         plugin = getPlugin(project);
 
         if (plugin != null) {
-            LOGGER.info("Found plugin in project {}", project.getArtifactId());
+            LOGGER.debug("Found plugin in project {}", project.getArtifactId());
             return plugin;
         }
 
@@ -144,7 +144,7 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
 
         if (pluginManagement != null) {
             plugin = lookupPlugin(pluginManagement);
-            LOGGER.info("{} does not have plugin management ", pluginProject.getArtifactId());
+            LOGGER.debug("{} does not have plugin management ", pluginProject.getArtifactId());
         }
 
         if (plugin == null) {
