@@ -128,7 +128,7 @@ public final class DockerRegistryRestClient
 
         try {
             // Make the initial request to get the first page of 100 tags
-            Map<String, String> nextPageParams = getPageOfTags(url, Map.of("n", "100"), authToken, allTags);
+            Map<String, String> nextPageParams = getPageOfTags(url, Map.of("n", "1000"), authToken, allTags);
 
             // Fetch subsequent pages until there are no more tags
             while (nextPageParams != null) {
