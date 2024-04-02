@@ -16,8 +16,6 @@
 package com.github.cafapi.docker_versions.docker.auth;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Arrays;
@@ -99,7 +97,7 @@ final class DockerAuthConfig
         if (auths.has(registryToLookup)) {
             return auths.get(registryToLookup);
         }
-        final String registryWithScheme = ensureRegistryHttpUrl(registryToLookup);
+        final String registryWithScheme = DockerAuthUtil.ensureRegistryHttpUrl(registryToLookup);
         if (auths.has(registryWithScheme)) {
             return auths.get(registryWithScheme);
         }
@@ -111,42 +109,9 @@ final class DockerAuthConfig
         final String dockerConfig = System.getenv("DOCKER_CONFIG");
 
         final Reader reader = dockerConfig == null
-            ? getFileReaderFromDir(new File(getHomeDir(), ".docker/config.json"))
-            : getFileReaderFromDir(new File(dockerConfig, "config.json"));
+            ? DockerAuthUtil.getFileReaderFromDir(new File(DockerAuthUtil.getHomeDir(), ".docker/config.json"))
+            : DockerAuthUtil.getFileReaderFromDir(new File(dockerConfig, "config.json"));
         return reader != null ? Constants.MAPPER.readValue(reader, ObjectNode.class) : null;
     }
 
-    private static Reader getFileReaderFromDir(final File file)
-    {
-        if (file.exists() && file.length() != 0) {
-            try {
-                return new FileReader(file);
-            } catch (final FileNotFoundException e) {
-                throw new IllegalStateException("Cannot find " + file, e);
-            }
-        }
-        return null;
-    }
-
-    private static File getHomeDir()
-    {
-        return new File(getUserHome());
-    }
-
-    private static String getUserHome()
-    {
-        String homeDir = System.getenv("HOME");
-        if (homeDir == null) {
-            homeDir = System.getProperty("user.home");
-        }
-        return homeDir;
-    }
-
-    private static String ensureRegistryHttpUrl(final String registry) {
-        if (registry.toLowerCase().startsWith("http")) {
-            return registry;
-        }
-        // Default to https:// schema
-        return "https://" + registry;
-    }
 }

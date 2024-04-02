@@ -36,7 +36,7 @@ final class MavenSettingsAuthConfig
 
     public static DockerRegistryAuthConfig getRegistryAuthConfig(final Settings settings, final String registry)
     {
-        final String normalizedHostname = convertToHostname(registry);
+        final String normalizedHostname = DockerAuthUtil.convertToHostname(registry);
         return Optional.ofNullable(settings.getServer(normalizedHostname))
             .map(MavenSettingsAuthConfig::createRegistryAuthConfigFromServer)
             .orElse(null);
@@ -74,15 +74,4 @@ final class MavenSettingsAuthConfig
         return null;
     }
 
-    private static String convertToHostname(final String registry)
-    {
-        String stripped = registry;
-        if (registry.startsWith("http://")) {
-            stripped = registry.substring(7);
-        } else if (registry.startsWith("https://")) {
-            stripped = registry.substring(8);
-        }
-        final String[] numParts = stripped.split("/", 2);
-        return numParts[0];
-    }
 }
