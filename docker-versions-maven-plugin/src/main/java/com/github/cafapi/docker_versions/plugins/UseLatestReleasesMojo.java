@@ -124,7 +124,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
                 }
                 else {
                     // Image config does not need any updates
-                    LOGGER.info("Image config updates not required: {}", imageMoniker.getFullImageNameWithTag());
+                    LOGGER.debug("Image config updates not required: {}", imageMoniker.getFullImageNameWithTag());
                 }
             }
         }
@@ -143,6 +143,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         final String digestOfLatestVersion)
         throws DockerRegistryException
     {
+        LOGGER.info("Getting latest static tag for {}...", imageMoniker.getFullImageNameWithTag());
         final List<String> tags = DockerRegistryRestClient.getTags(
             authToken, registrySchema, imageMoniker.getRegistry(), imageMoniker.getRepositoryWithoutRegistry());
 
@@ -174,7 +175,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
                 latestStaticTag = imageMoniker.getTag();
             }
         }
-        LOGGER.info("Static tag for latest image: {} : {}", imageMoniker.getFullImageNameWithTag(), latestStaticTag);
+        LOGGER.debug("Static tag for latest image: {} : {}", imageMoniker.getFullImageNameWithTag(), latestStaticTag);
         return latestStaticTag;
     }
 
@@ -224,16 +225,13 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         final String latestTag,
         final String latestDigest)
     {
-        LOGGER.info("Updating image: {} from version {} to {}",
-            imageMoniker.getFullImageNameWithoutTag(), imageMoniker.getTag(), latestTag);
-
         updateTag(imageMoniker, imageToUpdate, latestTag);
         upsertDigest(imageMoniker, imageToUpdate, latestDigest);
     }
 
     private static void updateTag(final ImageMoniker imageMoniker, final Xpp3Dom imageToUpdate, final String latestTag)
     {
-        LOGGER.debug("Updating tag for {} from {} to {}",
+        LOGGER.info("Updating {} from version {} to {}",
             imageMoniker.getFullImageNameWithoutTag(), imageToUpdate.getChild("tag").getValue(), latestTag);
 
         imageToUpdate.getChild("tag").setValue(latestTag);
@@ -243,7 +241,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
     {
         if (imageToUpdate.getChild("digest") == null) {
             // Add digest
-            LOGGER.info("Adding digest for {}", imageMoniker.getFullImageNameWithoutTag());
+            LOGGER.info("Setting digest for {} to {}", imageMoniker.getFullImageNameWithoutTag(), latestDigest);
 
             final Xpp3Dom digestParam = new Xpp3Dom("digest");
             digestParam.setValue(latestDigest);
@@ -251,6 +249,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         }
         else {
             // Update digest
+            LOGGER.info("Updating digest of {} to {}", imageMoniker.getFullImageNameWithoutTag(), latestDigest);
             imageToUpdate.getChild("digest").setValue(latestDigest);
         }
     }

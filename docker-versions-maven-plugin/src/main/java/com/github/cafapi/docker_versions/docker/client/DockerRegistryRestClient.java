@@ -76,7 +76,7 @@ public final class DockerRegistryRestClient
 
         final String imageNameWithTag = registryWithoutTrailingSlash + "/" + repository + ":" + tag;
 
-        LOGGER.info("Getting digest for image '{}'", imageNameWithTag);
+        LOGGER.debug("Getting digest for image '{}'", imageNameWithTag);
 
         final String url = String.format("%s://%s/%s",
             registrySchema,
@@ -119,7 +119,7 @@ public final class DockerRegistryRestClient
     {
         final List<String> allTags = new ArrayList<>();
         final String registryWithoutTrailingSlash = getRegistryName(registry);
-        LOGGER.info("Finding image tags '{}/{}'", registryWithoutTrailingSlash, repository);
+        LOGGER.debug("Finding image tags '{}/{}'", registryWithoutTrailingSlash, repository);
 
         final String url = String.format("%s://%s/%s",
             registrySchema,
@@ -148,7 +148,7 @@ public final class DockerRegistryRestClient
         final List<String> allTags)
         throws DockerRegistryException, URISyntaxException
     {
-        LOGGER.info("Getting page of tags: {}", nextPageParams);
+        LOGGER.debug("Getting page of tags: {}", nextPageParams);
         final URIBuilder uriBuilder = new URIBuilder(new URI(url));
         nextPageParams.entrySet().forEach( entry -> uriBuilder.addParameter(entry.getKey(), entry.getValue()));
 
@@ -211,15 +211,12 @@ public final class DockerRegistryRestClient
 
     public static String getSchema(final String registry)
     {
-        LOGGER.info("Get schema for: {}", registry);
         String host = registry;
         if(isDockerHub(registry)) {
             host = "registry-1.docker.io";
         }
         try {
-            LOGGER.info("Trying https...");
-            final int code = getBase(String.format("%s://%s", SCHEMA_HTTPS, host));
-            LOGGER.info("Use '{}' for: {} , got code : {}", SCHEMA_HTTPS, host, code);
+            getBase(String.format("%s://%s", SCHEMA_HTTPS, host));
             return SCHEMA_HTTPS;
         } catch (final SSLException e){
             // Try "http"
@@ -230,9 +227,7 @@ public final class DockerRegistryRestClient
         try {
             // Try "http"
             final int code = getBase(String.format("%s://%s", SCHEMA_HTTP, host));
-            LOGGER.info("Tried '{}' got code: {}", SCHEMA_HTTP, code);
             if (code == HttpStatus.SC_OK) {
-                LOGGER.info("Use '{}' for: {}", SCHEMA_HTTP, host);
                 return SCHEMA_HTTP;
             }
         } catch (final IOException | ProtocolException e) {
@@ -255,7 +250,7 @@ public final class DockerRegistryRestClient
                         : response.getHeader("Www-Authenticate").getValue();
                     // https://distribution.github.io/distribution/spec/api/
                     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
-                    LOGGER.info("Registry base url: {}, authentication methods: {}", endpoint, authMethods);
+                    LOGGER.debug("Registry base url: {}, authentication methods: {}", endpoint, authMethods);
                 }
                 return code;
             }
@@ -334,11 +329,7 @@ public final class DockerRegistryRestClient
         final HttpGet httpGet = new HttpGet(authUrl);
 
         if (authConfig != null) {
-            LOGGER.info("Getting docker hub auth token from {} for user {}", authConfig);
             httpGet.addHeader(HttpHeaders.AUTHORIZATION, getBasicRegistryAuth(authConfig));
-        }
-        else {
-            LOGGER.info("Getting docker hub auth token without credentials");
         }
 
         try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
