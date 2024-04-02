@@ -43,7 +43,6 @@ final class DockerAuthConfig
             LOGGER.warn("Error reading docker config", e);
             return null;
         }
-        LOGGER.info("getAuthConfigFromDockerConfig...{}", dockerConfig);
         if (dockerConfig == null) {
             return null;
         }
