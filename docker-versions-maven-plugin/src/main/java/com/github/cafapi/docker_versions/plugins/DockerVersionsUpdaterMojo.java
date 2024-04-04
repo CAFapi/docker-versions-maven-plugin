@@ -39,6 +39,7 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.cafapi.docker_versions.docker.auth.DockerRegistryAuthException;
 import com.github.cafapi.docker_versions.docker.client.DockerRegistryException;
 import com.github.cafapi.docker_versions.docker.client.ImageNotFoundException;
 
@@ -73,7 +74,8 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
             final File outFile = projectToUpdate.getFile();
 
             process(outFile);
-        } catch (final DockerRegistryException
+        } catch (final DockerRegistryAuthException
+            | DockerRegistryException
             | ImageNotFoundException
             | IncorrectDigestException
             | IOException
@@ -83,11 +85,12 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
     }
 
     protected void process(final File outFile)
-        throws DockerRegistryException,
-        ImageNotFoundException,
-        IncorrectDigestException,
-        IOException,
-        XMLStreamException 
+        throws DockerRegistryAuthException,
+            DockerRegistryException,
+            ImageNotFoundException,
+            IncorrectDigestException,
+            IOException,
+            XMLStreamException
     {
         final StringBuilder input = DockerVersionsHelper.readFile(outFile);
         final ModifiedPomXMLEventReader pomToUpdate = DockerVersionsHelper.createPomXmlEventReader(input, outFile.getAbsolutePath());
@@ -104,10 +107,11 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
     }
 
     protected abstract void update(final ModifiedPomXMLEventReader pom)
-        throws DockerRegistryException,
-        ImageNotFoundException,
-        IncorrectDigestException,
-        XMLStreamException;
+        throws DockerRegistryAuthException,
+            DockerRegistryException,
+            ImageNotFoundException,
+            IncorrectDigestException,
+            XMLStreamException;
 
     private Plugin getPlugin()
     {

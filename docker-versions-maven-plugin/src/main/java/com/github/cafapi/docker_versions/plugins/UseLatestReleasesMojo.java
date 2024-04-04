@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.cafapi.docker_versions.docker.auth.DockerRegistryAuthConfig;
+import com.github.cafapi.docker_versions.docker.auth.DockerRegistryAuthException;
 import com.github.cafapi.docker_versions.docker.auth.AuthConfigHelper;
 import com.github.cafapi.docker_versions.docker.client.DockerRegistryException;
 import com.github.cafapi.docker_versions.docker.client.DockerRegistryRestClient;
@@ -49,7 +50,8 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
 
     @Override
     protected void update(final ModifiedPomXMLEventReader pom)
-        throws DockerRegistryException,
+        throws DockerRegistryAuthException,
+            DockerRegistryException,
             ImageNotFoundException,
             IncorrectDigestException,
             XMLStreamException

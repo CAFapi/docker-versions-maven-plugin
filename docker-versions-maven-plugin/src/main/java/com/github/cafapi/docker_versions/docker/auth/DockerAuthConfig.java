@@ -34,7 +34,7 @@ final class DockerAuthConfig
     {
     }
 
-    public static DockerRegistryAuthConfig getRegistryAuthConfig(final String registry)
+    public static DockerRegistryAuthConfig getRegistryAuthConfig(final String registry) throws DockerRegistryAuthException
     {
         final ObjectNode dockerConfig;
         try {
@@ -54,11 +54,47 @@ final class DockerAuthConfig
             registryToLookup = Constants.DEFAULT_DOCKER_REGISTRY;
         }
 
+        DockerRegistryAuthConfig authConfig;
+        if (dockerConfig.has("credHelpers")) {
+            final JsonNode credHelpers = dockerConfig.get("credHelpers");
+            if (credHelpers.has(registryToLookup)) {
+                authConfig = extractAuthConfigFromCredentialsHelper(
+                    registryToLookup,
+                    credHelpers.get(registryToLookup).asText());
+                if (authConfig != null) {
+                    return authConfig;
+                }
+            }
+        }
+
+        if (dockerConfig.has("credsStore")) {
+            authConfig = extractAuthConfigFromCredentialsHelper(
+                registryToLookup,
+                dockerConfig.get("credsStore").asText());
+            if (authConfig != null) {
+                return authConfig;
+            }
+        }
+
         if (dockerConfig.has("auths")) {
             return extractAuthConfigFromDockerConfigAuths(registryToLookup, dockerConfig.get("auths"));
         }
 
         return null;
+    }
+
+    private static DockerRegistryAuthConfig extractAuthConfigFromCredentialsHelper(
+        final String registryToLookup,
+        final String credConfig)
+        throws DockerRegistryAuthException
+    {
+        final CredentialHelperClient credentialHelper = new CredentialHelperClient(credConfig);
+        try {
+            return credentialHelper.getAuthConfig(registryToLookup);
+        } catch (final IOException e) {
+            throw new DockerRegistryAuthException(
+                "Error getting the credentials for " + registryToLookup + " from the configured credential helper", e);
+        }
     }
 
     private static DockerRegistryAuthConfig extractAuthConfigFromDockerConfigAuths(

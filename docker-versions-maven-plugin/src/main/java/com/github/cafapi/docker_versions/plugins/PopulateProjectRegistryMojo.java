@@ -16,6 +16,7 @@
 package com.github.cafapi.docker_versions.plugins;
 
 import com.github.cafapi.docker_versions.docker.auth.AuthConfigHelper;
+import com.github.cafapi.docker_versions.docker.auth.DockerRegistryAuthException;
 import com.github.cafapi.docker_versions.docker.client.DockerRestClient;
 import com.github.cafapi.docker_versions.docker.client.ImageTaggingException;
 import com.github.dockerjava.api.command.InspectImageResponse;
@@ -43,6 +44,8 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
     {
         try {
             new ExecutionImpl().executeImpl();
+        } catch (final DockerRegistryAuthException ex) {
+            throw new MojoExecutionException("Unable to find auth configuration", ex);
         } catch (final ImagePullException ex) {
             throw new MojoExecutionException("Unable to pull and retag image", ex);
         } catch (final ImageTaggingException ex) {
@@ -64,7 +67,12 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             dockerClient = new DockerRestClient(httpConfiguration);
         }
 
-        public void executeImpl() throws ImagePullException, ImageTaggingException, IncorrectDigestException, InterruptedException
+        public void executeImpl()
+            throws DockerRegistryAuthException,
+                ImagePullException,
+                ImageTaggingException,
+                IncorrectDigestException,
+                InterruptedException
         {
             LOGGER.debug("PopulateProjectRegistryMojo with this configuration {}", imageManagement);
 
@@ -89,7 +97,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
         }
 
         private InspectImageResponse getImageToTag(final ImageMoniker imageMoniker)
-            throws ImagePullException, IncorrectDigestException, InterruptedException
+            throws DockerRegistryAuthException, ImagePullException, IncorrectDigestException, InterruptedException
         {
             if (!imageMoniker.hasDigest()) {
                 LOGGER.debug("Digest not specified for image '{}', pull it...", imageMoniker.getFullImageNameWithTag());
@@ -116,7 +124,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
         }
 
         private InspectImageResponse pullImage(final ImageMoniker imageMoniker)
-            throws ImagePullException, IncorrectDigestException, InterruptedException
+            throws DockerRegistryAuthException, ImagePullException, IncorrectDigestException, InterruptedException 
         {
             final AuthConfig authConfig = AuthConfigHelper.getAuthConfig(settings, imageMoniker.getRegistry());
 

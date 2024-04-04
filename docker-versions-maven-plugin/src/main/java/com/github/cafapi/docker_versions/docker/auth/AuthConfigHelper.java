@@ -32,6 +32,7 @@ public final class AuthConfigHelper
     public static AuthConfig getAuthConfig(
         final Settings settings,
         final String registry)
+        throws DockerRegistryAuthException
     {
         final DockerRegistryAuthConfig authConfig = getRegistryAuthConfig(settings, registry);
 
@@ -49,7 +50,10 @@ public final class AuthConfigHelper
         return dockerJavaClientAuthConfig;
     }
 
-    public static DockerRegistryAuthConfig getRegistryAuthConfig(final Settings settings, final String registry)
+    public static DockerRegistryAuthConfig getRegistryAuthConfig(
+        final Settings settings,
+        final String registry)
+        throws DockerRegistryAuthException
     {
         // Check maven settings stored typically in ~/.m2/settings.xml
         DockerRegistryAuthConfig ret = MavenSettingsAuthConfig.getRegistryAuthConfig(settings, registry);
