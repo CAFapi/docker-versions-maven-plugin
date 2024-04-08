@@ -316,7 +316,7 @@ public final class DockerRegistryRestClient
 
     private static boolean isDockerHub(final String registry)
     {
-        return registry.equals(Constants.DEFAULT_DOCKER_REGISTRY);
+        return registry.equals(Constants.DEFAULT_REGISTRY);
     }
 
     private static String getRegistryAuthToken(

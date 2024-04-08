@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 public final class Constants
 {
+    public static final String DEFAULT_REGISTRY = "docker.io";
     public static final String DEFAULT_DOCKER_REGISTRY = "https://index.docker.io/v1/";
     public static final String[] DEFAULT_REGISTRIES = new String[] { "docker.io", "index.docker.io", "registry.hub.docker.com" };
 

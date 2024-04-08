@@ -15,6 +15,7 @@
  */
 package com.github.cafapi.docker_versions.plugins;
 
+import com.github.cafapi.docker_versions.docker.auth.Constants;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.NameParser.HostnameReposName;
@@ -58,7 +59,7 @@ final class ImageMoniker
     {
         final String hostname = hostRepoName.hostname;
         return AuthConfig.DEFAULT_SERVER_ADDRESS.equals(hostname)
-            ? "docker.io"
+            ? Constants.DEFAULT_REGISTRY
             : hostname;
     }
 

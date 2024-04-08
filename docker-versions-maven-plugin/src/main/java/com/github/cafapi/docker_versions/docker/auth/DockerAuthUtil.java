@@ -26,18 +26,6 @@ final class DockerAuthUtil
     {
     }
 
-    public static String convertToHostname(final String registry)
-    {
-        String stripped = registry;
-        if (registry.startsWith("http://")) {
-            stripped = registry.substring(7);
-        } else if (registry.startsWith("https://")) {
-            stripped = registry.substring(8);
-        }
-        final String[] numParts = stripped.split("/", 2);
-        return numParts[0];
-    }
-
     public static String ensureRegistryHttpUrl(final String registry)
     {
         if (registry.toLowerCase().startsWith("http")) {

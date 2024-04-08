@@ -36,8 +36,7 @@ final class MavenSettingsAuthConfig
 
     public static DockerRegistryAuthConfig getRegistryAuthConfig(final Settings settings, final String registry)
     {
-        final String normalizedHostname = DockerAuthUtil.convertToHostname(registry);
-        return Optional.ofNullable(settings.getServer(normalizedHostname))
+        return Optional.ofNullable(settings.getServer(registry))
             .map(MavenSettingsAuthConfig::createRegistryAuthConfigFromServer)
             .orElse(null);
     }
