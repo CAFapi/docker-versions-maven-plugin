@@ -15,6 +15,7 @@
  */
 package com.github.cafapi.docker_versions.plugins;
 
+import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.NameParser.HostnameReposName;
 import org.apache.commons.lang3.StringUtils;
@@ -45,12 +46,20 @@ final class ImageMoniker
 
         final HostnameReposName hostRepoName = NameParser.resolveRepositoryName(repository);
 
-        this.registry = hostRepoName.hostname;
+        this.registry = getRegistry(hostRepoName);
         this.repositorySansRegistry = hostRepoName.reposName;
         this.tag = tag;
         this.digest = digest;
         this.fullImageNameWithTag = repository + ":" + tag;
         this.fullImageNameWithoutTag = repository;
+    }
+
+    private static String getRegistry(final HostnameReposName hostRepoName)
+    {
+        final String hostname = hostRepoName.hostname;
+        return AuthConfig.DEFAULT_SERVER_ADDRESS.equals(hostname)
+            ? "docker.io"
+            : hostname;
     }
 
     public String getRegistry()
