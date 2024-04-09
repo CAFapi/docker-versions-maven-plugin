@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -189,7 +190,7 @@ public final class DockerVersionsHelper
     public static StringBuilder readFile(final File inFile) throws IOException
     {
         LOGGER.debug("Reading pom : {}", inFile);
-        try (final Reader reader = new XmlStreamReader(inFile)) {
+        try (final Reader reader = XmlStreamReader.builder().setFile(inFile).setCharset(StandardCharsets.UTF_8).get()) {
             return new StringBuilder(IOUtil.toString(reader));
         }
     }
@@ -197,7 +198,7 @@ public final class DockerVersionsHelper
     public static void writeFile(final File outFile, final StringBuilder input) throws IOException
     {
         LOGGER.debug("Writing updated pom to: {}", outFile);
-        try (final Writer writer = new XmlStreamWriter(outFile)) {
+        try (final Writer writer = XmlStreamWriter.builder().setFile(outFile).setCharset(StandardCharsets.UTF_8).get()) {
             IOUtil.copy(input.toString(), writer);
         }
     }
