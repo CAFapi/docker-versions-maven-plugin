@@ -75,8 +75,14 @@
                             </image>
                         </imageManagement>
                         <ignoreVersions>
-                            <ignoreVersion><type>regex</type><version>(?i).*alpha.*</version></ignoreVersion>
-                            <ignoreVersion><type>regex</type><version>(?i).*beta.*</version></ignoreVersion>
+                            <ignoreVersion>
+                                <type>regex</type>
+                                <version>(?i).*alpha.*</version>
+                            </ignoreVersion>
+                            <ignoreVersion>
+                                <type>regex</type>
+                                <version>(?i).*beta.*</version>
+                            </ignoreVersion>
                         </ignoreVersions>
                     </configuration>
                 </plugin>

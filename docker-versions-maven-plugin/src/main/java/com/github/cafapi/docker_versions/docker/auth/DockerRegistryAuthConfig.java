@@ -15,8 +15,6 @@
  */
 package com.github.cafapi.docker_versions.docker.auth;
 
-import org.apache.commons.codec.binary.Base64;
-
 public final class DockerRegistryAuthConfig
 {
     private final String username;
@@ -24,7 +22,6 @@ public final class DockerRegistryAuthConfig
     private final String email;
     private final String auth;
     private final String identityToken;
-    private String registry;
 
     public DockerRegistryAuthConfig(
         final String username,
@@ -43,18 +40,6 @@ public final class DockerRegistryAuthConfig
     public DockerRegistryAuthConfig(final String username, final String password, final String email, final String auth)
     {
         this(username, password, email, auth, null);
-    }
-
-    public DockerRegistryAuthConfig(final String credentialsEncoded, final String email, final String identityToken)
-    {
-        // credentialsEncoded would be base64 encoded credentials in the form 'user:password'
-        final String credentials = new String(Base64.decodeBase64(credentialsEncoded));
-        final String[] parsedCreds = credentials.split(":", 2);
-        username = parsedCreds[0];
-        password = parsedCreds[1];
-        this.email = email;
-        this.identityToken = identityToken;
-        auth = credentialsEncoded;
     }
 
     public String getUsername()
@@ -82,17 +67,11 @@ public final class DockerRegistryAuthConfig
         return identityToken;
     }
 
-    public void setRegistry(final String registry)
-    {
-        this.registry = registry;
-    }
-
     @Override
     public String toString()
     {
         return "DockerRegistryAuthConfig [username=" + username
             + ", email=" + email
-            + ", registry=" + registry
             + "]";
     }
 }

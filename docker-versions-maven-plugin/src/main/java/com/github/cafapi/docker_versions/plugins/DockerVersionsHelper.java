@@ -61,7 +61,7 @@ public final class DockerVersionsHelper
         + "((/build(/pluginManagement)?/plugins/plugin))?"
         + "(/configuration/imageManagement/image)((/repository)|(/tag)|(/digest))");
 
-    private DockerVersionsHelper ()
+    private DockerVersionsHelper()
     {
     }
 
@@ -85,7 +85,7 @@ public final class DockerVersionsHelper
         boolean madeReplacement = false;
         boolean hasDigest = false;
 
-        String repository = null;
+        String repository;
         String newVersion = null;
         String newDigest = null;
 
@@ -104,8 +104,7 @@ public final class DockerVersionsHelper
                         final Optional<Xpp3Dom> repo = findRepository(repository, imagesConfig);
                         if (repo.isEmpty()) {
                             needsUpdate = false;
-                        }
-                        else {
+                        } else {
                             LOGGER.debug("Updating repo : {}", repository);
                             needsUpdate = true;
                             final Xpp3Dom repoToUpdate = repo.get();
@@ -134,8 +133,7 @@ public final class DockerVersionsHelper
                             pom.clearMark(1);
                             madeReplacement = true;
                         }
-                    }
-                    else if ("digest".equals(event.asEndElement().getName().getLocalPart())) {
+                    } else if ("digest".equals(event.asEndElement().getName().getLocalPart())) {
                         pom.mark(1);
                         if (pom.hasMark(0) && pom.hasMark(1)) {
                             pom.replaceBetween(0, 1, newDigest);
@@ -188,7 +186,8 @@ public final class DockerVersionsHelper
         }
     }
 
-    public static StringBuilder readFile(final File inFile) throws IOException {
+    public static StringBuilder readFile(final File inFile) throws IOException
+    {
         LOGGER.debug("Reading pom : {}", inFile);
         try (final Reader reader = new XmlStreamReader(inFile)) {
             return new StringBuilder(IOUtil.toString(reader));
@@ -202,5 +201,4 @@ public final class DockerVersionsHelper
             IOUtil.copy(input.toString(), writer);
         }
     }
-
 }
