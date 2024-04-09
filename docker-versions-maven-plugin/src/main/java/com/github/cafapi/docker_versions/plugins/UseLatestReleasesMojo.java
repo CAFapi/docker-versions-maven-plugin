@@ -183,6 +183,8 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
     ) throws DockerRegistryException
     {
         final List<String> latestVersionTags = new ArrayList<>();
+        final int tagsCount = tags.size();
+        int i = 0;
         for (final String tag : tags) {
             try {
                 final String tagDigest = DockerRegistryRestClient.getDigest(
@@ -191,6 +193,10 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
                 // Find all the ones that match the digest of the image with 'latest' tag
                 if (tagDigest.equals(digestOfLatestVersion)) {
                     latestVersionTags.add(tag);
+                }
+                i++;
+                if(i % 100 == 0 || i == tagsCount) {
+                    LOGGER.info("Processed {} of {} tags", i, tagsCount);
                 }
             } catch (final ImageNotFoundException e) {
                 LOGGER.debug("Cannot find image digest for {}:{}", imageMoniker.getRepositoryWithoutRegistry(), tag, e);
