@@ -259,6 +259,9 @@ public final class DockerRegistryRestClient
 
     private static String getBasicRegistryAuth(final DockerRegistryAuthConfig authConfig)
     {
+        if (authConfig.getIdentityToken() != null) {
+            return "Bearer " + authConfig.getIdentityToken();
+        }
         final String authString;
         if (authConfig.getAuth() != null) {
             authString = authConfig.getAuth();
