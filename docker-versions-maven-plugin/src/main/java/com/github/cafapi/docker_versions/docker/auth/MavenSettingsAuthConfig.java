@@ -19,7 +19,7 @@ import com.github.dockerjava.api.model.AuthConfig;
 import java.util.Optional;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
-import org.apache.maven.shared.utils.xml.Xpp3Dom;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 final class MavenSettingsAuthConfig
 {
