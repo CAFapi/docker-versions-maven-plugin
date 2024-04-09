@@ -32,14 +32,11 @@ import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpHead;
 import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpStatus;
-import org.apache.hc.core5.http.ParseException;
-import org.apache.hc.core5.http.ProtocolException;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.net.URIBuilder;
 import org.slf4j.Logger;
@@ -98,24 +95,29 @@ public final class DockerRegistryRestClient
         httpHead.addHeader(HttpHeaders.ACCEPT, "application/vnd.docker.distribution.manifest.v2+json");
 
         try (final CloseableHttpClient httpclient = HttpClients.custom().setRedirectStrategy(new DefaultRedirectStrategy()).build()) {
-            try (final CloseableHttpResponse response = httpclient.execute(httpHead)) {
+            final Result result = httpclient.execute(httpHead, response -> {
                 if (response.getCode() == HttpStatus.SC_OK) {
                     final Header digestHeader = response.getHeader("Docker-Content-Digest");
                     if (digestHeader == null) {
-                        throw new DockerRegistryException("Docker-Content-Digest header was not set in the response");
+                        return new Result(response.getCode(), null);
                     }
-                    return digestHeader.getValue();
+                    return new Result(response.getCode(), digestHeader.getValue());
                 }
-                if (response.getCode() == HttpStatus.SC_NOT_FOUND) {
-                    throw new ImageNotFoundException("Image not found in registry " + imageNameWithTag);
-                }
-            } catch (final IOException | ProtocolException e) {
-                throw new DockerRegistryException("Error getting digest", e);
+                return new Result(response.getCode(), null);
+            });
+
+            if (result.data != null) {
+                return result.data;
             }
+
+            if (result.status == HttpStatus.SC_NOT_FOUND) {
+                throw new ImageNotFoundException("Image not found in registry " + imageNameWithTag);
+            }
+
+            throw new DockerRegistryException("Docker-Content-Digest header was not set in the response");
         } catch (final IOException ex) {
             throw new DockerRegistryException("Error creating http client for getting digest", ex);
         }
-        throw new DockerRegistryException("Digest not found for " + imageNameWithTag);
     }
 
     public static List<String> getTags(
@@ -165,21 +167,24 @@ public final class DockerRegistryRestClient
         Optional.ofNullable(authToken).ifPresent(t -> httpGet.addHeader(HttpHeaders.AUTHORIZATION, t));
 
         try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
-            try (final CloseableHttpResponse response = httpclient.execute(httpGet)) {
+            final Result result = httpclient.execute(httpGet, response -> {
                 if (response.getCode() == HttpStatus.SC_OK) {
                     final HttpEntity entity = response.getEntity();
                     final String resultContent = EntityUtils.toString(entity);
                     final JsonParser jsonParser = new JsonFactory().createParser(resultContent);
                     allTags.addAll(MAPPER.readValue(jsonParser, TagsResponse.class).getTags());
-                    final String nextPageLink = response.getHeader("link") == null ? null : response.getHeader("link").getValue();
-                    return extractNextPageParams(nextPageLink);
+                    final String link = response.getHeader("link") == null
+                        ? null
+                        : response.getHeader("link").getValue();
+                    return new Result(response.getCode(), link);
                 }
-                throw new DockerRegistryException("Error getting tags: " + response.getCode());
-            } catch (final ParseException e) {
-                throw new DockerRegistryException("Error parsing get tags response", e);
-            } catch (final IOException | ProtocolException e) {
-                throw new DockerRegistryException("Error getting tags", e);
+                return new Result(response.getCode(), null);
+            });
+
+            if (result.status == HttpStatus.SC_OK) {
+                return extractNextPageParams(result.data);
             }
+            throw new DockerRegistryException("Error getting tags: " + result.status);
         } catch (final IOException ex) {
             throw new DockerRegistryException("Error creating http client for getting tags", ex);
         }
@@ -228,7 +233,7 @@ public final class DockerRegistryRestClient
             return SCHEMA_HTTPS;
         } catch (final SSLException e) {
             // Try "http"
-        } catch (final IOException | ProtocolException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("No response from the registry server.", e);
         }
 
@@ -238,19 +243,19 @@ public final class DockerRegistryRestClient
             if (code == HttpStatus.SC_OK) {
                 return SCHEMA_HTTP;
             }
-        } catch (final IOException | ProtocolException e) {
+        } catch (final IOException e) {
             LOGGER.debug("Error fnding schema for host {}", host, e);
         }
         throw new RuntimeException("No response from the registry Server.");
     }
 
     private static int getBase(final String endpoint)
-        throws IOException, ProtocolException
+        throws IOException
     {
         // lightweight version checks and to validate registry authentication
         final HttpGet httpGet = new HttpGet(String.format(BASE, endpoint) + "/");
         try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
-            try (final CloseableHttpResponse response = httpclient.execute(httpGet)) {
+            return httpclient.execute(httpGet, response -> {
                 final int code = response.getCode();
                 if (code == HttpStatus.SC_UNAUTHORIZED) {
                     final String authMethods = response.getHeader("Www-Authenticate") == null
@@ -261,7 +266,7 @@ public final class DockerRegistryRestClient
                     LOGGER.debug("Registry base url: {}, authentication methods: {}", endpoint, authMethods);
                 }
                 return code;
-            }
+            });
         }
     }
 
@@ -344,21 +349,36 @@ public final class DockerRegistryRestClient
         }
 
         try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
-            try (final CloseableHttpResponse response = httpclient.execute(httpGet)) {
+            final Result result = httpclient.execute(httpGet, response -> {
                 if (response.getCode() == HttpStatus.SC_OK) {
                     final HttpEntity entity = response.getEntity();
                     final String resultContent = EntityUtils.toString(entity);
                     final DockerAuthResponse resp = MAPPER.readValue(resultContent, DockerAuthResponse.class);
-                    return resp.getToken();
-                } else if (response.getCode() == HttpStatus.SC_UNAUTHORIZED) {
-                    throw new DockerRegistryException("Unauthorized access : " + authUrl);
+                    return new Result(response.getCode(), resp.getToken());
                 }
-            } catch (final IOException | ParseException e) {
-                throw new DockerRegistryException("Error making getToken request:" + e.getMessage());
+                return new Result(response.getCode(), null);
+            });
+            if (result.status == HttpStatus.SC_OK) {
+                return result.data;
+            } else if (result.status == HttpStatus.SC_UNAUTHORIZED) {
+                throw new DockerRegistryException("Unauthorized access : " + authUrl);
+            } else {
+                throw new DockerRegistryException("Error making getToken request, status:" + result.status);
             }
         } catch (final IOException ex) {
             throw new DockerRegistryException("Error creating http client for getting auth token", ex);
         }
-        throw new DockerRegistryException("Unauthorized access : " + authUrl);
+    }
+
+    static class Result
+    {
+        final int status;
+        final String data;
+
+        Result(final int status, final String data)
+        {
+            this.status = status;
+            this.data = data;
+        }
     }
 }
