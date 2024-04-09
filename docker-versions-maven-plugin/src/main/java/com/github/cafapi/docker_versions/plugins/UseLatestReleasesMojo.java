@@ -85,9 +85,10 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
             // The longest value would be the 'static' tag
             final String staticTag = getLatestStaticTag(authToken, registrySchema, imageMoniker, latestTag, latestDigest);
 
-            final Xpp3Dom imageToUpdate = DockerVersionsHelper.findRepository(imageMoniker.getRepositoryWithoutRegistry(), imagesConfig)
-                .orElseThrow(()
-                    -> new IllegalArgumentException("Image configuration not found '" + imageMoniker.getFullImageNameWithoutTag()));
+            final Xpp3Dom imageToUpdate =
+                DockerVersionsHelper.findRepository(imageMoniker.getRepositoryFromConfigSansRegistry(), imagesConfig)
+                    .orElseThrow(()
+                        -> new IllegalArgumentException("Image configuration not found '" + imageMoniker.getFullImageNameWithoutTag()));
 
             if (!tag.equals(staticTag)) {
                 // the latest image is different from the one that is currently configured

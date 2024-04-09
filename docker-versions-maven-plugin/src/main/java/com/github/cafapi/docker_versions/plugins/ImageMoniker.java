@@ -27,6 +27,8 @@ final class ImageMoniker
 
     private final String repositorySansRegistry;
 
+    private final String repositoryFromConfigSansRegistry;
+
     private final String tag;
 
     private final String digest;
@@ -48,6 +50,7 @@ final class ImageMoniker
         final HostnameReposName hostRepoName = NameParser.resolveRepositoryName(repository);
 
         this.registry = getRegistry(hostRepoName);
+        this.repositoryFromConfigSansRegistry = hostRepoName.reposName;
         this.repositorySansRegistry = getRepositorySansRegistry(hostRepoName);
         this.tag = tag;
         this.digest = digest;
@@ -74,6 +77,11 @@ final class ImageMoniker
     public String getRegistry()
     {
         return registry;
+    }
+
+    public String getRepositoryFromConfigSansRegistry()
+    {
+        return repositoryFromConfigSansRegistry;
     }
 
     public String getRepositoryWithoutRegistry()
