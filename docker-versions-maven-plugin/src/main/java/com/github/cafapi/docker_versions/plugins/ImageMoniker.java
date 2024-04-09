@@ -48,7 +48,7 @@ final class ImageMoniker
         final HostnameReposName hostRepoName = NameParser.resolveRepositoryName(repository);
 
         this.registry = getRegistry(hostRepoName);
-        this.repositorySansRegistry = hostRepoName.reposName;
+        this.repositorySansRegistry = getRepositorySansRegistry(hostRepoName);
         this.tag = tag;
         this.digest = digest;
         this.fullImageNameWithTag = repository + ":" + tag;
@@ -61,6 +61,14 @@ final class ImageMoniker
         return AuthConfig.DEFAULT_SERVER_ADDRESS.equals(hostname)
             ? Constants.DEFAULT_REGISTRY
             : hostname;
+    }
+
+    private static String getRepositorySansRegistry(final HostnameReposName hostRepoName)
+    {
+        final String repoName = hostRepoName.reposName;
+        return repoName.contains("/")
+            ? repoName
+            : "library/" + repoName;
     }
 
     public String getRegistry()
