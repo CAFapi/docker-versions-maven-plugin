@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.cafapi.docker_versions.plugins;
+package com.github.cafapi.docker_versions.docker.auth;
 
 import com.github.dockerjava.api.model.AuthConfig;
 import java.util.Optional;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
-import org.apache.maven.shared.utils.xml.Xpp3Dom;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 final class MavenSettingsAuthConfig
 {
@@ -29,20 +29,36 @@ final class MavenSettingsAuthConfig
 
     public static AuthConfig getAuthConfig(final Settings settings, final String registry)
     {
-        return Optional.ofNullable(settings.getServer(registry))
-            .map(MavenSettingsAuthConfig::createAuthConfigFromServer)
+        return Optional.ofNullable(getRegistryAuthConfig(settings, registry))
+            .map(regAuthConfig -> createAuthConfig(regAuthConfig))
             .orElse(null);
     }
 
-    private static AuthConfig createAuthConfigFromServer(final Server server)
+    public static DockerRegistryAuthConfig getRegistryAuthConfig(final Settings settings, final String registry)
+    {
+        return Optional.ofNullable(settings.getServer(registry))
+            .map(MavenSettingsAuthConfig::createRegistryAuthConfigFromServer)
+            .orElse(null);
+    }
+
+    private static AuthConfig createAuthConfig(final DockerRegistryAuthConfig regAuthConfig)
+    {
+        final AuthConfig authConfig = new AuthConfig();
+        authConfig.withUsername(regAuthConfig.getUsername())
+            .withPassword(regAuthConfig.getPassword())
+            .withEmail(regAuthConfig.getEmail())
+            .withAuth(regAuthConfig.getAuth());
+        return authConfig;
+    }
+
+    private static DockerRegistryAuthConfig createRegistryAuthConfigFromServer(final Server server)
     {
         final Object serverConfig = server.getConfiguration();
-        final AuthConfig authConfig = new AuthConfig();
-        authConfig.withUsername(server.getUsername())
-            .withPassword(server.getPassword())
-            .withEmail(getProperty(serverConfig, "email"))
-            .withAuth(getProperty(serverConfig, "auth"));
-        return authConfig;
+        return new DockerRegistryAuthConfig(
+            server.getUsername(),
+            server.getPassword(),
+            getProperty(serverConfig, Constants.AUTH_EMAIL),
+            getProperty(serverConfig, Constants.AUTH_AUTH));
     }
 
     private static String getProperty(final Object configuration, final String property)
