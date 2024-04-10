@@ -34,12 +34,19 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 final class CredentialHelperClient
 {
     // Refer: https://docs.docker.com/reference/cli/docker/login/
     private static final Logger LOGGER = LoggerFactory.getLogger(CredentialHelperClient.class);
+
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
     private static final String SECRET_KEY = "Secret";
     private static final String USERNAME_KEY = "Username";
@@ -61,7 +68,7 @@ final class CredentialHelperClient
         return credentialHelperName;
     }
 
-    public DockerRegistryAuthConfig getAuthConfig(final String registry) throws IOException
+    public DockerRegistryAuthConfig getAuthConfig(final String authKey) throws IOException
     {
         LOGGER.debug("Executing {} {}", getName(), "get");
         // create and start the process
@@ -73,7 +80,7 @@ final class CredentialHelperClient
             try (
                 final Writer outStreamWriter = new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8);
                 final BufferedWriter writer = new BufferedWriter(outStreamWriter)) {
-                writer.write(registry);
+                writer.write(authKey);
                 writer.newLine();
                 writer.flush();
             }
@@ -112,7 +119,7 @@ final class CredentialHelperClient
 
     private static DockerRegistryAuthConfig readAuthDetails(final String authDetails) throws IOException
     {
-        final JsonNode credentials = Constants.MAPPER.readTree(authDetails);
+        final JsonNode credentials = MAPPER.readTree(authDetails);
         if (!credentials.has(SECRET_KEY) || !credentials.has(USERNAME_KEY)) {
             return null;
         }

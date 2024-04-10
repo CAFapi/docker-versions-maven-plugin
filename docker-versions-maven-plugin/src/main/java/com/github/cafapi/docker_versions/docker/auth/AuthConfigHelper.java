@@ -51,6 +51,7 @@ public final class AuthConfigHelper
     }
 
     public static DockerRegistryAuthConfig getRegistryAuthConfig(final Settings settings, final String registry)
+        throws DockerRegistryAuthException
     {
         // Check maven settings stored typically in ~/.m2/settings.xml
         DockerRegistryAuthConfig ret = MavenSettingsAuthConfig.getRegistryAuthConfig(settings, registry);

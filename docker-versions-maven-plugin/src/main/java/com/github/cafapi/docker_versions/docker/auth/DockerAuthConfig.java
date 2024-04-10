@@ -53,6 +53,7 @@ final class DockerAuthConfig
         if (dockerConfig == null) {
             return null;
         }
+
         final String authKey;
         if (registry != null
             && Arrays.stream(Constants.DEFAULT_REGISTRIES).noneMatch(r -> r.equalsIgnoreCase(registry))) {
@@ -61,19 +62,17 @@ final class DockerAuthConfig
             authKey = Constants.DEFAULT_DOCKER_REGISTRY;
         }
 
-        DockerRegistryAuthConfig authConfig;
         final JsonNode credHelpers = dockerConfig.get("credHelpers");
         if (credHelpers != null) {
             final JsonNode credsStore = credHelpers.get(authKey);
             if (credsStore != null) {
-                authConfig = extractAuthConfigFromCredentialsHelper(authKey, credsStore.asText());
-                return authConfig;
+                return extractAuthConfigFromCredentialsHelper(authKey, credsStore.asText());
             }
         }
 
         final JsonNode credsStore = dockerConfig.get("credsStore");
         if (credsStore != null) {
-            authConfig = extractAuthConfigFromCredentialsHelper(authKey, credsStore.asText());
+            final DockerRegistryAuthConfig authConfig = extractAuthConfigFromCredentialsHelper(authKey, credsStore.asText());
             if (authConfig != null) {
                 return authConfig;
             }
