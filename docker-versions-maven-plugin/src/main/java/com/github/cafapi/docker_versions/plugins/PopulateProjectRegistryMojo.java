@@ -124,7 +124,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
         }
 
         private InspectImageResponse pullImage(final ImageMoniker imageMoniker)
-            throws DockerRegistryAuthException, ImagePullException, IncorrectDigestException, InterruptedException 
+            throws DockerRegistryAuthException, ImagePullException, IncorrectDigestException, InterruptedException
         {
             final AuthConfig authConfig = AuthConfigHelper.getAuthConfig(settings, imageMoniker.getRegistry());
 
