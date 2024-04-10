@@ -144,14 +144,14 @@ final class AuthHelperTest
               },
               "credsStore": "wincred"
         }
-        */
+         */
         final DockerRegistryAuthConfig authConfig = AuthConfigHelper.getRegistryAuthConfig(
             testSettings, "saas-docker-prerelease.artifactory.acme.net");
 
         Assertions.assertNotNull(authConfig, "Got authConfig FromCredStore");
 
         Assertions.assertTrue(authConfig.getUsername().equals("johndoe@acme.com"),
-            "Got username from auth config FromCredStore");
+                              "Got username from auth config FromCredStore");
 
         LOGGER.info("Got auth config FromCredStore: {} ", authConfig);
     }
@@ -175,17 +175,17 @@ final class AuthHelperTest
             }
         } catch (final SettingsParseException e) {
             LOGGER.error(
-                    "Non-parseable settings : {} {} {}", e.getMessage(),
-                    e.getLineNumber(),
-                    e.getColumnNumber(),
-                    e);
+                "Non-parseable settings : {} {} {}", e.getMessage(),
+                e.getLineNumber(),
+                e.getColumnNumber(),
+                e);
             return new Settings();
         } catch (final IOException e) {
             LOGGER.error(
-                    "Non-readable settings : {} {} {}", e.getMessage(),
-                    -1,
-                    -1,
-                    e);
+                "Non-readable settings : {} {} {}", e.getMessage(),
+                -1,
+                -1,
+                e);
             return new Settings();
         }
         return settings;

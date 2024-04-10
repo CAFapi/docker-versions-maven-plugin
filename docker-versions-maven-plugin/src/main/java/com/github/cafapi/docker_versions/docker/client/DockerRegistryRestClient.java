@@ -95,16 +95,18 @@ public final class DockerRegistryRestClient
         httpHead.addHeader(HttpHeaders.ACCEPT, "application/vnd.docker.distribution.manifest.v2+json");
 
         try (final CloseableHttpClient httpclient = HttpClients.custom().setRedirectStrategy(new DefaultRedirectStrategy()).build()) {
-            final Result result = httpclient.execute(httpHead, response -> {
-                if (response.getCode() == HttpStatus.SC_OK) {
-                    final Header digestHeader = response.getHeader("Docker-Content-Digest");
-                    if (digestHeader == null) {
-                        return new Result(response.getCode(), null);
+            final Result result = httpclient.execute(
+                httpHead, response -> {
+                    if (response.getCode() == HttpStatus.SC_OK) {
+                        final Header digestHeader = response.getHeader("Docker-Content-Digest");
+                        if (digestHeader == null) {
+                            return new Result(response.getCode(), null);
+                        }
+                        return new Result(response.getCode(), digestHeader.getValue());
                     }
-                    return new Result(response.getCode(), digestHeader.getValue());
+                    return new Result(response.getCode(), null);
                 }
-                return new Result(response.getCode(), null);
-            });
+            );
 
             if (result.data != null) {
                 return result.data;
@@ -167,23 +169,26 @@ public final class DockerRegistryRestClient
         Optional.ofNullable(authToken).ifPresent(t -> httpGet.addHeader(HttpHeaders.AUTHORIZATION, t));
 
         try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
-            final Result result = httpclient.execute(httpGet, response -> {
-                if (response.getCode() == HttpStatus.SC_OK) {
-                    final HttpEntity entity = response.getEntity();
-                    final String resultContent = EntityUtils.toString(entity);
-                    final JsonParser jsonParser = new JsonFactory().createParser(resultContent);
-                    allTags.addAll(MAPPER.readValue(jsonParser, TagsResponse.class).getTags());
-                    final String link = response.getHeader("link") == null
+            final Result result = httpclient.execute(
+                httpGet, response -> {
+                    if (response.getCode() == HttpStatus.SC_OK) {
+                        final HttpEntity entity = response.getEntity();
+                        final String resultContent = EntityUtils.toString(entity);
+                        final JsonParser jsonParser = new JsonFactory().createParser(resultContent);
+                        allTags.addAll(MAPPER.readValue(jsonParser, TagsResponse.class).getTags());
+                        final String link = response.getHeader("link") == null
                         ? null
                         : response.getHeader("link").getValue();
-                    return new Result(response.getCode(), link);
+                        return new Result(response.getCode(), link);
+                    }
+                    return new Result(response.getCode(), null);
                 }
-                return new Result(response.getCode(), null);
-            });
+            );
 
             if (result.status == HttpStatus.SC_OK) {
                 return extractNextPageParams(result.data);
             }
+
             throw new DockerRegistryException("Error getting tags: " + result.status);
         } catch (final IOException ex) {
             throw new DockerRegistryException("Error creating http client for getting tags", ex);
@@ -255,18 +260,20 @@ public final class DockerRegistryRestClient
         // lightweight version checks and to validate registry authentication
         final HttpGet httpGet = new HttpGet(String.format(BASE, endpoint) + "/");
         try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
-            return httpclient.execute(httpGet, response -> {
-                final int code = response.getCode();
-                if (code == HttpStatus.SC_UNAUTHORIZED) {
-                    final String authMethods = response.getHeader("Www-Authenticate") == null
+            return httpclient.execute(
+                httpGet, response -> {
+                    final int code = response.getCode();
+                    if (code == HttpStatus.SC_UNAUTHORIZED) {
+                        final String authMethods = response.getHeader("Www-Authenticate") == null
                         ? null
                         : response.getHeader("Www-Authenticate").getValue();
-                    // https://distribution.github.io/distribution/spec/api/
-                    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
-                    LOGGER.debug("Registry base url: {}, authentication methods: {}", endpoint, authMethods);
+                        // https://distribution.github.io/distribution/spec/api/
+                        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
+                        LOGGER.debug("Registry base url: {}, authentication methods: {}", endpoint, authMethods);
+                    }
+                    return code;
                 }
-                return code;
-            });
+            );
         }
     }
 
@@ -349,15 +356,18 @@ public final class DockerRegistryRestClient
         }
 
         try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
-            final Result result = httpclient.execute(httpGet, response -> {
-                if (response.getCode() == HttpStatus.SC_OK) {
-                    final HttpEntity entity = response.getEntity();
-                    final String resultContent = EntityUtils.toString(entity);
-                    final DockerAuthResponse resp = MAPPER.readValue(resultContent, DockerAuthResponse.class);
-                    return new Result(response.getCode(), resp.getToken());
+            final Result result = httpclient.execute(
+                httpGet, response -> {
+                    if (response.getCode() == HttpStatus.SC_OK) {
+                        final HttpEntity entity = response.getEntity();
+                        final String resultContent = EntityUtils.toString(entity);
+                        final DockerAuthResponse resp = MAPPER.readValue(resultContent, DockerAuthResponse.class);
+                        return new Result(response.getCode(), resp.getToken());
+                    }
+                    return new Result(response.getCode(), null);
                 }
-                return new Result(response.getCode(), null);
-            });
+            );
+
             if (result.status == HttpStatus.SC_OK) {
                 return result.data;
             } else if (result.status == HttpStatus.SC_UNAUTHORIZED) {

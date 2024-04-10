@@ -1,5 +1,5 @@
 {
-   "auths": {
+    "auths": {
         "saas-docker-release.artifactory.acme.net": {
             "username": "johndoe@acme.com",
             "password": "jdoespwd"
@@ -8,5 +8,5 @@
             "username": "johndoe@acme.com",
             "password": "jdoespwd"
         }
-   }
+    }
 }

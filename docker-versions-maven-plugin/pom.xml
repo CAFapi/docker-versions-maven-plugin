@@ -175,7 +175,8 @@
                 <configuration>
                     <environmentVariables>
                         <DOCKER_CONFIG>
-                            ${project.build.testResources[0].directory}/com/github/cafapi/docker_versions/plugins/test</DOCKER_CONFIG>
+                            ${project.build.testResources[0].directory}/com/github/cafapi/docker_versions/plugins/test
+                        </DOCKER_CONFIG>
                     </environmentVariables>
                 </configuration>
             </plugin>

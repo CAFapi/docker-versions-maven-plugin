@@ -85,8 +85,8 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
             // The longest value would be the 'static' tag
             final String staticTag = getLatestStaticTag(authToken, registrySchema, imageMoniker, latestTag, latestDigest);
 
-            final Xpp3Dom imageToUpdate =
-                DockerVersionsHelper.findRepository(imageMoniker.getRepositoryFromConfigSansRegistry(), imagesConfig)
+            final Xpp3Dom imageToUpdate
+                = DockerVersionsHelper.findRepository(imageMoniker.getRepositoryFromConfigSansRegistry(), imagesConfig)
                     .orElseThrow(()
                         -> new IllegalArgumentException("Image configuration not found '" + imageMoniker.getFullImageNameWithoutTag()));
 
@@ -195,7 +195,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
                     latestVersionTags.add(tag);
                 }
                 i++;
-                if(i % 100 == 0 || i == tagsCount) {
+                if (i % 100 == 0 || i == tagsCount) {
                     LOGGER.info("Processed {} of {} tags", i, tagsCount);
                 }
             } catch (final ImageNotFoundException e) {

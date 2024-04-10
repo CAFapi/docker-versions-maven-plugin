@@ -69,7 +69,7 @@ final class DockerRegistryRestClientTest
     }
 
     @Test
-    public void testGetTagsDockerHubNoCredentials() throws DockerRegistryException 
+    public void testGetTagsDockerHubNoCredentials() throws DockerRegistryException
     {
         final DockerRegistryAuthConfig authConfig = null;
         final String schema = "https";
@@ -82,5 +82,4 @@ final class DockerRegistryRestClientTest
 
         LOGGER.info("Got digest for {}/{} - {}", registry, repository, tags);
     }
-
 }
