@@ -69,10 +69,10 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
 
         public void executeImpl()
             throws DockerRegistryAuthException,
-                ImagePullException,
-                ImageTaggingException,
-                IncorrectDigestException,
-                InterruptedException
+                   ImagePullException,
+                   ImageTaggingException,
+                   IncorrectDigestException,
+                   InterruptedException
         {
             LOGGER.debug("PopulateProjectRegistryMojo with this configuration {}", imageManagement);
 
