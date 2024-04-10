@@ -50,10 +50,10 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
     @Override
     protected void update(final ModifiedPomXMLEventReader pom)
         throws DockerRegistryAuthException,
-            DockerRegistryException,
-            ImageNotFoundException,
-            IncorrectDigestException,
-            XMLStreamException
+               DockerRegistryException,
+               ImageNotFoundException,
+               IncorrectDigestException,
+               XMLStreamException
     {
         LOGGER.debug("UseLatestReleasesMojo with this configuration {}", pluginConfig);
         final List<Xpp3Dom> imagesToUpdate = new ArrayList<>();

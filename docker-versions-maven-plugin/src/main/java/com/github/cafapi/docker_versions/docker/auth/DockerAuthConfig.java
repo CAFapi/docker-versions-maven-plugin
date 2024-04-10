@@ -41,7 +41,8 @@ final class DockerAuthConfig
     {
     }
 
-    public static DockerRegistryAuthConfig getRegistryAuthConfig(final String registry) throws DockerRegistryAuthException
+    public static DockerRegistryAuthConfig getRegistryAuthConfig(final String registry)
+        throws DockerRegistryAuthException
     {
         final ObjectNode dockerConfig;
         try {

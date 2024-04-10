@@ -75,7 +75,8 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
             final File outFile = projectToUpdate.getFile();
 
             process(outFile);
-        } catch (final DockerRegistryException
+        } catch (final DockerRegistryAuthException
+                       | DockerRegistryException
                        | ImageNotFoundException
                        | IncorrectDigestException
                        | IOException
@@ -86,7 +87,7 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
 
     protected void process(final File outFile)
         throws DockerRegistryAuthException,
-            DockerRegistryException,
+               DockerRegistryException,
                ImageNotFoundException,
                IncorrectDigestException,
                IOException,
@@ -106,7 +107,8 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
     }
 
     protected abstract void update(final ModifiedPomXMLEventReader pom)
-        throws DockerRegistryException,
+        throws DockerRegistryAuthException,
+               DockerRegistryException,
                ImageNotFoundException,
                IncorrectDigestException,
                XMLStreamException;
