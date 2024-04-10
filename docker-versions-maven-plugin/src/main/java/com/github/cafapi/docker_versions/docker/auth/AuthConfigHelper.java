@@ -50,15 +50,11 @@ public final class AuthConfigHelper
         return dockerJavaClientAuthConfig;
     }
 
-    public static DockerRegistryAuthConfig getRegistryAuthConfig(
-        final Settings settings,
-        final String registry)
-        throws DockerRegistryAuthException
+    public static DockerRegistryAuthConfig getRegistryAuthConfig(final Settings settings, final String registry)
     {
         // Check maven settings stored typically in ~/.m2/settings.xml
         DockerRegistryAuthConfig ret = MavenSettingsAuthConfig.getRegistryAuthConfig(settings, registry);
         if (ret != null) {
-            ret.setRegistry(registry);
             LOGGER.debug("Found credentials in ~/.m2/settings.xml");
             return ret;
         }
@@ -66,12 +62,11 @@ public final class AuthConfigHelper
         // Check ~/.docker/config.json
         ret = DockerAuthConfig.getRegistryAuthConfig(registry);
         if (ret != null) {
-            ret.setRegistry(registry);
             LOGGER.debug("Found credentials in ~/.docker/config.json");
             return ret;
         }
 
-        LOGGER.info("Credentials not found");
+        LOGGER.info("Credentials not found for {}", registry);
         return null;
     }
 }

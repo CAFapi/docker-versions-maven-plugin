@@ -19,7 +19,7 @@ import com.github.dockerjava.api.model.AuthConfig;
 import java.util.Optional;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
-import org.apache.maven.shared.utils.xml.Xpp3Dom;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 final class MavenSettingsAuthConfig
 {
@@ -36,8 +36,7 @@ final class MavenSettingsAuthConfig
 
     public static DockerRegistryAuthConfig getRegistryAuthConfig(final Settings settings, final String registry)
     {
-        final String normalizedHostname = DockerAuthUtil.convertToHostname(registry);
-        return Optional.ofNullable(settings.getServer(normalizedHostname))
+        return Optional.ofNullable(settings.getServer(registry))
             .map(MavenSettingsAuthConfig::createRegistryAuthConfigFromServer)
             .orElse(null);
     }
@@ -73,5 +72,4 @@ final class MavenSettingsAuthConfig
         }
         return null;
     }
-
 }

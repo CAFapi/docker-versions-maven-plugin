@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,7 +62,7 @@ public final class DockerVersionsHelper
         + "((/build(/pluginManagement)?/plugins/plugin))?"
         + "(/configuration/imageManagement/image)((/repository)|(/tag)|(/digest))");
 
-    private DockerVersionsHelper ()
+    private DockerVersionsHelper()
     {
     }
 
@@ -85,7 +86,7 @@ public final class DockerVersionsHelper
         boolean madeReplacement = false;
         boolean hasDigest = false;
 
-        String repository = null;
+        String repository;
         String newVersion = null;
         String newDigest = null;
 
@@ -104,8 +105,7 @@ public final class DockerVersionsHelper
                         final Optional<Xpp3Dom> repo = findRepository(repository, imagesConfig);
                         if (repo.isEmpty()) {
                             needsUpdate = false;
-                        }
-                        else {
+                        } else {
                             LOGGER.debug("Updating repo : {}", repository);
                             needsUpdate = true;
                             final Xpp3Dom repoToUpdate = repo.get();
@@ -134,8 +134,7 @@ public final class DockerVersionsHelper
                             pom.clearMark(1);
                             madeReplacement = true;
                         }
-                    }
-                    else if ("digest".equals(event.asEndElement().getName().getLocalPart())) {
+                    } else if ("digest".equals(event.asEndElement().getName().getLocalPart())) {
                         pom.mark(1);
                         if (pom.hasMark(0) && pom.hasMark(1)) {
                             pom.replaceBetween(0, 1, newDigest);
@@ -188,9 +187,10 @@ public final class DockerVersionsHelper
         }
     }
 
-    public static StringBuilder readFile(final File inFile) throws IOException {
+    public static StringBuilder readFile(final File inFile) throws IOException
+    {
         LOGGER.debug("Reading pom : {}", inFile);
-        try (final Reader reader = new XmlStreamReader(inFile)) {
+        try (final Reader reader = XmlStreamReader.builder().setFile(inFile).setCharset(StandardCharsets.UTF_8).get()) {
             return new StringBuilder(IOUtil.toString(reader));
         }
     }
@@ -198,9 +198,8 @@ public final class DockerVersionsHelper
     public static void writeFile(final File outFile, final StringBuilder input) throws IOException
     {
         LOGGER.debug("Writing updated pom to: {}", outFile);
-        try (final Writer writer = new XmlStreamWriter(outFile)) {
+        try (final Writer writer = XmlStreamWriter.builder().setFile(outFile).setCharset(StandardCharsets.UTF_8).get()) {
             IOUtil.copy(input.toString(), writer);
         }
     }
-
 }

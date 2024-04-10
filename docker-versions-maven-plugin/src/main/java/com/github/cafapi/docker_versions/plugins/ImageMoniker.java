@@ -15,6 +15,8 @@
  */
 package com.github.cafapi.docker_versions.plugins;
 
+import com.github.cafapi.docker_versions.docker.auth.Constants;
+import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.NameParser.HostnameReposName;
 import org.apache.commons.lang3.StringUtils;
@@ -24,6 +26,8 @@ final class ImageMoniker
     private final String registry;
 
     private final String repositorySansRegistry;
+
+    private final String repositoryFromConfigSansRegistry;
 
     private final String tag;
 
@@ -45,17 +49,39 @@ final class ImageMoniker
 
         final HostnameReposName hostRepoName = NameParser.resolveRepositoryName(repository);
 
-        this.registry = hostRepoName.hostname;
-        this.repositorySansRegistry = hostRepoName.reposName;
+        this.registry = getRegistry(hostRepoName);
+        this.repositoryFromConfigSansRegistry = hostRepoName.reposName;
+        this.repositorySansRegistry = getRepositorySansRegistry(hostRepoName);
         this.tag = tag;
         this.digest = digest;
         this.fullImageNameWithTag = repository + ":" + tag;
         this.fullImageNameWithoutTag = repository;
     }
 
+    private static String getRegistry(final HostnameReposName hostRepoName)
+    {
+        final String hostname = hostRepoName.hostname;
+        return AuthConfig.DEFAULT_SERVER_ADDRESS.equals(hostname)
+            ? Constants.DEFAULT_REGISTRY
+            : hostname;
+    }
+
+    private static String getRepositorySansRegistry(final HostnameReposName hostRepoName)
+    {
+        final String repoName = hostRepoName.reposName;
+        return repoName.contains("/")
+            ? repoName
+            : "library/" + repoName;
+    }
+
     public String getRegistry()
     {
         return registry;
+    }
+
+    public String getRepositoryFromConfigSansRegistry()
+    {
+        return repositoryFromConfigSansRegistry;
     }
 
     public String getRepositoryWithoutRegistry()

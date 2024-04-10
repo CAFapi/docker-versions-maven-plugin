@@ -26,27 +26,6 @@ final class DockerAuthUtil
     {
     }
 
-    public static String convertToHostname(final String registry)
-    {
-        String stripped = registry;
-        if (registry.startsWith("http://")) {
-            stripped = registry.substring(7);
-        } else if (registry.startsWith("https://")) {
-            stripped = registry.substring(8);
-        }
-        final String[] numParts = stripped.split("/", 2);
-        return numParts[0];
-    }
-
-    public static String ensureRegistryHttpUrl(final String registry)
-    {
-        if (registry.toLowerCase().startsWith("http")) {
-            return registry;
-        }
-        // Default to https:// schema
-        return "https://" + registry;
-    }
-
     public static Reader getFileReaderFromDir(final File file)
     {
         if (file.exists() && file.length() != 0) {
@@ -66,10 +45,10 @@ final class DockerAuthUtil
 
     private static String getUserHome()
     {
-        String homeDir = System.getenv("HOME");
-        if (homeDir == null) {
-            homeDir = System.getProperty("user.home");
-        }
-        return homeDir;
+        final String homeDir = System.getenv("HOME");
+
+        return (homeDir == null)
+            ? System.getProperty("user.home")
+            : homeDir;
     }
 }

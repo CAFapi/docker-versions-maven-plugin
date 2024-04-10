@@ -20,8 +20,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 public final class IgnoreVersion
 {
     /**
-     * A version number or a regular expression for version numbers that should be
-     * ignored.
+     * A version number or a regular expression for version numbers that should be ignored.
      */
     @Parameter(required = true)
     private String version;
@@ -34,7 +33,7 @@ public final class IgnoreVersion
 
     /**
      * Get the type of ignore mechanism to use. Allowed values are 'exact' and 'regex'.
-     * 
+     *
      * @return String
      */
     public String getType()
@@ -43,9 +42,8 @@ public final class IgnoreVersion
     }
 
     /**
-     * Get a version number or a regular expression for version numbers that should
-     * be ignored.
-     * 
+     * Get a version number or a regular expression for version numbers that should be ignored.
+     *
      * @return String
      */
     public String getVersion()
@@ -54,9 +52,8 @@ public final class IgnoreVersion
     }
 
     /**
-     * Set the type of ignore mechanism to use. Allowed values are 'exact' and
-     * 'regex'.
-     * 
+     * Set the type of ignore mechanism to use. Allowed values are 'exact' and 'regex'.
+     *
      * @param type a type object.
      */
     public void setType(final String type)
@@ -65,9 +62,8 @@ public final class IgnoreVersion
     }
 
     /**
-     * Set a version number or a regular expression for version numbers that should
-     * be ignored.
-     * 
+     * Set a version number or a regular expression for version numbers that should be ignored.
+     *
      * @param version a version object.
      */
     public void setVersion(final String version)
@@ -80,5 +76,4 @@ public final class IgnoreVersion
     {
         return "IgnoreVersion [version=" + version + ", type=" + type + "]";
     }
-
 }

@@ -23,12 +23,19 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 final class DockerAuthConfig
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerAuthConfig.class);
+
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
     private DockerAuthConfig()
     {
@@ -46,62 +53,55 @@ final class DockerAuthConfig
         if (dockerConfig == null) {
             return null;
         }
-        final String registryToLookup;
+        final String authKey;
         if (registry != null
             && Arrays.stream(Constants.DEFAULT_REGISTRIES).noneMatch(r -> r.equalsIgnoreCase(registry))) {
-            registryToLookup = registry;
+            authKey = registry;
         } else {
-            registryToLookup = Constants.DEFAULT_DOCKER_REGISTRY;
+            authKey = Constants.DEFAULT_DOCKER_REGISTRY;
         }
 
         DockerRegistryAuthConfig authConfig;
-        if (dockerConfig.has("credHelpers")) {
-            final JsonNode credHelpers = dockerConfig.get("credHelpers");
-            if (credHelpers.has(registryToLookup)) {
-                authConfig = extractAuthConfigFromCredentialsHelper(
-                    registryToLookup,
-                    credHelpers.get(registryToLookup).asText());
-                if (authConfig != null) {
-                    return authConfig;
-                }
+        final JsonNode credHelpers = dockerConfig.get("credHelpers");
+        if (credHelpers != null) {
+            final JsonNode credsStore = credHelpers.get(authKey);
+            if (credsStore != null) {
+                authConfig = extractAuthConfigFromCredentialsHelper(authKey, credsStore.asText());
+                return authConfig;
             }
         }
 
-        if (dockerConfig.has("credsStore")) {
-            authConfig = extractAuthConfigFromCredentialsHelper(
-                registryToLookup,
-                dockerConfig.get("credsStore").asText());
+        final JsonNode credsStore = dockerConfig.get("credsStore");
+        if (credsStore != null) {
+            authConfig = extractAuthConfigFromCredentialsHelper(authKey, credsStore.asText());
             if (authConfig != null) {
                 return authConfig;
             }
         }
 
-        if (dockerConfig.has("auths")) {
-            return extractAuthConfigFromDockerConfigAuths(registryToLookup, dockerConfig.get("auths"));
+        final JsonNode auths = dockerConfig.get("auths");
+        if (auths == null) {
+            return null;
         }
 
-        return null;
+        return extractAuthConfigFromDockerConfigAuths(auths, authKey);
     }
 
-    private static DockerRegistryAuthConfig extractAuthConfigFromCredentialsHelper(
-        final String registryToLookup,
-        final String credConfig)
+    private static DockerRegistryAuthConfig extractAuthConfigFromCredentialsHelper(final String authKey, final String credentialsStore)
         throws DockerRegistryAuthException
     {
-        final CredentialHelperClient credentialHelper = new CredentialHelperClient(credConfig);
+        final CredentialHelperClient credentialHelper = new CredentialHelperClient(credentialsStore);
         try {
-            return credentialHelper.getAuthConfig(registryToLookup);
+            return credentialHelper.getAuthConfig(authKey);
         } catch (final IOException e) {
             throw new DockerRegistryAuthException(
-                "Error getting the credentials for " + registryToLookup + " from the configured credential helper", e);
+                "Error getting the credentials for " + authKey + " from the configured credential helper", e);
         }
     }
 
-    private static DockerRegistryAuthConfig extractAuthConfigFromDockerConfigAuths(
-        final String registryToLookup,
-        final JsonNode auths)
+    private static DockerRegistryAuthConfig extractAuthConfigFromDockerConfigAuths(final JsonNode auths, final String authKey)
     {
-        final JsonNode credentials = getCredentialsNode(auths, registryToLookup);
+        final JsonNode credentials = auths.get(authKey);
 
         if (credentials == null) {
             return null;
@@ -127,18 +127,6 @@ final class DockerAuthConfig
             : null;
     }
 
-    private static JsonNode getCredentialsNode(final JsonNode auths, final String registryToLookup)
-    {
-        if (auths.has(registryToLookup)) {
-            return auths.get(registryToLookup);
-        }
-        final String registryWithScheme = DockerAuthUtil.ensureRegistryHttpUrl(registryToLookup);
-        if (auths.has(registryWithScheme)) {
-            return auths.get(registryWithScheme);
-        }
-        return null;
-    }
-
     private static ObjectNode readDockerConfig() throws IOException
     {
         final String dockerConfig = System.getenv("DOCKER_CONFIG");
@@ -146,7 +134,6 @@ final class DockerAuthConfig
         final Reader reader = dockerConfig == null
             ? DockerAuthUtil.getFileReaderFromDir(new File(DockerAuthUtil.getHomeDir(), ".docker/config.json"))
             : DockerAuthUtil.getFileReaderFromDir(new File(dockerConfig, "config.json"));
-        return reader != null ? Constants.MAPPER.readValue(reader, ObjectNode.class) : null;
+        return reader != null ? MAPPER.readValue(reader, ObjectNode.class) : null;
     }
-
 }

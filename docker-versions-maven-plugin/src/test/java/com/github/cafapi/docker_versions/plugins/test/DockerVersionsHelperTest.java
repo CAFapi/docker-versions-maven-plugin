@@ -49,8 +49,8 @@ final class DockerVersionsHelperTest
     @Test
     public void testSetImageVersion() throws XMLStreamException, URISyntaxException, IOException
     {
-        final URL pomUrl = DockerVersionsHelperTest.class.getResource("/testPluginPom.xml");
-        final File pomFile =  new File(pomUrl.toURI());;
+        final URL pomUrl = DockerVersionsHelperTest.class.getResource("testPluginPom.xml");
+        final File pomFile = new File(pomUrl.toURI());
         final StringBuilder input = DockerVersionsHelper.readFile(pomFile);
         final ModifiedPomXMLEventReader pomToUpdate = DockerVersionsHelper.createPomXmlEventReader(input, pomFile.getAbsolutePath());
 
@@ -65,7 +65,7 @@ final class DockerVersionsHelperTest
             "sha256:7fb9a3aecb3e8112e61569f5510a602b9a18a5712c5e90497f77feaedec2c66c"));
 
         final Properties properties = new Properties();
-        properties.load(DockerVersionsHelperTest.class.getResourceAsStream("/test.properties"));
+        properties.load(DockerVersionsHelperTest.class.getResourceAsStream("test.properties"));
 
         final boolean madeReplacement = DockerVersionsHelper.setImageVersion(pomToUpdate, imagesConfig, properties);
 

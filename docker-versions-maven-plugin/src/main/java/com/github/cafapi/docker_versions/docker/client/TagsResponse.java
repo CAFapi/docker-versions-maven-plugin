@@ -22,19 +22,23 @@ final class TagsResponse
     private String name;
     private List<String> tags;
 
-    public String getName() {
+    public String getName()
+    {
         return name;
     }
 
-    public void setName(final String name) {
+    public void setName(final String name)
+    {
         this.name = name;
     }
 
-    public List<String> getTags() {
+    public List<String> getTags()
+    {
         return tags;
     }
 
-    public void setTags(final List<String> tags) {
+    public void setTags(final List<String> tags)
+    {
         this.tags = tags;
     }
 }

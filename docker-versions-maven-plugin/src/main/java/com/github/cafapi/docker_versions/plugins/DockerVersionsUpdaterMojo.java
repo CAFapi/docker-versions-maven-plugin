@@ -65,7 +65,8 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
     protected MavenProject projectToUpdate;
 
     @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
+    public void execute() throws MojoExecutionException, MojoFailureException
+    {
         try {
             dockerVersionsPlugin = getPlugin();
             pluginConfig = getPluginConfig(dockerVersionsPlugin);
@@ -74,12 +75,11 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
             final File outFile = projectToUpdate.getFile();
 
             process(outFile);
-        } catch (final DockerRegistryAuthException
-            | DockerRegistryException
-            | ImageNotFoundException
-            | IncorrectDigestException
-            | IOException
-            | XMLStreamException e) {
+        } catch (final DockerRegistryException
+                       | ImageNotFoundException
+                       | IncorrectDigestException
+                       | IOException
+                       | XMLStreamException e) {
             throw new MojoExecutionException("Error updating image versions", e);
         }
     }
@@ -87,10 +87,10 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
     protected void process(final File outFile)
         throws DockerRegistryAuthException,
             DockerRegistryException,
-            ImageNotFoundException,
-            IncorrectDigestException,
-            IOException,
-            XMLStreamException
+               ImageNotFoundException,
+               IncorrectDigestException,
+               IOException,
+               XMLStreamException
     {
         final StringBuilder input = DockerVersionsHelper.readFile(outFile);
         final ModifiedPomXMLEventReader pomToUpdate = DockerVersionsHelper.createPomXmlEventReader(input, outFile.getAbsolutePath());
@@ -100,18 +100,16 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
         if (pomToUpdate.isModified()) {
             DockerVersionsHelper.writeFile(outFile, input);
             LOGGER.info("Pom has been updated.");
-        }
-        else {
+        } else {
             LOGGER.info("Pom is unmodified.");
         }
     }
 
     protected abstract void update(final ModifiedPomXMLEventReader pom)
-        throws DockerRegistryAuthException,
-            DockerRegistryException,
-            ImageNotFoundException,
-            IncorrectDigestException,
-            XMLStreamException;
+        throws DockerRegistryException,
+               ImageNotFoundException,
+               IncorrectDigestException,
+               XMLStreamException;
 
     private Plugin getPlugin()
     {
@@ -172,13 +170,13 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
         if (configuration == null) {
             throw new IllegalArgumentException("'configuration' is not set in plugin");
         }
-        return new Xpp3Dom((Xpp3Dom)configuration);
+        return new Xpp3Dom((Xpp3Dom) configuration);
     }
 
     private static List<Xpp3Dom> getImagesConfig(final Xpp3Dom config)
     {
         final Xpp3Dom configImageManagement = config.getChild("imageManagement");
-        if (configImageManagement == null){
+        if (configImageManagement == null) {
             throw new IllegalArgumentException("'imageManagement' is not set in plugin configuration");
         }
 
