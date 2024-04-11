@@ -42,6 +42,7 @@ final class DockerAuthConfig
     }
 
     public static DockerRegistryAuthConfig getRegistryAuthConfig(final String registry)
+        throws DockerRegistryAuthException
     {
         final ObjectNode dockerConfig;
         try {
@@ -54,11 +55,6 @@ final class DockerAuthConfig
             return null;
         }
 
-        final JsonNode auths = dockerConfig.get("auths");
-        if (auths == null) {
-            return null;
-        }
-
         final String authKey;
         if (registry != null
             && Arrays.stream(Constants.DEFAULT_REGISTRIES).noneMatch(r -> r.equalsIgnoreCase(registry))) {
@@ -67,7 +63,40 @@ final class DockerAuthConfig
             authKey = Constants.DEFAULT_DOCKER_REGISTRY;
         }
 
+        final JsonNode credHelpers = dockerConfig.get("credHelpers");
+        if (credHelpers != null) {
+            final JsonNode credsStore = credHelpers.get(authKey);
+            if (credsStore != null) {
+                return extractAuthConfigFromCredentialsHelper(authKey, credsStore.asText());
+            }
+        }
+
+        final JsonNode credsStore = dockerConfig.get("credsStore");
+        if (credsStore != null) {
+            final DockerRegistryAuthConfig authConfig = extractAuthConfigFromCredentialsHelper(authKey, credsStore.asText());
+            if (authConfig != null) {
+                return authConfig;
+            }
+        }
+
+        final JsonNode auths = dockerConfig.get("auths");
+        if (auths == null) {
+            return null;
+        }
+
         return extractAuthConfigFromDockerConfigAuths(auths, authKey);
+    }
+
+    private static DockerRegistryAuthConfig extractAuthConfigFromCredentialsHelper(final String authKey, final String credentialsStore)
+        throws DockerRegistryAuthException
+    {
+        final CredentialHelperClient credentialHelper = new CredentialHelperClient(credentialsStore);
+        try {
+            return credentialHelper.getAuthConfig(authKey);
+        } catch (final IOException e) {
+            throw new DockerRegistryAuthException(
+                "Error getting the credentials for " + authKey + " from the configured credential helper", e);
+        }
     }
 
     private static DockerRegistryAuthConfig extractAuthConfigFromDockerConfigAuths(final JsonNode auths, final String authKey)
