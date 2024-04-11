@@ -19,7 +19,8 @@ public final class DockerRegistryAuthException extends Exception
 {
     private static final long serialVersionUID = -2855023647157597584L;
 
-    public DockerRegistryAuthException(final String message) {
+    public DockerRegistryAuthException(final String message)
+    {
         super(message);
     }
 
