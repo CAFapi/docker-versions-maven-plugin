@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +35,17 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DepopulateProjectRegistryMojo.class);
 
+    @Parameter(property = "skipDepopulateProjectRegistry", defaultValue = "false")
+    private boolean skipDepopulateProjectRegistry;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException
     {
+        if (skip || skipDepopulateProjectRegistry) {
+            LOGGER.info("Skipping depopulate project registry.");
+            return;
+        }
+
         try {
             new ExecutionImpl().executeImpl();
         } catch (final ImageTaggingException ex) {

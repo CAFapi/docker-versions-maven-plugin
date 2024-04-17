@@ -38,6 +38,9 @@ abstract class DockerVersionsMojo extends AbstractMojo
     @Parameter
     protected HttpConfiguration httpConfiguration;
 
+    @Parameter(property = "skip", defaultValue = "false")
+    protected boolean skip;
+
     protected String getProjectDockerRegister()
     {
         return project.getProperties().getProperty(

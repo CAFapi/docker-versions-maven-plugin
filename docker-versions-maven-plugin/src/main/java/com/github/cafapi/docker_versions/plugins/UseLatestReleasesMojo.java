@@ -26,6 +26,7 @@ import javax.xml.stream.XMLStreamException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.mojo.versions.rewriting.ModifiedPomXMLEventReader;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.slf4j.Logger;
@@ -46,6 +47,15 @@ import com.github.cafapi.docker_versions.docker.client.ImageNotFoundException;
 public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(UseLatestReleasesMojo.class);
+
+    @Parameter(property = "skipUseLatestReleases", defaultValue = "false")
+    private boolean skipUseLatestReleases;
+
+    @Override
+    protected boolean shouldSkip()
+    {
+        return skip || skipUseLatestReleases;
+    }
 
     @Override
     protected void update(final ModifiedPomXMLEventReader pom)
