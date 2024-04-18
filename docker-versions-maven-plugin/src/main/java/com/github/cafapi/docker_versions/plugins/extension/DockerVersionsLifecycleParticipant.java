@@ -51,9 +51,10 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
     @Override
     public void afterProjectsRead(final MavenSession session) throws MavenExecutionException
     {
-        final List<String> goalsForSession = session.getGoals();
+        final List<String> goalsForSession = session.getRequest().getGoals();
 
         if (goalsForSession == null || goalsForSession.isEmpty()) {
+            LOGGER.info("DockerVersionsLifecycleParticipant no goals in session.");
             return;
         }
 
