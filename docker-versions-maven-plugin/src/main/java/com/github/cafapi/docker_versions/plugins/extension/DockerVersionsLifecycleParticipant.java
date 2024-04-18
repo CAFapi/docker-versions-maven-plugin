@@ -38,12 +38,7 @@ import org.slf4j.LoggerFactory;
 @Named("docker-versions-maven-extension")
 @Singleton
 /**
- * This maven build extension adds executions to the docker-versions plugin.
- * This is a build extension which is loaded late.
- * Dynamic phases: https://cwiki.apache.org/confluence/display/MAVEN/Dynamic+phases
- * Refer: https://maven.apache.org/guides/mini/guide-using-extensions.html#build-extension
- * https://maven.apache.org/ref/4.0.0-alpha-13/xref/org/apache/maven/ReactorReader.html
- * https://github.com/sandipchitale/m2e-phasesandgoals/blob/master/org.eclipse.m2e.core.ui.phasesandgoals/src/org/eclipse/m2e/core/ui/internal/handlers/ShowPhasesAndGoalsHandler.java#L73
+ * This maven build extension adds the populate-project-registry and depopulate-project-registry goals to the maven session.
  */
 public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifecycleParticipant
 {
@@ -62,17 +57,18 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
             return;
         }
 
-        // Update the maven tasks to include the docker-versions goals at the beginning
-        // and end of execution
+        // Update the maven tasks to include the docker-versions goals at the start and end of execution
         goalsForSession.add(0, "docker-versions:populate-project-registry");
         goalsForSession.add("docker-versions:depopulate-project-registry");
-        LOGGER.info("Updated goals: {}", goalsForSession);
         session.getRequest().setGoals(goalsForSession);
+
+        LOGGER.info("DockerVersionsLifecycleParticipant updated goals: {}", goalsForSession);
 
         final List<MavenProject> projects = session.getProjects();
         getBuildOrder(projects);
 
-        // Skip the docker-versions goals for all projects other than the first and last
+        // Skip the docker-versions goals for all projects other than the first and last project to be built
+
         if (projects.size() == 1) {
             // Single project, so execute both populate and de-populate project registry goals
             return;
@@ -80,7 +76,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 
         final int projectsCount = projects.size();
 
-        final List<Entry<Plugin, Xpp3Dom>> pluginConfigs = new ArrayList<>();
+        final List<Entry<Plugin, Xpp3Dom>> pluginConfigsToUpdate = new ArrayList<>();
 
         for (int i = 0; i < projectsCount; i++) {
             final MavenProject project = projects.get(i);
@@ -101,38 +97,25 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
                 continue;
             }
 
-            pluginConfigs.add(Map.entry(plugin, pluginConfig));
+            pluginConfigsToUpdate.add(Map.entry(plugin, pluginConfig));
         }
 
-        if (pluginConfigs.isEmpty() || pluginConfigs.size() == 1) {
-            // No projects have plugin configured
-            // or just one has the plugin configured, so run both goals
+        if (pluginConfigsToUpdate.isEmpty() || pluginConfigsToUpdate.size() == 1) {
+            // Plugin is not configured in any project
+            // or just one project has the plugin configured, so run both goals
             return;
         }
 
-        final Entry<Plugin, Xpp3Dom> first = pluginConfigs.remove(0);
-        // First project, run populate goal, skip dePopulate goal
+        // For the first project, run populate goal, skip dePopulate goal
+        final Entry<Plugin, Xpp3Dom> first = pluginConfigsToUpdate.remove(0);
         setSkipMojoConfig(first.getKey(), first.getValue(), "skipDepopulateProjectRegistry");
 
-        // Last project, skip populate goal, run dePopulate goal
-        final Entry<Plugin, Xpp3Dom> last = pluginConfigs.remove(pluginConfigs.size() - 1);
+        // For the last project, skip populate goal, run dePopulate goal
+        final Entry<Plugin, Xpp3Dom> last = pluginConfigsToUpdate.remove(pluginConfigsToUpdate.size() - 1);
         setSkipMojoConfig(last.getKey(), last.getValue(), "skipPopulateProjectRegistry");
 
-        // Skip plugin execution entirely for all other projects
-        pluginConfigs.forEach(entry -> setSkipMojoConfig(entry.getKey(), entry.getValue(), "skip"));
-    }
-
-    private static void setSkipMojoConfig(final Plugin plugin, final Xpp3Dom config, final String name)
-    {
-        final Xpp3Dom skipPluginConfigParam = config.getChild("skip");
-        if (skipPluginConfigParam != null) {
-            config.removeChild(skipPluginConfigParam);
-        }
-
-        final Xpp3Dom configParam = new Xpp3Dom(name);
-        configParam.setValue("true");
-        config.addChild(configParam);
-        plugin.setConfiguration(config);
+        // For all other projects skip plugin execution entirely
+        pluginConfigsToUpdate.forEach(entry -> setSkipMojoConfig(entry.getKey(), entry.getValue(), "skip"));
     }
 
     private static Plugin getPlugin(final MavenProject project)
@@ -199,10 +182,23 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         return Arrays.asList(images);
     }
 
+    private static void setSkipMojoConfig(final Plugin plugin, final Xpp3Dom config, final String name)
+    {
+        final Xpp3Dom skipPluginConfigParam = config.getChild("skip");
+        if (skipPluginConfigParam != null) {
+            config.removeChild(skipPluginConfigParam);
+        }
+
+        final Xpp3Dom configParam = new Xpp3Dom(name);
+        configParam.setValue("true");
+        config.addChild(configParam);
+        plugin.setConfiguration(config);
+    }
+
     private static void getBuildOrder(final List<MavenProject> projects)
     {
         final int totalModules = projects.size();
-        LOGGER.debug("--- {} projects build order --- ", totalModules);
-        projects.stream().forEach(p -> LOGGER.debug("{}", p.getBuild().getFinalName()));
+        LOGGER.debug("--- Build order of {} projects --- ", totalModules);
+        projects.stream().forEach(p -> LOGGER.debug("{}", p.getName()));
     }
 }
