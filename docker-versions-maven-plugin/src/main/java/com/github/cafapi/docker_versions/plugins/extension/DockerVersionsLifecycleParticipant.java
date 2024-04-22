@@ -44,6 +44,8 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsLifecycleParticipant.class);
 
+    private static final List<String> IGNORE_TASKS_LIST = List.of("clean", "validate");
+
     private static final String DOCKER_VERSION_PLUGIN_GROUP_ID = "com.github.cafapi.plugins.docker.versions";
     private static final String DOCKER_VERSION_PLUGIN_ARTIFACT_ID = "docker-versions-maven-plugin";
     private static final String DOCKER_VERSION_PLUGIN_NAME = DOCKER_VERSION_PLUGIN_GROUP_ID + ":" + DOCKER_VERSION_PLUGIN_ARTIFACT_ID;
@@ -59,7 +61,12 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         }
 
         // Update the maven tasks to include the docker-versions goals at the start and end of execution
-        if (!goalsForSession.contains("docker-versions:populate-project-registry")) {
+
+        final boolean ignoreTagging = goalsForSession.contains("docker-versions:populate-project-registry")
+            || ((goalsForSession.size() == 1 && IGNORE_TASKS_LIST.contains(goalsForSession.get(0)))
+                || (goalsForSession.size() == 2 && goalsForSession.containsAll(IGNORE_TASKS_LIST)));
+
+        if (!ignoreTagging) {
             goalsForSession.add(0, "docker-versions:populate-project-registry");
         }
 
