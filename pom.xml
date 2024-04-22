@@ -25,6 +25,7 @@
         <groupId>com.github.cafapi</groupId>
         <artifactId>caf-common-parent</artifactId>
         <version>5.0.0-431</version>
+        <!--<version>5.1.0-SNAPSHOT</version>-->
     </parent>
 
     <groupId>com.github.cafapi.plugins.docker.versions</groupId>
@@ -66,6 +67,7 @@
     <properties>
         <copyrightYear>2024</copyrightYear>
         <copyrightNotice>Copyright ${copyrightYear} Open Text.</copyrightNotice>
+        <maven.compiler.release>11</maven.compiler.release>
     </properties>
 
     <modules>
