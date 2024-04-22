@@ -72,7 +72,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         LOGGER.info("DockerVersionsLifecycleParticipant updated goals: {}", goalsForSession);
 
         final List<MavenProject> projects = session.getProjects();
-        getBuildOrder(projects);
+        printBuildOrder(projects);
 
         // Skip the docker-versions goals for all projects other than the first and last project to be built
 
@@ -202,7 +202,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         plugin.setConfiguration(config);
     }
 
-    private static void getBuildOrder(final List<MavenProject> projects)
+    private static void printBuildOrder(final List<MavenProject> projects)
     {
         final int totalModules = projects.size();
         LOGGER.debug("--- Build order of {} projects --- ", totalModules);
