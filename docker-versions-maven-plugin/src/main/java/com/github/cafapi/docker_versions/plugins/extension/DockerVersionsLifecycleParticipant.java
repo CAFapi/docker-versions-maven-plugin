@@ -59,8 +59,14 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         }
 
         // Update the maven tasks to include the docker-versions goals at the start and end of execution
-        goalsForSession.add(0, "docker-versions:populate-project-registry");
-        goalsForSession.add("docker-versions:depopulate-project-registry");
+        if (!goalsForSession.contains("docker-versions:populate-project-registry")) {
+            goalsForSession.add(0, "docker-versions:populate-project-registry");
+        }
+
+        if (!goalsForSession.contains("docker-versions:depopulate-project-registry")) {
+            goalsForSession.add("docker-versions:depopulate-project-registry");
+        }
+
         session.getRequest().setGoals(goalsForSession);
 
         LOGGER.info("DockerVersionsLifecycleParticipant updated goals: {}", goalsForSession);
