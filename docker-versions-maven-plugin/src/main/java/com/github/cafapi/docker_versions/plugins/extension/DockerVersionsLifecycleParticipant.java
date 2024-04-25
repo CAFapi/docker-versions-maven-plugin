@@ -44,7 +44,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsLifecycleParticipant.class);
 
-    private static final List<String> IGNORE_TASKS_LIST = List.of("clean", "validate");
+    private static final List<String> IGNORE_TASKS_LIST = List.of("clean", "validate", "docker-versions:depopulate-project-registry");
 
     private static final String DOCKER_VERSION_PLUGIN_GROUP_ID = "com.github.cafapi.plugins.docker.versions";
     private static final String DOCKER_VERSION_PLUGIN_ARTIFACT_ID = "docker-versions-maven-plugin";
@@ -62,11 +62,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 
         // Update the maven tasks to include the docker-versions goals at the start and end of execution
 
-        final boolean ignoreTagging = goalsForSession.contains("docker-versions:populate-project-registry")
-            || ((goalsForSession.size() == 1 && IGNORE_TASKS_LIST.contains(goalsForSession.get(0)))
-                || (goalsForSession.size() == 2 && goalsForSession.containsAll(IGNORE_TASKS_LIST)));
-
-        if (!ignoreTagging) {
+        if (!ignoreTagging(goalsForSession)) {
             goalsForSession.add(0, "docker-versions:populate-project-registry");
         }
 
@@ -130,6 +126,12 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 
         // For all other projects skip plugin execution entirely
         pluginConfigsToUpdate.forEach(entry -> setSkipMojoConfig(entry.getKey(), entry.getValue(), "skip"));
+    }
+
+    public static boolean ignoreTagging(final List<String> tasks)
+    {
+        return tasks.contains("docker-versions:populate-project-registry")
+            || (tasks.size() <= 3 && tasks.stream().filter(t -> !IGNORE_TASKS_LIST.contains(t)).count() == 0);
     }
 
     private static Plugin getPlugin(final MavenProject project)
