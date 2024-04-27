@@ -44,7 +44,8 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsLifecycleParticipant.class);
 
-    private static final List<String> IGNORE_TASKS_LIST = List.of("clean", "validate", "docker-versions:depopulate-project-registry");
+    private static final List<String> IGNORE_TAG_TASKS_LIST = List.of("clean", "validate", "docker-versions:depopulate-project-registry");
+    private static final List<String> IGNORE_UNTAG_TASKS_LIST = List.of("validate", "docker-versions:populate-project-registry");
 
     private static final String DOCKER_VERSION_PLUGIN_GROUP_ID = "com.github.cafapi.plugins.docker.versions";
     private static final String DOCKER_VERSION_PLUGIN_ARTIFACT_ID = "docker-versions-maven-plugin";
@@ -66,7 +67,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
             goalsForSession.add(0, "docker-versions:populate-project-registry");
         }
 
-        if (!goalsForSession.contains("docker-versions:depopulate-project-registry")) {
+        if (!ignoreUnTagging(goalsForSession)) {
             goalsForSession.add("docker-versions:depopulate-project-registry");
         }
 
@@ -131,7 +132,13 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
     public static boolean ignoreTagging(final List<String> tasks)
     {
         return tasks.contains("docker-versions:populate-project-registry")
-            || (tasks.size() <= 3 && tasks.stream().filter(t -> !IGNORE_TASKS_LIST.contains(t)).count() == 0);
+            || (tasks.size() <= 3 && tasks.stream().filter(t -> !IGNORE_TAG_TASKS_LIST.contains(t)).count() == 0);
+    }
+
+    public static boolean ignoreUnTagging(final List<String> tasks)
+    {
+        return tasks.contains("docker-versions:depopulate-project-registry")
+            || (tasks.size() <= 2 && tasks.stream().filter(t -> !IGNORE_UNTAG_TASKS_LIST.contains(t)).count() == 0);
     }
 
     private static Plugin getPlugin(final MavenProject project)
