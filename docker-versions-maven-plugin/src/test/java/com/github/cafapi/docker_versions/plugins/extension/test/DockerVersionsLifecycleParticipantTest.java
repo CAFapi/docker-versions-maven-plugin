@@ -37,56 +37,56 @@ final class DockerVersionsLifecycleParticipantTest
     }
 
     @Test
-    public void testIgnoreTagging() throws Exception
+    public void testDisableAutoPopulate() throws Exception
     {
-        verifyIgnoreTagging(List.of("clean"));
-        verifyIgnoreTagging(List.of("validate"));
-        verifyIgnoreTagging(List.of("docker-versions:populate-project-registry"));
+        verifyDisableAutoPopulate(List.of("clean"));
+        verifyDisableAutoPopulate(List.of("validate"));
+        verifyDisableAutoPopulate(List.of("docker-versions:populate-project-registry"));
 
-        verifyIgnoreTagging(List.of("clean", "validate"));
-        verifyIgnoreTagging(List.of("docker-versions:populate-project-registry", "validate"));
-        verifyIgnoreTagging(List.of("clean", "docker-versions:populate-project-registry"));
-        verifyIgnoreTagging(List.of("docker-versions:populate-project-registry", "verify"));
+        verifyDisableAutoPopulate(List.of("clean", "validate"));
+        verifyDisableAutoPopulate(List.of("docker-versions:populate-project-registry", "validate"));
+        verifyDisableAutoPopulate(List.of("clean", "docker-versions:populate-project-registry"));
+        verifyDisableAutoPopulate(List.of("docker-versions:populate-project-registry", "verify"));
 
-        verifyIgnoreTagging(List.of("clean", "validate", "docker-versions:populate-project-registry"));
-        verifyIgnoreTagging(List.of("clean", "validate", "docker-versions:depopulate-project-registry"));
-        verifyIgnoreTagging(List.of("clean", "docker-versions:depopulate-project-registry"));
-        verifyIgnoreTagging(List.of("docker-versions:depopulate-project-registry"));
-        verifyIgnoreTagging(List.of("validate", "docker-versions:depopulate-project-registry"));
+        verifyDisableAutoPopulate(List.of("clean", "validate", "docker-versions:populate-project-registry"));
+        verifyDisableAutoPopulate(List.of("clean", "validate", "docker-versions:depopulate-project-registry"));
+        verifyDisableAutoPopulate(List.of("clean", "docker-versions:depopulate-project-registry"));
+        verifyDisableAutoPopulate(List.of("docker-versions:depopulate-project-registry"));
+        verifyDisableAutoPopulate(List.of("validate", "docker-versions:depopulate-project-registry"));
 
-        verifyIgnoreTagging(List.of("clean", "validate", "docker-versions:populate-project-registry", "install"));
-        verifyIgnoreTagging(List.of("clean", "docker-versions:populate-project-registry", "verify"));
-        verifyIgnoreTagging(List.of("validate", "docker-versions:populate-project-registry", "site"));
+        verifyDisableAutoPopulate(List.of("clean", "validate", "docker-versions:populate-project-registry", "install"));
+        verifyDisableAutoPopulate(List.of("clean", "docker-versions:populate-project-registry", "verify"));
+        verifyDisableAutoPopulate(List.of("validate", "docker-versions:populate-project-registry", "site"));
 
-        verifyIgnoreTagging(List.of("docker-versions:populate-project-registry", "install", "deploy"));
+        verifyDisableAutoPopulate(List.of("docker-versions:populate-project-registry", "install", "deploy"));
     }
 
     @Test
-    public void testIncludeTagging() throws Exception
+    public void testEnableAutoPopulate() throws Exception
     {
-        verifyIncludeTagging(List.of("verify"));
+        verifyEnableAutoPopulate(List.of("verify"));
 
-        verifyIncludeTagging(List.of("install", "deploy"));
-        verifyIncludeTagging(List.of("clean", "deploy"));
-        verifyIncludeTagging(List.of("validate", "install"));
+        verifyEnableAutoPopulate(List.of("install", "deploy"));
+        verifyEnableAutoPopulate(List.of("clean", "deploy"));
+        verifyEnableAutoPopulate(List.of("validate", "install"));
 
-        verifyIncludeTagging(List.of("clean", "install", "docker-versions:depopulate-project-registry"));
+        verifyEnableAutoPopulate(List.of("clean", "install", "docker-versions:depopulate-project-registry"));
 
-        verifyIncludeTagging(List.of("compile", "install", "deploy"));
-        verifyIncludeTagging(List.of("clean", "validate", "site"));
-        verifyIncludeTagging(List.of("clean", "install", "deploy"));
-        verifyIncludeTagging(List.of("validate", "install", "deploy"));
+        verifyEnableAutoPopulate(List.of("compile", "install", "deploy"));
+        verifyEnableAutoPopulate(List.of("clean", "validate", "site"));
+        verifyEnableAutoPopulate(List.of("clean", "install", "deploy"));
+        verifyEnableAutoPopulate(List.of("validate", "install", "deploy"));
     }
 
-    private static void verifyIgnoreTagging(final List<String> tasks)
+    private static void verifyDisableAutoPopulate(final List<String> tasks)
     {
-        LOGGER.info("Ignore tagging for tasks in session: {}...", tasks);
-        Assertions.assertTrue( DockerVersionsLifecycleParticipant.ignoreTagging(tasks) );
+        LOGGER.info("Ignore populate goal for tasks in session: {}...", tasks);
+        Assertions.assertFalse(DockerVersionsLifecycleParticipant.shouldAddPopulateGoal(tasks));
     }
 
-    private static void verifyIncludeTagging(final List<String> tasks)
+    private static void verifyEnableAutoPopulate(final List<String> tasks)
     {
-        LOGGER.info("Include tagging for tasks in session: {}...", tasks);
-        Assertions.assertFalse( DockerVersionsLifecycleParticipant.ignoreTagging(tasks) );
+        LOGGER.info("Include populate goal for tasks in session: {}...", tasks);
+        Assertions.assertTrue(DockerVersionsLifecycleParticipant.shouldAddPopulateGoal(tasks));
     }
 }

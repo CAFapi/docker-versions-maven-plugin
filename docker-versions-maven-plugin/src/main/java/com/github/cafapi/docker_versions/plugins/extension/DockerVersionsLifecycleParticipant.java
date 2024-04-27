@@ -35,17 +35,17 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Named("docker-versions-maven-extension")
-@Singleton
 /**
  * This maven build extension adds the populate-project-registry and depopulate-project-registry goals to the maven session.
  */
+@Named("docker-versions-maven-extension")
+@Singleton
 public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifecycleParticipant
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsLifecycleParticipant.class);
 
-    private static final List<String> IGNORE_TAG_TASKS_LIST = List.of("clean", "validate", "docker-versions:depopulate-project-registry");
-    private static final List<String> IGNORE_UNTAG_TASKS_LIST = List.of("validate", "docker-versions:populate-project-registry");
+    private static final List<String> AVOID_AUTO_POPULATE_TASKS = List.of("clean", "validate", "docker-versions:depopulate-project-registry");
+    private static final List<String> AVOID_AUTO_DEPOPULATE_TASKS = List.of("validate", "docker-versions:populate-project-registry");
 
     private static final String DOCKER_VERSION_PLUGIN_GROUP_ID = "com.github.cafapi.plugins.docker.versions";
     private static final String DOCKER_VERSION_PLUGIN_ARTIFACT_ID = "docker-versions-maven-plugin";
@@ -62,12 +62,11 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         }
 
         // Update the maven tasks to include the docker-versions goals at the start and end of execution
-
-        if (!ignoreTagging(goalsForSession)) {
+        if (shouldAddPopulateGoal(goalsForSession)) {
             goalsForSession.add(0, "docker-versions:populate-project-registry");
         }
 
-        if (!ignoreUnTagging(goalsForSession)) {
+        if (shouldAddDepopulateGoal(goalsForSession)) {
             goalsForSession.add("docker-versions:depopulate-project-registry");
         }
 
@@ -78,14 +77,13 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         final List<MavenProject> projects = session.getProjects();
         printBuildOrder(projects);
 
-        // Skip the docker-versions goals for all projects other than the first and last project to be built
+        final int projectsCount = projects.size();
 
-        if (projects.size() == 1) {
+        // Skip the docker-versions goals for all projects other than the first and last project to be built
+        if (projectsCount == 1) {
             // Single project, so execute both populate and de-populate project registry goals
             return;
         }
-
-        final int projectsCount = projects.size();
 
         final List<Entry<Plugin, Xpp3Dom>> pluginConfigsToUpdate = new ArrayList<>();
 
@@ -93,7 +91,6 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
             final MavenProject project = projects.get(i);
 
             final Plugin plugin = getPlugin(project);
-
             if (plugin == null) {
                 continue;
             }
@@ -129,16 +126,16 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         pluginConfigsToUpdate.forEach(entry -> setSkipMojoConfig(entry.getKey(), entry.getValue(), "skip"));
     }
 
-    public static boolean ignoreTagging(final List<String> tasks)
+    public static boolean shouldAddPopulateGoal(final List<String> tasks)
     {
-        return tasks.contains("docker-versions:populate-project-registry")
-            || (tasks.size() <= 3 && tasks.stream().filter(t -> !IGNORE_TAG_TASKS_LIST.contains(t)).count() == 0);
+        return !tasks.contains("docker-versions:populate-project-registry")
+            && tasks.stream().anyMatch(t -> !AVOID_AUTO_POPULATE_TASKS.contains(t));
     }
 
-    public static boolean ignoreUnTagging(final List<String> tasks)
+    public static boolean shouldAddDepopulateGoal(final List<String> tasks)
     {
-        return tasks.contains("docker-versions:depopulate-project-registry")
-            || (tasks.size() <= 2 && tasks.stream().filter(t -> !IGNORE_UNTAG_TASKS_LIST.contains(t)).count() == 0);
+        return !tasks.contains("docker-versions:depopulate-project-registry")
+            && tasks.stream().anyMatch(t -> !AVOID_AUTO_DEPOPULATE_TASKS.contains(t));
     }
 
     private static Plugin getPlugin(final MavenProject project)
@@ -183,10 +180,10 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
     private static Xpp3Dom getPluginConfig(final Plugin plugin)
     {
         final Object configuration = plugin.getConfiguration();
-
         if (configuration == null) {
             return null;
         }
+
         return new Xpp3Dom((Xpp3Dom) configuration);
     }
 
