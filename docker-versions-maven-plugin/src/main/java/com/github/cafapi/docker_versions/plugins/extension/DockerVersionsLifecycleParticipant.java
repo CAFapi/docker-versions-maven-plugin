@@ -72,7 +72,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 
         session.getRequest().setGoals(goalsForSession);
 
-        LOGGER.info("DockerVersionsLifecycleParticipant updated goals: {}", goalsForSession);
+        LOGGER.info("Adding docker version management goals... {}", goalsForSession);
 
         final List<MavenProject> projects = session.getProjects();
         printBuildOrder(projects);
@@ -114,11 +114,11 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
             return;
         }
 
-        // For the first project, run populate goal, skip dePopulate goal
+        // For the first project, run populate goal, skip depopulate goal
         final Entry<Plugin, Xpp3Dom> first = pluginConfigsToUpdate.remove(0);
         setSkipMojoConfig(first.getKey(), first.getValue(), "skipDepopulateProjectRegistry");
 
-        // For the last project, skip populate goal, run dePopulate goal
+        // For the last project, skip populate goal, run depopulate goal
         final Entry<Plugin, Xpp3Dom> last = pluginConfigsToUpdate.remove(pluginConfigsToUpdate.size() - 1);
         setSkipMojoConfig(last.getKey(), last.getValue(), "skipPopulateProjectRegistry");
 
