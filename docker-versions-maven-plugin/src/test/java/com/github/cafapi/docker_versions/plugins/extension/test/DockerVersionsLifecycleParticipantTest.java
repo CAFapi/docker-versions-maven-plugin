@@ -54,11 +54,18 @@ final class DockerVersionsLifecycleParticipantTest
         verifyDisableAutoPopulate(List.of("docker-versions:depopulate-project-registry"));
         verifyDisableAutoPopulate(List.of("validate", "docker-versions:depopulate-project-registry"));
 
+        verifyDisableAutoPopulate(List.of("clean", "validate", "site"));
         verifyDisableAutoPopulate(List.of("clean", "validate", "docker-versions:populate-project-registry", "install"));
         verifyDisableAutoPopulate(List.of("clean", "docker-versions:populate-project-registry", "verify"));
         verifyDisableAutoPopulate(List.of("validate", "docker-versions:populate-project-registry", "site"));
 
         verifyDisableAutoPopulate(List.of("docker-versions:populate-project-registry", "install", "deploy"));
+
+        verifyDisableAutoPopulate(List.of("clean", "compiler:compile"));
+        verifyDisableAutoPopulate(List.of("compiler:help"));
+        verifyDisableAutoPopulate(List.of("site"));
+        verifyDisableAutoPopulate(List.of("docker:build", "docker:start", "docker:stop"));
+        verifyDisableAutoPopulate(List.of("docker-versions:populate-project-registry", "docker:build", "verify"));
     }
 
     @Test
@@ -73,7 +80,7 @@ final class DockerVersionsLifecycleParticipantTest
         verifyEnableAutoPopulate(List.of("clean", "install", "docker-versions:depopulate-project-registry"));
 
         verifyEnableAutoPopulate(List.of("compile", "install", "deploy"));
-        verifyEnableAutoPopulate(List.of("clean", "validate", "site"));
+
         verifyEnableAutoPopulate(List.of("clean", "install", "deploy"));
         verifyEnableAutoPopulate(List.of("validate", "install", "deploy"));
     }
@@ -81,12 +88,14 @@ final class DockerVersionsLifecycleParticipantTest
     private static void verifyDisableAutoPopulate(final List<String> tasks)
     {
         LOGGER.info("Ignore populate goal for tasks in session: {}...", tasks);
-        Assertions.assertFalse(DockerVersionsLifecycleParticipant.shouldAddPopulateGoal(tasks));
+        final List<String> phasesInSession = DockerVersionsLifecycleParticipant.getPhases(tasks);
+        Assertions.assertFalse(DockerVersionsLifecycleParticipant.shouldAddPopulateGoal(tasks, phasesInSession));
     }
 
     private static void verifyEnableAutoPopulate(final List<String> tasks)
     {
         LOGGER.info("Include populate goal for tasks in session: {}...", tasks);
-        Assertions.assertTrue(DockerVersionsLifecycleParticipant.shouldAddPopulateGoal(tasks));
+        final List<String> phasesInSession = DockerVersionsLifecycleParticipant.getPhases(tasks);
+        Assertions.assertTrue(DockerVersionsLifecycleParticipant.shouldAddPopulateGoal(tasks, phasesInSession));
     }
 }

@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -44,9 +45,8 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsLifecycleParticipant.class);
 
-    private static final List<String> AVOID_AUTO_POPULATE_TASKS
-        = List.of("clean", "validate", "docker-versions:depopulate-project-registry");
-    private static final List<String> AVOID_AUTO_DEPOPULATE_TASKS = List.of("validate", "docker-versions:populate-project-registry");
+    private static final List<String> AVOID_AUTO_POPULATE_PHASES = List.of("clean", "validate", "site");
+    private static final List<String> AVOID_AUTO_DEPOPULATE_PHASES = List.of("validate", "site");
 
     private static final String DOCKER_VERSION_PLUGIN_GROUP_ID = "com.github.cafapi.plugins.docker.versions";
     private static final String DOCKER_VERSION_PLUGIN_ARTIFACT_ID = "docker-versions-maven-plugin";
@@ -59,25 +59,39 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
             return;
         }
 
-        final List<String> goalsForSession = session.getRequest().getGoals();
+        final List<String> sessionTasks = session.getRequest().getGoals();
 
-        if (goalsForSession == null || goalsForSession.isEmpty()) {
-            LOGGER.info("DockerVersionsLifecycleParticipant no goals in session.");
+        if (sessionTasks == null || sessionTasks.isEmpty()) {
+            LOGGER.debug("DockerVersionsLifecycleParticipant no tasks in session.");
             return;
         }
 
+        final List<String> phasesInSession = getPhases(sessionTasks);
+        if (phasesInSession.size() == 0) {
+            // Maven invoked with only goals, no lifecycle phases
+            LOGGER.debug("DockerVersionsLifecycleParticipant no phases in session.");
+            return;
+        }
+
+        final List<String> updatedSessionTasks = new ArrayList<>(sessionTasks);
+
         // Update the maven tasks to include the docker-versions goals at the start and end of execution
-        if (shouldAddPopulateGoal(goalsForSession)) {
-            goalsForSession.add(0, "docker-versions:populate-project-registry");
+        if (shouldAddPopulateGoal(sessionTasks, phasesInSession)) {
+            updatedSessionTasks.add(0, "docker-versions:populate-project-registry");
         }
 
-        if (shouldAddDepopulateGoal(goalsForSession)) {
-            goalsForSession.add("docker-versions:depopulate-project-registry");
+        if (shouldAddDepopulateGoal(sessionTasks, phasesInSession)) {
+            updatedSessionTasks.add("docker-versions:depopulate-project-registry");
         }
 
-        session.getRequest().setGoals(goalsForSession);
+        if (updatedSessionTasks.size() == sessionTasks.size()) {
+            // No need to run the docker-version goals
+            return;
+        }
 
-        LOGGER.info("Adding docker version management goals... {}", goalsForSession);
+        session.getRequest().setGoals(updatedSessionTasks);
+
+        LOGGER.info("Adding docker version management goals... {}", updatedSessionTasks);
 
         final List<MavenProject> projects = session.getProjects();
         printBuildOrder(projects);
@@ -131,16 +145,21 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         pluginConfigsToUpdate.forEach(entry -> setSkipMojoConfig(entry.getKey(), entry.getValue(), "skip"));
     }
 
-    public static boolean shouldAddPopulateGoal(final List<String> tasks)
+    public static boolean shouldAddPopulateGoal(final List<String> tasks, final List<String> phases)
     {
         return !tasks.contains("docker-versions:populate-project-registry")
-            && tasks.stream().anyMatch(t -> !AVOID_AUTO_POPULATE_TASKS.contains(t));
+            && phases.stream().anyMatch(p -> !AVOID_AUTO_POPULATE_PHASES.contains(p));
     }
 
-    public static boolean shouldAddDepopulateGoal(final List<String> tasks)
+    public static boolean shouldAddDepopulateGoal(final List<String> tasks, final List<String> phases)
     {
         return !tasks.contains("docker-versions:depopulate-project-registry")
-            && tasks.stream().anyMatch(t -> !AVOID_AUTO_DEPOPULATE_TASKS.contains(t));
+            && phases.stream().anyMatch(p -> !AVOID_AUTO_DEPOPULATE_PHASES.contains(p));
+    }
+
+    public static List<String> getPhases(final List<String> tasks)
+    {
+        return tasks.stream().filter(t -> !t.contains(":")).collect(Collectors.toList());
     }
 
     private static Plugin getPlugin(final MavenProject project)
