@@ -345,7 +345,7 @@ The execution of the plugin or any of its gaols can be skipped by setting any th
     <artifactId>docker-versions-maven-plugin</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <configuration>
-        <docker.versions.skip>true</docker.versions.skip>
+        <skip>true</skip>
         <imageManagement>
             <image>
                 <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
