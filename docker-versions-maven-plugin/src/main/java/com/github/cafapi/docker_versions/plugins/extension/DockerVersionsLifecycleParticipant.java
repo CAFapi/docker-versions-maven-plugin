@@ -55,7 +55,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
     @Override
     public void afterProjectsRead(final MavenSession session) throws MavenExecutionException
     {
-        if (Boolean.getBoolean(session.getUserProperties().getProperty("skipAutoPopulateRegistry", "false"))) {
+        if (Boolean.parseBoolean(session.getUserProperties().getProperty("skipAutoPopulateRegistry"))) {
             return;
         }
 
