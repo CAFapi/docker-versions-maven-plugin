@@ -55,6 +55,10 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
     @Override
     public void afterProjectsRead(final MavenSession session) throws MavenExecutionException
     {
+        if (Boolean.getBoolean(session.getUserProperties().getProperty("skipAutoPopulateRegistry", "false"))) {
+            return;
+        }
+
         final List<String> goalsForSession = session.getRequest().getGoals();
 
         if (goalsForSession == null || goalsForSession.isEmpty()) {
