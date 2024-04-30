@@ -133,7 +133,63 @@ This goal will not replace versions of images which use SNAPSHOT versions.
 
 Displays the help information.
 
-### For example:
+## Adding the plugin to the build
+
+Using this plugin in build could be done in multiple ways.
+
+The simplest way is to add the plugin to the build with required configuration and define it as an `extension`. The plugin's `LifecycleParticipant` will automatically include the `populate-project-registry` and `depopulate-project-registry` based on the maven phases and goals being executed. 
+
+Example snippet of plugin entry with minimal required configuration in build:
+
+```
+<plugin>
+    <groupId>com.github.cafapi.plugins.docker.versions</groupId>
+    <artifactId>docker-versions-maven-plugin</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <extensions>true</extensions>
+    <configuration>
+        <imageManagement>
+            <image>
+                <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
+                <tag>1.4.3</tag>
+                <digest>sha256:76b8dc916151a5ede5d8a999fcd0929ca3cd3a9dbf67085f65ef98b5279359f4</digest>
+            </image>
+            <image>
+                <repository>${dockerHubPublic}/cafapi/prereleases</repository>
+                <targetRepository>cafapi/opensuse-tomcat-jre17</targetRepository>
+                <tag>opensuse-tomcat-jre17-2.0.0-SNAPSHOT</tag>
+            </image>
+        </imageManagement>
+    </configuration>
+</plugin>
+```
+
+Example log output when plugin kicks in:
+
+- mvn clean install
+```
+[INFO] Scanning for projects...  
+[INFO] Adding docker version management goals... [docker-versions:populate-project-registry, clean, install, docker-versions:depopulate-project-registry]  
+...  
+```
+
+The plugin's lifecycle participant added both `populate-project-registry` and `depopulate-project-registry` to be executed at the start and end of the mvn execution respectively.
+
+- mvn validate site
+```
+[INFO] Scanning for projects...  
+[INFO] Inspecting build with total of 20 modules...  
+[INFO] Installing Nexus Staging features:  
+[INFO]   ... total of 20 executions of maven-deploy-plugin replaced with nexus-staging-maven-plugin  
+[INFO] ------------------------------------------------------------------------  
+[INFO] Reactor Build Order:  
+...  
+```
+In this case the plugin's lifecycle participant did not add any `docker-version` goals to the mvn execution, since the tasks being executed do not need them.
+
+
+In case more control is needed, it can be manually configured with the executions bound to required phases.
+
 ```
 <plugin>
     <groupId>com.github.cafapi.plugins.docker.versions</groupId>
@@ -274,3 +330,40 @@ The following configuration options can be set via environment variables.
     <td> Determines the timeout for an image pull to be completed, default is 300s. </td>
   </tr>
 </table>
+
+### Skipping goals
+The execution of the plugin or any of its gaols can be skipped by setting any these properties to `true`:
+
+- `docker.versions.skip`: Skips executution of the plugin entirely
+- `skipPopulateProjectRegistry`: Skips executution of the `populate-project-registry` goal
+- `skipDepopulateProjectRegistry`: Skips executution of the `depopulate-project-registry` goal
+- `skipUseLatestReleases`: Skips executution of the `use-latest-releases` goal
+
+```
+<plugin>
+    <groupId>com.github.cafapi.plugins.docker.versions</groupId>
+    <artifactId>docker-versions-maven-plugin</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <configuration>
+        <docker.versions.skip>true</docker.versions.skip>
+        <imageManagement>
+            <image>
+                <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
+                <tag>1.4.3</tag>
+                <digest>sha256:76b8dc916151a5ede5d8a999fcd0929ca3cd3a9dbf67085f65ef98b5279359f4</digest>
+            </image>
+            <image>
+                <repository>${dockerHubPublic}/cafapi/prereleases</repository>
+                <targetRepository>cafapi/opensuse-tomcat-jre17</targetRepository>
+                <tag>opensuse-tomcat-jre17-2.0.0-SNAPSHOT</tag>
+            </image>
+        </imageManagement>
+    </configuration>
+</plugin>
+```
+
+You can also skip the goal execution via the command line by setting the skip configuration, like:
+
+```
+mvn install -DskipDepopulateProjectRegistry=true
+```
