@@ -44,7 +44,8 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsLifecycleParticipant.class);
 
-    private static final List<String> AVOID_AUTO_POPULATE_TASKS = List.of("clean", "validate", "docker-versions:depopulate-project-registry");
+    private static final List<String> AVOID_AUTO_POPULATE_TASKS
+        = List.of("clean", "validate", "docker-versions:depopulate-project-registry");
     private static final List<String> AVOID_AUTO_DEPOPULATE_TASKS = List.of("validate", "docker-versions:populate-project-registry");
 
     private static final String DOCKER_VERSION_PLUGIN_GROUP_ID = "com.github.cafapi.plugins.docker.versions";
