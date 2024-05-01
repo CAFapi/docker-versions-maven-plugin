@@ -332,7 +332,7 @@ The following configuration options can be set via environment variables.
 </table>
 
 ### Skipping goals
-The execution of the plugin or any of its gaols can be skipped by setting any these properties to `true`:
+The execution of the plugin or any of its goals can be skipped by setting any these properties to `true`:
 
 - `docker.versions.skip`: Skips executution of the plugin entirely
 - `skipPopulateProjectRegistry`: Skips executution of the `populate-project-registry` goal
@@ -362,8 +362,8 @@ The execution of the plugin or any of its gaols can be skipped by setting any th
 </plugin>
 ```
 
-You can also skip the goal execution via the command line by setting the skip configuration, like:
+You can also skip the goal execution via the command line by setting the skip configuration property:
 
 ```
-mvn install -DskipDepopulateProjectRegistry=true
+mvn -DskipDepopulateProjectRegistry=true install
 ```

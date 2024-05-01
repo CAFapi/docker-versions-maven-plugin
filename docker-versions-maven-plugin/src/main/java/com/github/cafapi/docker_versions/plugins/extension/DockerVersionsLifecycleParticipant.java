@@ -67,7 +67,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         }
 
         final List<String> phasesInSession = getPhases(sessionTasks);
-        if (phasesInSession.size() == 0) {
+        if (phasesInSession.isEmpty()) {
             // Maven invoked with only goals, no lifecycle phases
             LOGGER.debug("DockerVersionsLifecycleParticipant no phases in session.");
             return;
