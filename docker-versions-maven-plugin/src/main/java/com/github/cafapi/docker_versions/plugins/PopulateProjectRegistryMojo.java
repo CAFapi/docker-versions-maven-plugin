@@ -17,10 +17,10 @@ package com.github.cafapi.docker_versions.plugins;
 
 import com.github.cafapi.docker_versions.docker.auth.AuthConfigHelper;
 import com.github.cafapi.docker_versions.docker.auth.DockerRegistryAuthException;
-import com.github.cafapi.docker_versions.docker.client.DockerRestClient;
 import com.github.cafapi.docker_versions.docker.client.ImageTaggingException;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.model.AuthConfig;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -53,6 +53,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
 
         try {
             new ExecutionImpl().executeImpl();
+            incrementPopulateRegistryCount();
         } catch (final DockerRegistryAuthException ex) {
             throw new MojoExecutionException("Unable to find auth configuration", ex);
         } catch (final ImagePullException ex) {
@@ -64,18 +65,13 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
         } catch (final InterruptedException ex) {
             LOGGER.warn("Plugin interrupted", ex);
             Thread.currentThread().interrupt();
+        } catch (final IOException ex) {
+            throw new MojoExecutionException("Unable to record populate registry execution count", ex);
         }
     }
 
     private final class ExecutionImpl
     {
-        final DockerRestClient dockerClient;
-
-        public ExecutionImpl()
-        {
-            dockerClient = new DockerRestClient(httpConfiguration);
-        }
-
         public void executeImpl()
             throws DockerRegistryAuthException,
                    ImagePullException,
