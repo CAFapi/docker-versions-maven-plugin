@@ -61,6 +61,12 @@ public final class DockerRestClient
         this.dockerClient = DockerClientImpl.getInstance(config, httpClient);
     }
 
+    public String getDockerSystemId()
+    {
+        LOGGER.debug("Getting docker system id...");
+        return dockerClient.infoCmd().exec().getId();
+    }
+
     public Optional<InspectImageResponse> findImage(final String imageName)
     {
         LOGGER.debug("Checking if image '{}' is present...", imageName);

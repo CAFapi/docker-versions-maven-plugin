@@ -15,9 +15,9 @@
  */
 package com.github.cafapi.docker_versions.plugins;
 
-import com.github.cafapi.docker_versions.docker.client.DockerRestClient;
 import com.github.cafapi.docker_versions.docker.client.ImageTaggingException;
 import com.github.dockerjava.api.command.InspectImageResponse;
+import java.io.IOException;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -47,21 +47,27 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
         }
 
         try {
+            // if count is 1 then depopulate & delete file
+            // else  decrement count (don't depopulate)
+            final int populateGoalCount = getPopulateRegistryCount();
+
+            if (populateGoalCount > 1) {
+                writePopulateRegistryCount(populateGoalCount - 1);
+                return;
+            }
             new ExecutionImpl().executeImpl();
+            if (populateGoalCount == 1) {
+                removePopulateGoalCounter();
+            }
         } catch (final ImageTaggingException ex) {
             throw new MojoExecutionException("Unable to untag image", ex);
+        } catch (final IOException ex) {
+            throw new MojoExecutionException("Unable to update populate registry execution count", ex);
         }
     }
 
     private final class ExecutionImpl
     {
-        final DockerRestClient dockerClient;
-
-        public ExecutionImpl()
-        {
-            dockerClient = new DockerRestClient(httpConfiguration);
-        }
-
         public void executeImpl() throws ImageTaggingException
         {
             LOGGER.debug("DepopulateProjectRegistry with this configuration {}", imageManagement);
