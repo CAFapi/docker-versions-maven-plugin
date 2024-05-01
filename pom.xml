@@ -66,6 +66,7 @@
     <properties>
         <copyrightYear>2024</copyrightYear>
         <copyrightNotice>Copyright ${copyrightYear} Open Text.</copyrightNotice>
+        <maven.compiler.release>11</maven.compiler.release>
     </properties>
 
     <modules>
@@ -124,6 +125,11 @@
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>2.16.1</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.inject</groupId>
+                <artifactId>javax.inject</artifactId>
+                <version>1</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -213,4 +219,15 @@
         </dependencies>
     </dependencyManagement>
 
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.eclipse.sisu</groupId>
+                    <artifactId>sisu-maven-plugin</artifactId>
+                    <version>0.3.5</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>

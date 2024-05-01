@@ -67,6 +67,11 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException
     {
+        if (shouldSkip()) {
+            LOGGER.info("Skipping docker versions update.");
+            return;
+        }
+
         try {
             dockerVersionsPlugin = getPlugin();
             pluginConfig = getPluginConfig(dockerVersionsPlugin);
@@ -104,6 +109,11 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
         } else {
             LOGGER.info("Pom is unmodified.");
         }
+    }
+
+    protected boolean shouldSkip()
+    {
+        return skip;
     }
 
     protected abstract void update(final ModifiedPomXMLEventReader pom)
