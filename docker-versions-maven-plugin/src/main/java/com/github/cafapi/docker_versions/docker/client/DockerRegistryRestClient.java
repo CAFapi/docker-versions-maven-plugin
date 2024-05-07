@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -140,7 +141,11 @@ public final class DockerRegistryRestClient
 
         try {
             // Make the initial request to get the first page of tags
-            Map<String, String> nextPageParams = appendPageOfTagsToSpecifiedList(url, Map.of("n", "1000"), authToken, allTags);
+            Map<String, String> nextPageParams = appendPageOfTagsToSpecifiedList(
+                url,
+                Collections.singletonMap("n", "1000"),
+                authToken,
+                allTags);
 
             // Fetch subsequent pages until there are no more tags
             while (nextPageParams != null) {

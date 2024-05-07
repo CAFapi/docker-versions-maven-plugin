@@ -15,6 +15,7 @@
  */
 package com.github.cafapi.docker_versions.plugins.extension.test;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
@@ -39,50 +40,50 @@ final class DockerVersionsLifecycleParticipantTest
     @Test
     public void testDisableAutoPopulate() throws Exception
     {
-        verifyDisableAutoPopulate(List.of("clean"));
-        verifyDisableAutoPopulate(List.of("validate"));
-        verifyDisableAutoPopulate(List.of("docker-versions:populate-project-registry"));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"clean"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"validate"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"docker-versions:populate-project-registry"}));
 
-        verifyDisableAutoPopulate(List.of("clean", "validate"));
-        verifyDisableAutoPopulate(List.of("docker-versions:populate-project-registry", "validate"));
-        verifyDisableAutoPopulate(List.of("clean", "docker-versions:populate-project-registry"));
-        verifyDisableAutoPopulate(List.of("docker-versions:populate-project-registry", "verify"));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"clean", "validate"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"docker-versions:populate-project-registry", "validate"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"clean", "docker-versions:populate-project-registry"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"docker-versions:populate-project-registry", "verify"}));
 
-        verifyDisableAutoPopulate(List.of("clean", "validate", "docker-versions:populate-project-registry"));
-        verifyDisableAutoPopulate(List.of("clean", "validate", "docker-versions:depopulate-project-registry"));
-        verifyDisableAutoPopulate(List.of("clean", "docker-versions:depopulate-project-registry"));
-        verifyDisableAutoPopulate(List.of("docker-versions:depopulate-project-registry"));
-        verifyDisableAutoPopulate(List.of("validate", "docker-versions:depopulate-project-registry"));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"clean", "validate", "docker-versions:populate-project-registry"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"clean", "validate", "docker-versions:depopulate-project-registry"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"clean", "docker-versions:depopulate-project-registry"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"docker-versions:depopulate-project-registry"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"validate", "docker-versions:depopulate-project-registry"}));
 
-        verifyDisableAutoPopulate(List.of("clean", "validate", "site"));
-        verifyDisableAutoPopulate(List.of("clean", "validate", "docker-versions:populate-project-registry", "install"));
-        verifyDisableAutoPopulate(List.of("clean", "docker-versions:populate-project-registry", "verify"));
-        verifyDisableAutoPopulate(List.of("validate", "docker-versions:populate-project-registry", "site"));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"clean", "validate", "site"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"clean", "validate", "docker-versions:populate-project-registry", "install"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"clean", "docker-versions:populate-project-registry", "verify"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"validate", "docker-versions:populate-project-registry", "site"}));
 
-        verifyDisableAutoPopulate(List.of("docker-versions:populate-project-registry", "install", "deploy"));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"docker-versions:populate-project-registry", "install", "deploy"}));
 
-        verifyDisableAutoPopulate(List.of("clean", "compiler:compile"));
-        verifyDisableAutoPopulate(List.of("compiler:help"));
-        verifyDisableAutoPopulate(List.of("site"));
-        verifyDisableAutoPopulate(List.of("docker:build", "docker:start", "docker:stop"));
-        verifyDisableAutoPopulate(List.of("docker-versions:populate-project-registry", "docker:build", "verify"));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"clean", "compiler:compile"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"compiler:help"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"site"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"docker:build", "docker:start", "docker:stop"}));
+        verifyDisableAutoPopulate(Arrays.asList(new String[]{"docker-versions:populate-project-registry", "docker:build", "verify"}));
     }
 
     @Test
     public void testEnableAutoPopulate() throws Exception
     {
-        verifyEnableAutoPopulate(List.of("verify"));
+        verifyEnableAutoPopulate(Arrays.asList(new String[]{"verify"}));
 
-        verifyEnableAutoPopulate(List.of("install", "deploy"));
-        verifyEnableAutoPopulate(List.of("clean", "deploy"));
-        verifyEnableAutoPopulate(List.of("validate", "install"));
+        verifyEnableAutoPopulate(Arrays.asList(new String[]{"install", "deploy"}));
+        verifyEnableAutoPopulate(Arrays.asList(new String[]{"clean", "deploy"}));
+        verifyEnableAutoPopulate(Arrays.asList(new String[]{"validate", "install"}));
 
-        verifyEnableAutoPopulate(List.of("clean", "install", "docker-versions:depopulate-project-registry"));
+        verifyEnableAutoPopulate(Arrays.asList(new String[]{"clean", "install", "docker-versions:depopulate-project-registry"}));
 
-        verifyEnableAutoPopulate(List.of("compile", "install", "deploy"));
+        verifyEnableAutoPopulate(Arrays.asList(new String[]{"compile", "install", "deploy"}));
 
-        verifyEnableAutoPopulate(List.of("clean", "install", "deploy"));
-        verifyEnableAutoPopulate(List.of("validate", "install", "deploy"));
+        verifyEnableAutoPopulate(Arrays.asList(new String[]{"clean", "install", "deploy"}));
+        verifyEnableAutoPopulate(Arrays.asList(new String[]{"validate", "install", "deploy"}));
     }
 
     private static void verifyDisableAutoPopulate(final List<String> tasks)
