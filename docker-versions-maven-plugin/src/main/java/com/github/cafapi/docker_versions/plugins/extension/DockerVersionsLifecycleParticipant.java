@@ -15,11 +15,11 @@
  */
 package com.github.cafapi.docker_versions.plugins.extension;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -45,8 +45,8 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsLifecycleParticipant.class);
 
-    private static final List<String> AVOID_AUTO_POPULATE_PHASES = List.of("clean", "validate", "site");
-    private static final List<String> AVOID_AUTO_DEPOPULATE_PHASES = List.of("validate", "site");
+    private static final List<String> AVOID_AUTO_POPULATE_PHASES = Arrays.asList(new String[]{"clean", "validate", "site"});
+    private static final List<String> AVOID_AUTO_DEPOPULATE_PHASES = Arrays.asList(new String[]{"validate", "site"});
 
     private static final String DOCKER_VERSION_PLUGIN_GROUP_ID = "com.github.cafapi.plugins.docker.versions";
     private static final String DOCKER_VERSION_PLUGIN_ARTIFACT_ID = "docker-versions-maven-plugin";
@@ -61,13 +61,13 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 
         final List<String> sessionTasks = session.getRequest().getGoals();
 
-        if (sessionTasks == null || sessionTasks.isEmpty()) {
+        if (sessionTasks == null || sessionTasks.size() == 0) {
             LOGGER.debug("DockerVersionsLifecycleParticipant no tasks in session.");
             return;
         }
 
         final List<String> phasesInSession = getPhases(sessionTasks);
-        if (phasesInSession.isEmpty()) {
+        if (phasesInSession.size() == 0) {
             // Maven invoked with only goals, no lifecycle phases
             LOGGER.debug("DockerVersionsLifecycleParticipant no phases in session.");
             return;
@@ -124,7 +124,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
                 continue;
             }
 
-            pluginConfigsToUpdate.add(Map.entry(plugin, pluginConfig));
+            pluginConfigsToUpdate.add(new AbstractMap.SimpleEntry<Plugin, Xpp3Dom>(plugin, pluginConfig));
         }
 
         if (pluginConfigsToUpdate.isEmpty() || pluginConfigsToUpdate.size() == 1) {

@@ -150,7 +150,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
 
             LOGGER.debug("Pulled image '{}', verify that it is now present...", imageName);
             final Optional<InspectImageResponse> image = dockerClient.findImage(imageName);
-            if (image.isEmpty()) {
+            if (!image.isPresent()) {
                 throw new ImagePullException("Image not found after pulling it: " + imageName);
             }
 

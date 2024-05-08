@@ -103,7 +103,7 @@ public final class DockerVersionsHelper
                         repository = PomHelper.evaluate(pom.getElementText().trim(), implicitProperties);
 
                         final Optional<Xpp3Dom> repo = findRepository(repository, imagesConfig);
-                        if (repo.isEmpty()) {
+                        if (!repo.isPresent()) {
                             needsUpdate = false;
                         } else {
                             LOGGER.debug("Updating repo : {}", repository);
