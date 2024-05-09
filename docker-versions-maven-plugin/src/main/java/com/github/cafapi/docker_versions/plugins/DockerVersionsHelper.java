@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +37,9 @@ import javax.xml.stream.events.XMLEvent;
 import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.commons.io.output.XmlStreamWriter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.model.PluginManagement;
+import org.apache.maven.project.MavenProject;
 import org.codehaus.mojo.versions.api.PomHelper;
 import org.codehaus.mojo.versions.rewriting.ModifiedPomXMLEventReader;
 import org.codehaus.plexus.util.IOUtil;
@@ -48,6 +53,8 @@ import org.slf4j.LoggerFactory;
  */
 public final class DockerVersionsHelper
 {
+    protected static final String DOCKER_VERSION_PLUGIN_NAME = "com.github.cafapi.plugins.docker.versions:docker-versions-maven-plugin";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsHelper.class);
 
     private static final Pattern IMAGE_MATCH_PATTERN = Pattern.compile(
@@ -201,5 +208,69 @@ public final class DockerVersionsHelper
         try (final Writer writer = XmlStreamWriter.builder().setFile(outFile).setCharset(StandardCharsets.UTF_8).get()) {
             IOUtil.copy(input.toString(), writer);
         }
+    }
+
+    public static Plugin getPlugin(final MavenProject project)
+    {
+        final Plugin plugin = getPlugin(project.getPluginManagement());
+        if (plugin != null) {
+            return plugin;
+        }
+
+        // Look in build/plugins
+        return getPluginWithImageConfig(project.getPlugin(DOCKER_VERSION_PLUGIN_NAME));
+    }
+
+    public static Plugin getPlugin(final PluginManagement pluginManagement)
+    {
+        if (pluginManagement == null) {
+            return null;
+        }
+
+        final Plugin plugin = pluginManagement.getPluginsAsMap().get(DOCKER_VERSION_PLUGIN_NAME);
+
+        return getPluginWithImageConfig(plugin);
+    }
+
+    public static Plugin getPluginWithImageConfig(final Plugin plugin)
+    {
+        if (plugin == null) {
+            return null;
+        }
+        final Xpp3Dom pluginConfig = getPluginConfig(plugin);
+        if (pluginConfig == null) {
+            return null;
+        }
+        final List<Xpp3Dom> imagesConfig = getImagesConfig(pluginConfig);
+
+        if (imagesConfig.isEmpty()) {
+            return null;
+        }
+        return plugin;
+    }
+
+    public static Xpp3Dom getPluginConfig(final Plugin plugin)
+    {
+        final Object configuration = plugin.getConfiguration();
+        if (configuration == null) {
+            return null;
+        }
+
+        return new Xpp3Dom((Xpp3Dom) configuration);
+    }
+
+    public static List<Xpp3Dom> getImagesConfig(final Xpp3Dom config)
+    {
+        if (config == null) {
+            return Collections.emptyList();
+        }
+
+        final Xpp3Dom configImageManagement = config.getChild("imageManagement");
+        if (configImageManagement == null) {
+            throw new IllegalArgumentException("'imageManagement' is not set in plugin configuration");
+        }
+
+        final Xpp3Dom[] images = configImageManagement.getChildren("image");
+        return Arrays.asList(images);
     }
 }

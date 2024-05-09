@@ -19,14 +19,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Plugin;
-import org.apache.maven.model.PluginManagement;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
@@ -45,7 +43,6 @@ import com.github.cafapi.docker_versions.docker.client.ImageNotFoundException;
 
 abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
 {
-    protected static final String DOCKER_VERSION_PLUGIN_NAME = "com.github.cafapi.plugins.docker.versions:docker-versions-maven-plugin";
     protected static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsUpdaterMojo.class);
@@ -129,7 +126,7 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
         final MavenProject rootProject = PomHelper.getLocalRoot(projectBuilder, session, getLog());
 
         projectToUpdate = rootProject;
-        Plugin plugin = getPlugin(rootProject);
+        Plugin plugin = DockerVersionsHelper.getPlugin(rootProject);
 
         if (plugin != null) {
             LOGGER.debug("Found plugin in aggregator project");
@@ -139,7 +136,7 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
         LOGGER.debug("Plugin not found in aggregator project, look in the project");
 
         projectToUpdate = project;
-        plugin = getPlugin(project);
+        plugin = DockerVersionsHelper.getPlugin(project);
 
         if (plugin != null) {
             LOGGER.debug("Found plugin in project {}", project.getArtifactId());
@@ -148,31 +145,6 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
 
         // If this mojo is being executed, the plugin must be defined in the project
         throw new RuntimeException("Plugin is not found in " + project.getArtifactId());
-    }
-
-    private static Plugin getPlugin(final MavenProject pluginProject)
-    {
-        final PluginManagement pluginManagement = pluginProject.getPluginManagement();
-
-        Plugin plugin = null;
-
-        if (pluginManagement != null) {
-            plugin = lookupPlugin(pluginManagement);
-            LOGGER.debug("{} does not have plugin management ", pluginProject.getArtifactId());
-        }
-
-        if (plugin == null) {
-            // Look for imageConfiguration in build/plugins/plugin
-            return pluginProject.getPlugin(DOCKER_VERSION_PLUGIN_NAME);
-        }
-
-        return plugin;
-    }
-
-    private static Plugin lookupPlugin(final PluginManagement pluginManagement)
-    {
-        final Map<String, Plugin> pluginMap = pluginManagement.getPluginsAsMap();
-        return pluginMap.get(DOCKER_VERSION_PLUGIN_NAME);
     }
 
     private static Xpp3Dom getPluginConfig(final Plugin plugin)
