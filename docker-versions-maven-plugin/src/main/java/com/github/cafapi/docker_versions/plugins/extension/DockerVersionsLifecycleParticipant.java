@@ -18,7 +18,6 @@ package com.github.cafapi.docker_versions.plugins.extension;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -30,11 +29,12 @@ import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Plugin;
-import org.apache.maven.model.PluginManagement;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.github.cafapi.docker_versions.plugins.DockerVersionsHelper;
 
 /**
  * This maven build extension adds the populate-project-registry and depopulate-project-registry goals to the maven session.
@@ -48,14 +48,11 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
     private static final List<String> AVOID_AUTO_POPULATE_PHASES = Arrays.asList(new String[]{"clean", "validate", "site"});
     private static final List<String> AVOID_AUTO_DEPOPULATE_PHASES = Arrays.asList(new String[]{"validate", "site"});
 
-    private static final String DOCKER_VERSION_PLUGIN_GROUP_ID = "com.github.cafapi.plugins.docker.versions";
-    private static final String DOCKER_VERSION_PLUGIN_ARTIFACT_ID = "docker-versions-maven-plugin";
-    private static final String DOCKER_VERSION_PLUGIN_NAME = DOCKER_VERSION_PLUGIN_GROUP_ID + ":" + DOCKER_VERSION_PLUGIN_ARTIFACT_ID;
-
     @Override
     public void afterProjectsRead(final MavenSession session) throws MavenExecutionException
     {
         if (Boolean.parseBoolean(session.getUserProperties().getProperty("skipAutoPopulateRegistry"))) {
+            LOGGER.debug("DockerVersionsLifecycleParticipant skipping auto populate registry.");
             return;
         }
 
@@ -86,6 +83,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 
         if (updatedSessionTasks.size() == sessionTasks.size()) {
             // No need to run the docker-version goals
+            LOGGER.debug("DockerVersionsLifecycleParticipant skipping docker-version goals.");
             return;
         }
 
@@ -109,19 +107,14 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         for (int i = 0; i < projectsCount; i++) {
             final MavenProject project = projects.get(i);
 
-            final Plugin plugin = getPlugin(project);
+            final Plugin plugin = DockerVersionsHelper.getPlugin(project);
             if (plugin == null) {
                 continue;
             }
 
-            final Xpp3Dom pluginConfig = getPluginConfig(plugin);
+            Xpp3Dom pluginConfig = DockerVersionsHelper.getPluginConfig(plugin);
             if (pluginConfig == null) {
-                continue;
-            }
-
-            final List<Xpp3Dom> imagesConfig = getImagesConfig(pluginConfig);
-            if (imagesConfig.isEmpty()) {
-                continue;
+                pluginConfig = new Xpp3Dom("configuration");
             }
 
             pluginConfigsToUpdate.add(new AbstractMap.SimpleEntry<Plugin, Xpp3Dom>(plugin, pluginConfig));
@@ -130,6 +123,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         if (pluginConfigsToUpdate.isEmpty() || pluginConfigsToUpdate.size() == 1) {
             // Plugin is not configured in any project
             // or just one project has the plugin configured, so run both goals
+            LOGGER.debug("DockerVersionsLifecycleParticipant running auto populate and depopulate registry...");
             return;
         }
 
@@ -162,72 +156,9 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         return tasks.stream().filter(t -> !t.contains(":")).collect(Collectors.toList());
     }
 
-    private static Plugin getPlugin(final MavenProject project)
-    {
-        final Plugin plugin = getPlugin(project.getPluginManagement());
-        if (plugin != null) {
-            return plugin;
-        }
-
-        // Look in build/plugins
-        return getPluginWithImageConfig(project.getPlugin(DOCKER_VERSION_PLUGIN_NAME));
-    }
-
-    private static Plugin getPlugin(final PluginManagement pluginManagement)
-    {
-        if (pluginManagement == null) {
-            return null;
-        }
-
-        final Plugin plugin = pluginManagement.getPluginsAsMap().get(DOCKER_VERSION_PLUGIN_NAME);
-
-        return getPluginWithImageConfig(plugin);
-    }
-
-    private static Plugin getPluginWithImageConfig(final Plugin plugin)
-    {
-        if (plugin == null) {
-            return null;
-        }
-        final Xpp3Dom pluginConfig = getPluginConfig(plugin);
-        if (pluginConfig == null) {
-            return null;
-        }
-        final List<Xpp3Dom> imagesConfig = getImagesConfig(pluginConfig);
-
-        if (imagesConfig.isEmpty()) {
-            return null;
-        }
-        return plugin;
-    }
-
-    private static Xpp3Dom getPluginConfig(final Plugin plugin)
-    {
-        final Object configuration = plugin.getConfiguration();
-        if (configuration == null) {
-            return null;
-        }
-
-        return new Xpp3Dom((Xpp3Dom) configuration);
-    }
-
-    private static List<Xpp3Dom> getImagesConfig(final Xpp3Dom config)
-    {
-        if (config == null) {
-            return Collections.emptyList();
-        }
-
-        final Xpp3Dom configImageManagement = config.getChild("imageManagement");
-        if (configImageManagement == null) {
-            throw new IllegalArgumentException("'imageManagement' is not set in plugin configuration");
-        }
-
-        final Xpp3Dom[] images = configImageManagement.getChildren("image");
-        return Arrays.asList(images);
-    }
-
     private static void setSkipMojoConfig(final Plugin plugin, final Xpp3Dom config, final String name)
     {
+        LOGGER.debug("DockerVersionsLifecycleParticipant setting {}...", name);
         final Xpp3Dom skipPluginConfigParam = config.getChild("skip");
         if (skipPluginConfigParam != null) {
             config.removeChild(skipPluginConfigParam);
