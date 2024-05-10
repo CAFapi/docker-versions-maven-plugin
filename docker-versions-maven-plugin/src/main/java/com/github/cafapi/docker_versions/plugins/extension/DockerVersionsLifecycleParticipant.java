@@ -52,6 +52,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
     public void afterProjectsRead(final MavenSession session) throws MavenExecutionException
     {
         if (Boolean.parseBoolean(session.getUserProperties().getProperty("skipAutoPopulateRegistry"))) {
+            LOGGER.debug("DockerVersionsLifecycleParticipant skipping auto populate registry.");
             return;
         }
 
@@ -82,6 +83,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 
         if (updatedSessionTasks.size() == sessionTasks.size()) {
             // No need to run the docker-version goals
+            LOGGER.debug("DockerVersionsLifecycleParticipant skipping docker-version goals.");
             return;
         }
 
@@ -110,14 +112,9 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
                 continue;
             }
 
-            final Xpp3Dom pluginConfig = DockerVersionsHelper.getPluginConfig(plugin);
+            Xpp3Dom pluginConfig = DockerVersionsHelper.getPluginConfig(plugin);
             if (pluginConfig == null) {
-                continue;
-            }
-
-            final List<Xpp3Dom> imagesConfig = DockerVersionsHelper.getImagesConfig(pluginConfig);
-            if (imagesConfig.isEmpty()) {
-                continue;
+                pluginConfig = new Xpp3Dom("configuration");
             }
 
             pluginConfigsToUpdate.add(new AbstractMap.SimpleEntry<Plugin, Xpp3Dom>(plugin, pluginConfig));
@@ -126,6 +123,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         if (pluginConfigsToUpdate.isEmpty() || pluginConfigsToUpdate.size() == 1) {
             // Plugin is not configured in any project
             // or just one project has the plugin configured, so run both goals
+            LOGGER.debug("DockerVersionsLifecycleParticipant running auto populate and depopulate registry...");
             return;
         }
 
@@ -160,6 +158,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 
     private static void setSkipMojoConfig(final Plugin plugin, final Xpp3Dom config, final String name)
     {
+        LOGGER.debug("DockerVersionsLifecycleParticipant setting {}...", name);
         final Xpp3Dom skipPluginConfigParam = config.getChild("skip");
         if (skipPluginConfigParam != null) {
             config.removeChild(skipPluginConfigParam);

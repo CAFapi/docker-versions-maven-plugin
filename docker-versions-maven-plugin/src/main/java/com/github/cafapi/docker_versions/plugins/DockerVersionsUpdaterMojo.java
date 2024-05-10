@@ -126,7 +126,7 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
         final MavenProject rootProject = PomHelper.getLocalRoot(projectBuilder, session, getLog());
 
         projectToUpdate = rootProject;
-        Plugin plugin = DockerVersionsHelper.getPlugin(rootProject);
+        Plugin plugin = DockerVersionsHelper.getPluginWithImageConfig(rootProject);
 
         if (plugin != null) {
             LOGGER.debug("Found plugin in aggregator project");
@@ -136,7 +136,7 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
         LOGGER.debug("Plugin not found in aggregator project, look in the project");
 
         projectToUpdate = project;
-        plugin = DockerVersionsHelper.getPlugin(project);
+        plugin = DockerVersionsHelper.getPluginWithImageConfig(project);
 
         if (plugin != null) {
             LOGGER.debug("Found plugin in project {}", project.getArtifactId());

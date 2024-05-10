@@ -212,7 +212,13 @@ public final class DockerVersionsHelper
 
     public static Plugin getPlugin(final MavenProject project)
     {
-        final Plugin plugin = getPlugin(project.getPluginManagement());
+        // Look in build/plugins
+        return project.getPlugin(DOCKER_VERSION_PLUGIN_NAME);
+    }
+
+    public static Plugin getPluginWithImageConfig(final MavenProject project)
+    {
+        final Plugin plugin = getPluginWithImageConfig(project.getPluginManagement());
         if (plugin != null) {
             return plugin;
         }
@@ -221,7 +227,7 @@ public final class DockerVersionsHelper
         return getPluginWithImageConfig(project.getPlugin(DOCKER_VERSION_PLUGIN_NAME));
     }
 
-    public static Plugin getPlugin(final PluginManagement pluginManagement)
+    public static Plugin getPluginWithImageConfig(final PluginManagement pluginManagement)
     {
         if (pluginManagement == null) {
             return null;
