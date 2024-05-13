@@ -15,6 +15,8 @@
  */
 package com.github.cafapi.docker_versions.plugins;
 
+import java.util.Objects;
+
 import org.apache.maven.plugins.annotations.Parameter;
 
 public final class IgnoreVersion
@@ -75,5 +77,30 @@ public final class IgnoreVersion
     public String toString()
     {
         return "IgnoreVersion [version=" + version + ", type=" + type + "]";
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(type, version);
+    }
+
+    @Override
+    public boolean equals(final Object obj)
+    {
+        if (this == obj)
+        {
+            return true;
+        }
+        if (obj == null)
+        {
+            return false;
+        }
+        if (getClass() != obj.getClass())
+        {
+            return false;
+        }
+        final IgnoreVersion other = (IgnoreVersion) obj;
+        return Objects.equals(type, other.type) && Objects.equals(version, other.version);
     }
 }

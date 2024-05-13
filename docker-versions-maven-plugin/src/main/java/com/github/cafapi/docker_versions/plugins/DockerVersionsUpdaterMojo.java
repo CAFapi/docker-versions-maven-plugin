@@ -53,6 +53,9 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
     @Parameter
     protected Set<IgnoreVersion> ignoreVersions;
 
+    @Parameter(property = "docker.ignore.versions")
+    protected String ignoreVersionsConfigPath;
+
     @Parameter(defaultValue = "${session}", readonly = true, required = true)
     private MavenSession session;
 
