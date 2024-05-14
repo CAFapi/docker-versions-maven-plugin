@@ -16,6 +16,7 @@
 package com.github.cafapi.docker_versions.plugins;
 
 import java.util.List;
+
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
@@ -46,5 +47,10 @@ abstract class DockerVersionsMojo extends AbstractMojo
         return project.getProperties().getProperty(
             PROJECT_DOCKER_REGISTRY,
             project.getArtifactId() + "-" + project.getVersion() + ".project-registries.local");
+    }
+
+    protected String getDockerHost()
+    {
+        return project.getProperties().getProperty("docker.host");
     }
 }

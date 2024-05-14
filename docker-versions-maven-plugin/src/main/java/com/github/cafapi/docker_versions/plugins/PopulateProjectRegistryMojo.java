@@ -73,7 +73,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
 
         public ExecutionImpl()
         {
-            dockerClient = new DockerRestClient(httpConfiguration);
+            dockerClient = new DockerRestClient(httpConfiguration, getDockerHost());
         }
 
         public void executeImpl()
