@@ -91,9 +91,6 @@ public final class IgnoreVersion
         if (this == obj) {
             return true;
         }
-        if (obj == null) {
-            return false;
-        }
         if (!(obj instanceof IgnoreVersion)) {
             return false;
         }
