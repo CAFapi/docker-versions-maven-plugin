@@ -145,15 +145,14 @@ public final class DockerRestClient
     private static String getDockerConfig()
     {
         final String dockerConfigEnv = System.getenv(DefaultDockerClientConfig.DOCKER_CONFIG);
+        LOGGER.debug("DOCKER_CONFIG environment variable set: {}", dockerConfigEnv);
 
-        if (dockerConfigEnv != null && !dockerConfigEnv.trim().isEmpty()) {
-            LOGGER.debug("DOCKER_CONFIG environment variable set: {}", dockerConfigEnv);
-            return dockerConfigEnv;
-        }
+        final String dockerConfigDir = dockerConfigEnv == null
+            ? SystemUtils.USER_HOME + "/.docker"
+            : dockerConfigEnv;
 
-        final String defaultDockerConfigDir = SystemUtils.USER_HOME + "/.docker";
-        LOGGER.debug("Looking for docker config in: {}", defaultDockerConfigDir);
-        final File dockerCfgFile = new File(defaultDockerConfigDir, "config.json");
+        LOGGER.debug("Looking for docker config in: {}", dockerConfigDir);
+        final File dockerCfgFile = new File(dockerConfigDir, "config.json");
 
         if (!dockerCfgFile.exists() || !dockerCfgFile.isFile()) {
             LOGGER.debug("{} does not exist or is not a file", dockerCfgFile);
@@ -168,7 +167,7 @@ public final class DockerRestClient
         } catch (final IOException e) {
             throw new IllegalArgumentException("Error reading default docker config", e);
         }
-        LOGGER.debug("Use defaultDockerConfigDir : {}", defaultDockerConfigDir);
-        return defaultDockerConfigDir;
+        LOGGER.debug("Use dockerConfigDir : {}", dockerConfigDir);
+        return dockerConfigDir;
     }
 }
