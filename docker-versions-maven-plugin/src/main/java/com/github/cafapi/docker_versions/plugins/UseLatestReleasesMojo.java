@@ -20,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -233,7 +234,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
 
     private boolean isIgnoredVersion(final String tag)
     {
-        if (effectiveIgnoreVersions == null) {
+        if (effectiveIgnoreVersions.isEmpty()) {
             return false;
         }
 
@@ -251,15 +252,15 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
 
     private Set<IgnoreVersion> getIgnoreVersions()
     {
-        final Set<IgnoreVersion> ignoreImageVersions = ignoreVersions;
+        final Set<IgnoreVersion> ignoreImageVersions
+            = ignoreVersions == null
+                ? new HashSet<>()
+                : new HashSet<>(ignoreVersions);
         if (ignoreVersionsConfigPath != null) {
             try (final FileInputStream ignoreVersionsConfig = new FileInputStream(ignoreVersionsConfigPath)){
                  final YAMLMapper yamlMapper = new YAMLMapper();
                  final Set<IgnoreVersion> ignoreVersionsFromConfigFile
                      = yamlMapper.readValue(ignoreVersionsConfig, new TypeReference<Set<IgnoreVersion>>() {});
-                 if (ignoreImageVersions == null) {
-                     return ignoreVersionsFromConfigFile;
-                 }
                  ignoreImageVersions.addAll(ignoreVersionsFromConfigFile);
             } catch (final FileNotFoundException e) {
                 throw new IllegalArgumentException("Ignore versions config file not found", e);
