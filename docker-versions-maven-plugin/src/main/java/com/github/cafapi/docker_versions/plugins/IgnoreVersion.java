@@ -94,7 +94,7 @@ public final class IgnoreVersion
         if (obj == null) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof IgnoreVersion)) {
             return false;
         }
         final IgnoreVersion other = (IgnoreVersion) obj;
