@@ -50,5 +50,4 @@ abstract class DockerVersionsMojo extends AbstractMojo
             PROJECT_DOCKER_REGISTRY,
             project.getArtifactId() + "-" + project.getVersion() + ".project-registries.local");
     }
-
 }
