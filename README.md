@@ -268,6 +268,11 @@ The following properties are read:
 - auth: Optional base64 encoded 'username:password' string, which can be set instead of username and password
 
 ### Configuration
+The docker host url can be set in any of these ways:
+- `docker.host` property
+- `dockerHost` plugin configuration
+- `DOCKER_HOST` environment variable
+
 Http connection timeout can be set in the plugin configuration. This configuration is optional and the values indicate time in seconds.
 
 ```
