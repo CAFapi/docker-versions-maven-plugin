@@ -41,6 +41,9 @@ abstract class DockerVersionsMojo extends AbstractMojo
     @Parameter(property = "docker.versions.skip", defaultValue = "false")
     protected boolean skip;
 
+    @Parameter(property = "docker.host")
+    protected String dockerHost;
+
     protected String getProjectDockerRegister()
     {
         return project.getProperties().getProperty(
@@ -48,8 +51,4 @@ abstract class DockerVersionsMojo extends AbstractMojo
             project.getArtifactId() + "-" + project.getVersion() + ".project-registries.local");
     }
 
-    protected String getDockerHost()
-    {
-        return project.getProperties().getProperty("docker.host");
-    }
 }

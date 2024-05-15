@@ -49,7 +49,7 @@ public final class DockerRestClient
 
         final DefaultDockerClientConfig.Builder configBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder();
 
-        if (!configBuilder.isDockerHostSetExplicitly() && dockerHost != null) {
+        if (dockerHost != null) {
             configBuilder.withDockerHost(dockerHost);
         }
 
