@@ -47,20 +47,23 @@ public final class DockerRestClient
     private final long downloadImageTimeout;
     private final DockerClient dockerClient;
 
-    public DockerRestClient(final HttpConfiguration httpConfiguration)
+    public DockerRestClient(final HttpConfiguration httpConfiguration, final String dockerHost)
     {
         final HttpConfiguration httpConfig = (httpConfiguration == null)
             ? new HttpConfiguration()
             : httpConfiguration;
         LOGGER.debug("HttpConfig: {}", httpConfig);
 
-        final DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
-            .build();
+        final DefaultDockerClientConfig.Builder configBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder();
+
+        if (dockerHost != null) {
+            configBuilder.withDockerHost(dockerHost);
+        }
 
         final String dockerConfig = getDockerConfig();
         configBuilder.withDockerConfig(dockerConfig);
 
-
+        final DockerClientConfig config = configBuilder.build();
         final DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
             .dockerHost(config.getDockerHost())
             .sslConfig(config.getSSLConfig())

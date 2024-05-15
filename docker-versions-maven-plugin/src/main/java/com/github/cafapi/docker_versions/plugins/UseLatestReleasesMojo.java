@@ -15,9 +15,14 @@
  */
 package com.github.cafapi.docker_versions.plugins;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -31,9 +36,12 @@ import org.codehaus.mojo.versions.rewriting.ModifiedPomXMLEventReader;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import com.github.cafapi.docker_versions.docker.auth.DockerRegistryAuthConfig;
 import com.github.cafapi.docker_versions.docker.auth.DockerRegistryAuthException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.github.cafapi.docker_versions.docker.auth.AuthConfigHelper;
 import com.github.cafapi.docker_versions.docker.client.DockerRegistryException;
 import com.github.cafapi.docker_versions.docker.client.DockerRegistryRestClient;
@@ -51,6 +59,8 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
     @Parameter(property = "skipUseLatestReleases", defaultValue = "false")
     private boolean skipUseLatestReleases;
 
+    private Set<IgnoreVersion> effectiveIgnoreVersions;
+
     @Override
     protected boolean shouldSkip()
     {
@@ -66,6 +76,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
                XMLStreamException
     {
         LOGGER.debug("UseLatestReleasesMojo with this configuration {}", pluginConfig);
+        effectiveIgnoreVersions = getIgnoreVersions();
         final List<Xpp3Dom> imagesToUpdate = new ArrayList<>();
 
         for (final ImageConfiguration imageConfig : imageManagement) {
@@ -223,12 +234,12 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
 
     private boolean isIgnoredVersion(final String tag)
     {
-        if (ignoreVersions == null) {
+        if (effectiveIgnoreVersions.isEmpty()) {
             return false;
         }
 
         boolean isMatch;
-        for (final IgnoreVersion iVersion : ignoreVersions) {
+        for (final IgnoreVersion iVersion : effectiveIgnoreVersions) {
             isMatch = "regex".equals(iVersion.getType())
                 ? Pattern.matches(iVersion.getVersion(), tag)
                 : iVersion.getVersion().equals(tag);
@@ -237,6 +248,29 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
             }
         }
         return false;
+    }
+
+    private Set<IgnoreVersion> getIgnoreVersions()
+    {
+        final Set<IgnoreVersion> ignoreImageVersions
+            = ignoreVersions == null
+                ? new HashSet<>()
+                : new HashSet<>(ignoreVersions);
+        if (ignoreVersionsConfigPath != null) {
+            try (final FileInputStream ignoreVersionsConfig = new FileInputStream(ignoreVersionsConfigPath)) {
+                 final YAMLMapper yamlMapper = new YAMLMapper();
+                 final Set<IgnoreVersion> ignoreVersionsFromConfigFile
+                     = yamlMapper.readValue(ignoreVersionsConfig, new TypeReference<Set<IgnoreVersion>>() {});
+                 ignoreImageVersions.addAll(ignoreVersionsFromConfigFile);
+            } catch (final FileNotFoundException e) {
+                throw new IllegalArgumentException("Ignore versions config file not found", e);
+            } catch (final IOException e) {
+                throw new IllegalArgumentException("Error reading ignore versions config file", e);
+            } catch (final YAMLException e) {
+                throw new IllegalArgumentException("Error parsing ignore versions config file", e);
+            }
+        }
+        return ignoreImageVersions;
     }
 
     private static void updateTagAndDigest(

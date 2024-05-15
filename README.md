@@ -268,6 +268,11 @@ The following properties are read:
 - auth: Optional base64 encoded 'username:password' string, which can be set instead of username and password
 
 ### Configuration
+The docker host url can be set in any of these ways:
+- `docker.host` property
+- `dockerHost` plugin configuration
+- `DOCKER_HOST` environment variable
+
 Http connection timeout can be set in the plugin configuration. This configuration is optional and the values indicate time in seconds.
 
 ```
@@ -292,6 +297,33 @@ When finding the latest static tag for the image any tag that matches the `regex
         <version>3.8.26-alpine</version>
     </ignoreVersion>
 </ignoreVersions>
+```
+
+Another way to configure images tags that should be ignored is by setting `ignoreVersionsConfigPath`.  
+This is the path of a yaml file containing the image tags to ignore. 
+If both `ignoreVersions` and `ignoreVersionsConfigPath` are set the configured values will be combined.
+
+```
+<ignoreVersionsConfigPath>/tmp/ignoreDockerVersions.yaml</ignoreVersionsConfigPath>
+```
+
+The path to the yaml config file can also be set as a user property called `docker.ignore.versions`.
+
+```
+mvn -Ddocker.ignore.versions=/tmp/ignoreDockerVersions.yaml docker-versions:use-latest-releases -N
+```
+
+Example yaml file containing the image tags to ignore:
+```
+---
+- type: regex
+  version: (?i).*alpha.*
+- type: regex
+  version: (?i).*beta.*
+- type: regex
+  version: (?i).*-rc.*
+- type: regex
+  version: (?i).*alpine.*
 ```
 
 The following configuration options can be set via environment variables.  
