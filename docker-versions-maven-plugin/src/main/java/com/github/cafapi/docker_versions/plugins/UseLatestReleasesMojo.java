@@ -257,7 +257,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
                 ? new HashSet<>()
                 : new HashSet<>(ignoreVersions);
         if (ignoreVersionsConfigPath != null) {
-            try (final FileInputStream ignoreVersionsConfig = new FileInputStream(ignoreVersionsConfigPath)){
+            try (final FileInputStream ignoreVersionsConfig = new FileInputStream(ignoreVersionsConfigPath)) {
                  final YAMLMapper yamlMapper = new YAMLMapper();
                  final Set<IgnoreVersion> ignoreVersionsFromConfigFile
                      = yamlMapper.readValue(ignoreVersionsConfig, new TypeReference<Set<IgnoreVersion>>() {});
