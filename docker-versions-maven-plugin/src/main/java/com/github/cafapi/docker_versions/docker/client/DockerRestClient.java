@@ -27,9 +27,16 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +59,9 @@ public final class DockerRestClient
         if (dockerHost != null) {
             configBuilder.withDockerHost(dockerHost);
         }
+
+        final String dockerConfig = getDockerConfig();
+        configBuilder.withDockerConfig(dockerConfig);
 
         final DockerClientConfig config = configBuilder.build();
         final DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
@@ -130,5 +140,34 @@ public final class DockerRestClient
             LOGGER.error("Image with id '{}' still tagged '{}:{}'...", unTaggedImage.getId(), unTaggedImage.getRepoTags());
             throw new ImageTaggingException("Image '" + image + "' was not un-tagged");
         }
+    }
+
+    private static String getDockerConfig()
+    {
+        final String dockerConfigEnv = System.getenv(DefaultDockerClientConfig.DOCKER_CONFIG);
+        LOGGER.debug("DOCKER_CONFIG environment variable set: {}", dockerConfigEnv);
+
+        final String dockerConfigDir = dockerConfigEnv == null
+            ? SystemUtils.USER_HOME + "/.docker"
+            : dockerConfigEnv;
+
+        LOGGER.debug("Looking for docker config in: {}", dockerConfigDir);
+        final File dockerCfgFile = new File(dockerConfigDir, "config.json");
+
+        if (!dockerCfgFile.exists() || !dockerCfgFile.isFile()) {
+            LOGGER.debug("{} does not exist or is not a file", dockerCfgFile);
+            return null;
+        }
+
+        try {
+            if (dockerCfgFile.length() == 0 || FileUtils.readFileToString(dockerCfgFile, StandardCharsets.UTF_8).trim().isEmpty()) {
+                LOGGER.debug("{} is empty.", dockerCfgFile);
+                return null;
+            }
+        } catch (final IOException e) {
+            throw new IllegalArgumentException("Error reading default docker config", e);
+        }
+        LOGGER.debug("Use dockerConfigDir : {}", dockerConfigDir);
+        return dockerConfigDir;
     }
 }
