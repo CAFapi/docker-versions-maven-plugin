@@ -299,6 +299,33 @@ When finding the latest static tag for the image any tag that matches the `regex
 </ignoreVersions>
 ```
 
+Another way to configure images tags that should be ignored is by setting `ignoreVersionsConfigPath`.  
+This is the path of a yaml file containing the image tags to ignore. 
+If both `ignoreVersions` and `ignoreVersionsConfigPath` are set the configured values will be combined.
+
+```
+<ignoreVersionsConfigPath>/tmp/ignoreDockerVersions.yaml</ignoreVersionsConfigPath>
+```
+
+The path to the yaml config file can also be set as a user property called `docker.ignore.versions`.
+
+```
+mvn -Ddocker.ignore.versions=/tmp/ignoreDockerVersions.yaml docker-versions:use-latest-releases -N
+```
+
+Example yaml file containing the image tags to ignore:
+```
+---
+- type: regex
+  version: (?i).*alpha.*
+- type: regex
+  version: (?i).*beta.*
+- type: regex
+  version: (?i).*-rc.*
+- type: regex
+  version: (?i).*alpine.*
+```
+
 The following configuration options can be set via environment variables.  
 
 <table class="table">
