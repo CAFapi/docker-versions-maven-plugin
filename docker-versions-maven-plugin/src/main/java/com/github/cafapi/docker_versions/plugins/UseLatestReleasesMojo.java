@@ -86,8 +86,10 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
                 imageConfig.getDigest());
 
             // Ignore intentionally dynamic versions
+            final String digest = imageMoniker.getDigest();
             final String tag = imageMoniker.getTag();
-            if (tag.equals(LATEST_TAG) || tag.endsWith(SNAPSHOT_SUFFIX)) {
+
+            if (StringUtils.isBlank(digest)) {
                 continue;
             }
 
@@ -135,10 +137,9 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
                     throw new IncorrectDigestException("Static image digest does not match latest image digest");
                 }
 
-                final String digest = imageMoniker.getDigest();
 
                 // Check if the specified digest matches digest of latest image
-                if (StringUtils.isBlank(digest) || !digest.equals(staticDigest)) {
+                if (!digest.equals(staticDigest)) {
                     // Add or update the digest
                     upsertDigest(imageMoniker, imageToUpdate, latestDigest);
                     imagesToUpdate.add(imageToUpdate);
