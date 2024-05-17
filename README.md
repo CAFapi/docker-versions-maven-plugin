@@ -92,7 +92,7 @@ Removes the project specific name tag from the Docker images that are used by a 
 ### use-latest-releases
 
 Replaces any Docker image release version with the latest static version of the image in the plugin configuration.  
-This goal will not replace versions of images which use SNAPSHOT versions.
+This goal will not replace versions of images configured without a digest, such as images with SNAPSHOT, latest, stable or dynamic tags.
 
 #### Required Parameters
 
