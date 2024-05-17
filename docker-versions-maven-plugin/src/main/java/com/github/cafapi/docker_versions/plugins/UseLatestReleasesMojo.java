@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -178,6 +179,9 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         final List<String> relevantTags = tags.stream().filter(t -> !isIgnoredVersion(t)).collect(Collectors.toList());
         LOGGER.debug("Relevant tags for latest image: {}-{}", imageMoniker.getFullImageNameWithTag(), relevantTags);
 
+        if (relevantTags.isEmpty()) {
+            return imageMoniker.getTag();
+        }
         // For the rest of the tags, fetch the digest from the manifest and compare to digest of latest version
         final List<String> tagsOfLatestVersion = getLatestVersionTagsOrderedByLength(
             authToken, registrySchema, imageMoniker, relevantTags, digestOfLatestVersion);
@@ -243,7 +247,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         for (final IgnoreVersion iVersion : effectiveIgnoreVersions) {
             isMatch = "regex".equals(iVersion.getType())
                 ? Pattern.matches(iVersion.getVersion(), tag)
-                : iVersion.getVersion().equals(tag);
+                : iVersion.getVersion().equals(tag) || DEFAULT_IGNORE_VERSIONS.contains(tag.toLowerCase(Locale.ENGLISH));
             if (isMatch) {
                 return true;
             }
