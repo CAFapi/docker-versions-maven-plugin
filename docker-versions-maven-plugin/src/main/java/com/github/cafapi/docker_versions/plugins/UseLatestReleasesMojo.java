@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -86,8 +87,10 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
                 imageConfig.getDigest());
 
             // Ignore intentionally dynamic versions
+            final String digest = imageMoniker.getDigest();
             final String tag = imageMoniker.getTag();
-            if (tag.equals(LATEST_TAG) || tag.endsWith(SNAPSHOT_SUFFIX)) {
+
+            if (StringUtils.isBlank(digest)) {
                 continue;
             }
 
@@ -135,10 +138,8 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
                     throw new IncorrectDigestException("Static image digest does not match latest image digest");
                 }
 
-                final String digest = imageMoniker.getDigest();
-
                 // Check if the specified digest matches digest of latest image
-                if (StringUtils.isBlank(digest) || !digest.equals(staticDigest)) {
+                if (!digest.equals(staticDigest)) {
                     // Add or update the digest
                     upsertDigest(imageMoniker, imageToUpdate, latestDigest);
                     imagesToUpdate.add(imageToUpdate);
@@ -177,6 +178,9 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         final List<String> relevantTags = tags.stream().filter(t -> !isIgnoredVersion(t)).collect(Collectors.toList());
         LOGGER.debug("Relevant tags for latest image: {}-{}", imageMoniker.getFullImageNameWithTag(), relevantTags);
 
+        if (relevantTags.isEmpty()) {
+            return imageMoniker.getTag();
+        }
         // For the rest of the tags, fetch the digest from the manifest and compare to digest of latest version
         final List<String> tagsOfLatestVersion = getLatestVersionTagsOrderedByLength(
             authToken, registrySchema, imageMoniker, relevantTags, digestOfLatestVersion);
@@ -242,7 +246,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         for (final IgnoreVersion iVersion : effectiveIgnoreVersions) {
             isMatch = "regex".equals(iVersion.getType())
                 ? Pattern.matches(iVersion.getVersion(), tag)
-                : iVersion.getVersion().equals(tag);
+                : iVersion.getVersion().equals(tag) || DEFAULT_IGNORE_VERSIONS.contains(tag.toLowerCase(Locale.ENGLISH));
             if (isMatch) {
                 return true;
             }
