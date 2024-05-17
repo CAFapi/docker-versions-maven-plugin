@@ -138,7 +138,6 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
                     throw new IncorrectDigestException("Static image digest does not match latest image digest");
                 }
 
-
                 // Check if the specified digest matches digest of latest image
                 if (!digest.equals(staticDigest)) {
                     // Add or update the digest
