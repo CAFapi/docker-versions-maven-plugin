@@ -238,6 +238,10 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
 
     private boolean isIgnoredVersion(final String tag)
     {
+        if (DEFAULT_IGNORE_VERSIONS.contains(tag.toLowerCase(Locale.ENGLISH))) {
+            return true;
+        }
+
         if (effectiveIgnoreVersions.isEmpty()) {
             return false;
         }
@@ -246,7 +250,7 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         for (final IgnoreVersion iVersion : effectiveIgnoreVersions) {
             isMatch = "regex".equals(iVersion.getType())
                 ? Pattern.matches(iVersion.getVersion(), tag)
-                : iVersion.getVersion().equals(tag) || DEFAULT_IGNORE_VERSIONS.contains(tag.toLowerCase(Locale.ENGLISH));
+                : iVersion.getVersion().equals(tag);
             if (isMatch) {
                 return true;
             }
