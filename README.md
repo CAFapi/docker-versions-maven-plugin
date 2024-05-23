@@ -227,6 +227,17 @@ In case more control is needed, it can be manually configured with the execution
     </configuration>
 </plugin>
 ```
+> [!NOTE]
+> If the plugin configuration is defined in the aggregator pom of a multi-module project, the configuration will be inherited by the sub projects. 
+When the plugin goals are run, they will be executed for all the projects which is not necessary. In this case the plugin goals can be run in a non-recursive way
+by specifying the maven `-N` [option](https://maven.apache.org/ref/3.9.6/maven-embedder/cli.html), like,
+> ```
+> mvn -N docker-versions:populate-project-registry
+> ```
+> or
+> ```
+> mvn -N -Ddocker.ignore.versions=/tmp/ignoreDockerVersions.yaml docker-versions:use-latest-releases
+> ```
 
 A Maven property could be used to specify the project registry:
 
