@@ -51,27 +51,27 @@ abstract class DockerVersionsMojo extends AbstractMojo
 
     protected String getProjectDockerRegister()
     {
-        final String projectDockerReg = project.getProperties().getProperty(
+        final String projectDockerRegistry = project.getProperties().getProperty(
             PROJECT_DOCKER_REGISTRY,
             project.getArtifactId() + "-" + project.getVersion() + ".project-registries.local");
 
-        final String sanitizedProjectDockerReg = sanitize(projectDockerReg);
+        final String sanitizedProjectDockerRegistry = sanitizeRegistryName(projectDockerRegistry);
 
-        project.getProperties().put(PROJECT_DOCKER_REGISTRY, sanitizedProjectDockerReg);
+        project.getProperties().put(PROJECT_DOCKER_REGISTRY, sanitizedProjectDockerRegistry);
 
-        return sanitizedProjectDockerReg;
+        return sanitizedProjectDockerRegistry;
     }
 
-    private static String sanitize(final String projectDockerReg)
+    private static String sanitizeRegistryName(final String registryName)
     {
         // Valid characters are case insensitive alphabets (a-z) (A-Z), digits (0-9), minus sign (-), and period (.)
         // replace all other chars with 2 hyphens
-        if (!projectDockerReg.matches("[a-zA-Z0-9-.]+")) {
-            final String sanitizedProjectDockerReg = projectDockerReg.replaceAll("[^a-zA-Z0-9-.]+", "--");
+        if (!registryName.matches("[a-zA-Z0-9-.]+")) {
+            final String sanitizedRegistryName = registryName.replaceAll("[^a-zA-Z0-9-.]+", "--");
             LOGGER.warn("Invalid project docker registry name: {}, using sanitized name instead: {}",
-                projectDockerReg, sanitizedProjectDockerReg);
-            return sanitizedProjectDockerReg;
+                registryName, sanitizedRegistryName);
+            return sanitizedRegistryName;
         }
-        return projectDockerReg;
+        return registryName;
     }
 }
