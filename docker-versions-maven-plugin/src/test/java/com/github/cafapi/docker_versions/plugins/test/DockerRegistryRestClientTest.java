@@ -79,8 +79,8 @@ final class DockerRegistryRestClientTest
         final String authToken = DockerRegistryRestClient.getAuthToken(schema.getAuthUrl(), registry, repository, authConfig);
         final List<String> tags = DockerRegistryRestClient.getTags(authToken, schema.getSchema(), registry, repository);
 
-        Assertions.assertNotNull(tags, "Got digest");
+        Assertions.assertNotNull(tags, "Got tags");
 
-        LOGGER.info("Got digest for {}/{} - {}", registry, repository, tags);
+        LOGGER.info("Got tags for {}/{} - {}", registry, repository, tags);
     }
 }
