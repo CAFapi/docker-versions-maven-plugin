@@ -76,7 +76,7 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
                     ? imageConfig.getTargetRepository()
                     : imageMoniker.getRepositoryWithoutRegistry();
 
-                final String projectDockerRegistryImageName = getProjectDockerRegister() + "/" + targetRepository;
+                final String projectDockerRegistryImageName = getAndSetProjectDockerRegister() + "/" + targetRepository;
 
                 final String imageName = projectDockerRegistryImageName + ":" + LATEST_TAG;
 

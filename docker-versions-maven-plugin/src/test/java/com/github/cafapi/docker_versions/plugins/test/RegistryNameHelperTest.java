@@ -40,7 +40,7 @@ final class RegistryNameHelperTest
     @Test
     public void testValidRegistryNames()
     {
-        final List<String> registryNames = Arrays.asList(new String[] {
+        final List<String> registryNames = Arrays.asList(new String[]{
             "acme", "acme-0.0.1-SNAPSHOT.project-registries.local",
             "opensuse-opensearch2-image-2.1.0-os-cve-test-SNAPSHOT.project-registries.local", "localHost",
             "LOCALDOMAIN", "docker.io", "index.docker.io", "127.0.0.1", "192.168.0.1",
@@ -56,7 +56,7 @@ final class RegistryNameHelperTest
     @Test
     public void testInvalidRegistryNames()
     {
-        final List<String> registryNames = Arrays.asList(new String[] {
+        final List<String> registryNames = Arrays.asList(new String[]{
             "acme_0.0.1-SNAPSHOT.project-registries.local",
             "opensuse-opensearch2-image-2.1.0-os_cve_test-SNAPSHOT.project-registries.local",
             "https://github.com/docker/docker",
@@ -66,7 +66,7 @@ final class RegistryNameHelperTest
         for (final String registryName : registryNames) {
             final String sanitizedRegistryName = RegistryNameHelper.sanitizeRegistryName(registryName);
             Assertions.assertFalse(registryName.equals(sanitizedRegistryName) && sanitizedRegistryName.contains("--"),
-                registryName + " - invalid registry is sanitized");
+                                   registryName + " - invalid registry is sanitized");
         }
     }
 }
