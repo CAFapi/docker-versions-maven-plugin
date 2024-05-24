@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import com.github.cafapi.docker_versions.docker.auth.DockerRegistryAuthConfig;
 import com.github.cafapi.docker_versions.docker.client.DockerRegistryException;
 import com.github.cafapi.docker_versions.docker.client.DockerRegistryRestClient;
+import com.github.cafapi.docker_versions.docker.client.DockerRegistrySchema;
 import com.github.cafapi.docker_versions.docker.client.ImageNotFoundException;
 
 final class DockerRegistryRestClientTest
@@ -47,8 +48,8 @@ final class DockerRegistryRestClientTest
     public void testGetSchema() throws XMLStreamException, URISyntaxException, IOException
     {
         final String registryUrl = "docker.io";
-        final String schema = DockerRegistryRestClient.getSchema(registryUrl);
-        Assertions.assertTrue("https".equals(schema), "Https schema supported: " + registryUrl);
+        final DockerRegistrySchema schema = DockerRegistryRestClient.getSchema(registryUrl);
+        Assertions.assertTrue("https".equals(schema.getSchema()), "Https schema supported: " + registryUrl);
 
     }
 
@@ -56,12 +57,12 @@ final class DockerRegistryRestClientTest
     public void testGetDigestDockerHubNoCredentials() throws DockerRegistryException, ImageNotFoundException
     {
         final DockerRegistryAuthConfig authConfig = null;
-        final String schema = "https";
         final String registry = "docker.io";
         final String repository = "cafapi/opensuse-jre17";
         final String tag = "latest";
-        final String authToken = DockerRegistryRestClient.getAuthToken(registry, repository, authConfig);
-        final String digest = DockerRegistryRestClient.getDigest(authToken, schema, registry, repository, tag);
+        final DockerRegistrySchema schema = DockerRegistryRestClient.getSchema(registry);
+        final String authToken = DockerRegistryRestClient.getAuthToken(schema.getAuthUrl(), registry, repository, authConfig);
+        final String digest = DockerRegistryRestClient.getDigest(authToken, schema.getSchema(), registry, repository, tag);
 
         Assertions.assertNotNull(digest, "Got digest");
 
@@ -72,11 +73,11 @@ final class DockerRegistryRestClientTest
     public void testGetTagsDockerHubNoCredentials() throws DockerRegistryException
     {
         final DockerRegistryAuthConfig authConfig = null;
-        final String schema = "https";
         final String registry = "docker.io";
         final String repository = "cafapi/opensuse-jre17";
-        final String authToken = DockerRegistryRestClient.getAuthToken(registry, repository, authConfig);
-        final List<String> tags = DockerRegistryRestClient.getTags(authToken, schema, registry, repository);
+        final DockerRegistrySchema schema = DockerRegistryRestClient.getSchema(registry);
+        final String authToken = DockerRegistryRestClient.getAuthToken(schema.getAuthUrl(), registry, repository, authConfig);
+        final List<String> tags = DockerRegistryRestClient.getTags(authToken, schema.getSchema(), registry, repository);
 
         Assertions.assertNotNull(tags, "Got digest");
 
