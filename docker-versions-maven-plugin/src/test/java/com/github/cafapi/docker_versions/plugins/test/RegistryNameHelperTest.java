@@ -47,7 +47,7 @@ final class RegistryNameHelperTest
             "thisisthesongthatneverendsitgoesonandonandonthisisthesongthatnev",
             "-12345",
             ".acme"});
-        for(final String registryName : registryNames) {
+        for (final String registryName : registryNames) {
             final String sanitizedRegistryName = RegistryNameHelper.sanitizeRegistryName(registryName);
             Assertions.assertTrue(registryName.equals(sanitizedRegistryName), registryName + " - valid registry name");
         }
@@ -61,8 +61,9 @@ final class RegistryNameHelperTest
             "opensuse-opensearch2-image-2.1.0-os_cve_test-SNAPSHOT.project-registries.local",
             "https://github.com/docker/docker",
             "[fc00::1]",
-            "[fe80::1%eth0]"});
-        for(final String registryName : registryNames) {
+            "[fe80::1%eth0]",
+            "acme com"});
+        for (final String registryName : registryNames) {
             final String sanitizedRegistryName = RegistryNameHelper.sanitizeRegistryName(registryName);
             Assertions.assertFalse(registryName.equals(sanitizedRegistryName) && sanitizedRegistryName.contains("--"),
                 registryName + " - invalid registry is sanitized");
