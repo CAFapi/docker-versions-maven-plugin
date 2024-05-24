@@ -83,4 +83,20 @@ final class DockerRegistryRestClientTest
 
         LOGGER.info("Got tags for {}/{} - {}", registry, repository, tags);
     }
+
+    @Test
+    public void testGetDigestNoCredentialsNonDockerHubRegistry() throws DockerRegistryException, ImageNotFoundException
+    {
+        final DockerRegistryAuthConfig authConfig = null;
+        final String registry = "docker.elastic.co";
+        final String repository = "elasticsearch/elasticsearch-oss";
+        final String tag = "7.10.2";
+        final DockerRegistrySchema schema = DockerRegistryRestClient.getSchema(registry);
+        final String authToken = DockerRegistryRestClient.getAuthToken(schema.getAuthUrl(), registry, repository, authConfig);
+        final String digest = DockerRegistryRestClient.getDigest(authToken, schema.getSchema(), registry, repository, tag);
+
+        Assertions.assertNotNull(digest, "Got digest");
+
+        LOGGER.info("Got digest for {}/{}:{} - {}", registry, repository, tag, digest);
+    }
 }
