@@ -22,10 +22,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -175,7 +172,8 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         }
 
         // Filter out tags that are to be ignored
-        final List<String> relevantTags = tags.stream().filter(t -> !isIgnoredVersion(t)).collect(Collectors.toList());
+        final String fullImgNameNoTag = imageMoniker.getFullImageNameWithoutTag();
+        final List<String> relevantTags = IgnoreVersionsHelper.getRelevantTags(effectiveIgnoreVersions, tags, fullImgNameNoTag);
         LOGGER.debug("Relevant tags for latest image: {}-{}", imageMoniker.getFullImageNameWithTag(), relevantTags);
 
         if (relevantTags.isEmpty()) {
@@ -234,28 +232,6 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
         }
         latestVersionTags.sort(Comparator.comparingInt(String::length));
         return latestVersionTags;
-    }
-
-    private boolean isIgnoredVersion(final String tag)
-    {
-        if (DEFAULT_IGNORE_VERSIONS.contains(tag.toLowerCase(Locale.ENGLISH))) {
-            return true;
-        }
-
-        if (effectiveIgnoreVersions.isEmpty()) {
-            return false;
-        }
-
-        boolean isMatch;
-        for (final IgnoreVersion iVersion : effectiveIgnoreVersions) {
-            isMatch = "regex".equals(iVersion.getType())
-                ? Pattern.matches(iVersion.getVersion(), tag)
-                : iVersion.getVersion().equals(tag);
-            if (isMatch) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private Set<IgnoreVersion> getIgnoreVersions()

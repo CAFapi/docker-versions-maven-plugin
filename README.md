@@ -296,6 +296,8 @@ Http connection timeout can be set in the plugin configuration. This configurati
 
 When using the `use-latest-releases` goal an optional `ignoreVersions` configuration can be added.
 When finding the latest static tag for the image any tag that matches the `regex` or the `exact` value specified will be ignored.
+Image name patterns can be added to the `<images>` list if the `regex` or the `exact` value to be ignored has to be applied only to specific images.  
+`<ignoreVersion>` without an `<images>` list will be applied to all images.
 
 ```
 <ignoreVersions>
@@ -306,6 +308,15 @@ When finding the latest static tag for the image any tag that matches the `regex
     <ignoreVersion>
         <type>exact</type>
         <version>3.8.26-alpine</version>
+    </ignoreVersion>
+    <ignoreVersion>
+        <type>regex</type>
+        <version>(?i).*-alpine.*</version>
+        <images>
+            <image>(?i).*rabbitmq.*</image>
+            <image>(?i).*maven.*</image>
+            <image>(?i).*haproxy.*</image>
+        </images>
     </ignoreVersion>
 </ignoreVersions>
 ```
@@ -326,7 +337,6 @@ mvn -Ddocker.ignore.versions=/tmp/ignoreDockerVersions.yaml docker-versions:use-
 
 Example yaml file containing the image tags to ignore:
 ```
----
 - type: regex
   version: (?i).*alpha.*
 - type: regex
@@ -335,6 +345,11 @@ Example yaml file containing the image tags to ignore:
   version: (?i).*-rc.*
 - type: regex
   version: (?i).*alpine.*
+- type: regex
+  version: (?i).*-bullseye.*
+  images:
+  - (?i).*postgres.*
+  - (?i).*haproxy.*
 ```
 
 The following configuration options can be set via environment variables.  
