@@ -16,7 +16,6 @@
 package com.github.cafapi.docker_versions.plugins;
 
 import java.util.List;
-
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
