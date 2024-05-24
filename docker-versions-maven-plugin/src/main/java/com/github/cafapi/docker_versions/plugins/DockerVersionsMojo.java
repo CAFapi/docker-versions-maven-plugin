@@ -68,7 +68,8 @@ abstract class DockerVersionsMojo extends AbstractMojo
         // replace all other chars with 2 hyphens
         if (!projectDockerReg.matches("[a-zA-Z0-9-.]+")) {
             final String sanitizedProjectDockerReg = projectDockerReg.replaceAll("[^a-zA-Z0-9-.]+", "--");
-            LOGGER.warn("Sanitized project docker registry from {} to {}", projectDockerReg, sanitizedProjectDockerReg);
+            LOGGER.warn("Invalid project docker registry name: {}, using sanitized name instead: {}",
+                projectDockerReg, sanitizedProjectDockerReg);
             return sanitizedProjectDockerReg;
         }
         return projectDockerReg;
