@@ -99,7 +99,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
                     ? imageConfig.getTargetRepository()
                     : imageMoniker.getRepositoryWithoutRegistry();
 
-                final String projectDockerRegistryImageName = getProjectDockerRegister() + "/" + targetRepository;
+                final String projectDockerRegistryImageName = getAndSetProjectDockerRegister() + "/" + targetRepository;
 
                 dockerClient.tagImage(image, projectDockerRegistryImageName, LATEST_TAG);
             }

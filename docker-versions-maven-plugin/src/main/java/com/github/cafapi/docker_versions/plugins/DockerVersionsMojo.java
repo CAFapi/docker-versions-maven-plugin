@@ -44,10 +44,16 @@ abstract class DockerVersionsMojo extends AbstractMojo
     @Parameter(property = "docker.host")
     protected String dockerHost;
 
-    protected String getProjectDockerRegister()
+    protected String getAndSetProjectDockerRegister()
     {
-        return project.getProperties().getProperty(
+        final String projectDockerRegistry = project.getProperties().getProperty(
             PROJECT_DOCKER_REGISTRY,
             project.getArtifactId() + "-" + project.getVersion() + ".project-registries.local");
+
+        final String sanitizedProjectDockerRegistry = RegistryNameHelper.sanitizeRegistryName(projectDockerRegistry);
+
+        project.getProperties().put(PROJECT_DOCKER_REGISTRY, sanitizedProjectDockerRegistry);
+
+        return sanitizedProjectDockerRegistry;
     }
 }
