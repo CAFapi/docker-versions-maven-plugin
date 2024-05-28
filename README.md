@@ -318,6 +318,11 @@ Image name patterns can be added to the `<images>` list if the `regex` or the `e
             <image>(?i).*haproxy.*</image>
         </images>
     </ignoreVersion>
+    <ignoreVersion>
+        <type>regex</type>
+        <version>(?!1\.7\.1$).*</version>
+        <images>(?i).*mesosphere/mesos-.*</images>
+    </ignoreVersion>
 </ignoreVersions>
 ```
 
@@ -350,6 +355,10 @@ Example yaml file containing the image tags to ignore:
   images:
   - (?i).*postgres.*
   - (?i).*haproxy.*
+- type: regex
+  version: (?!7\.10\.2-amd64$).*
+  images:
+  - (?i).*elasticsearch/elasticsearch-oss.*
 ```
 
 The following configuration options can be set via environment variables.  
