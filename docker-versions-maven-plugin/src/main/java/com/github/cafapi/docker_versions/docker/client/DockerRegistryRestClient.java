@@ -55,6 +55,7 @@ import java.nio.charset.StandardCharsets;
 
 public final class DockerRegistryRestClient
 {
+    private static final Pattern AUTH_URL_PATTERN = Pattern.compile("Bearer realm=\"(.*?)\",service=\"(.*?)\"");
     private static final Pattern LINK_HEADER_PATTERN = Pattern.compile("<(.*)>; rel=\"next\"");
 
     private static final String BASE = "%s/v2";
@@ -117,7 +118,11 @@ public final class DockerRegistryRestClient
                 throw new ImageNotFoundException("Image not found in registry " + imageNameWithTag);
             }
 
-            throw new DockerRegistryException("Docker-Content-Digest header was not set in the response");
+            if (result.status == HttpStatus.SC_UNAUTHORIZED) {
+                throw new DockerRegistryException("Unauthorized registry access " + imageNameWithTag);
+            }
+
+            throw new DockerRegistryException("Docker-Content-Digest header was not set in the response, status: " + result.status);
         } catch (final IOException ex) {
             throw new DockerRegistryException("Error creating http client for getting digest", ex);
         }
@@ -232,15 +237,16 @@ public final class DockerRegistryRestClient
         return nextPageParams;
     }
 
-    public static String getSchema(final String registry)
+    public static DockerRegistrySchema getSchema(final String registry)
     {
         String host = registry;
         if (isDockerHub(registry)) {
             host = "registry-1.docker.io";
         }
         try {
-            getBase(SCHEMA_HTTPS + "://" + host);
-            return SCHEMA_HTTPS;
+            final RegistryBaseResult result = getBase(SCHEMA_HTTPS + "://" + host);
+            final DockerRegistryAuthUrl authUrl = result.authUrl;
+            return new DockerRegistrySchema(SCHEMA_HTTPS, authUrl);
         } catch (final SSLException e) {
             // Try "http"
         } catch (final IOException e) {
@@ -249,9 +255,10 @@ public final class DockerRegistryRestClient
 
         try {
             // Try "http"
-            final int code = getBase(SCHEMA_HTTP + "://" + host);
+            final RegistryBaseResult result = getBase(SCHEMA_HTTP + "://" + host);
+            final int code = result.status;
             if (code == HttpStatus.SC_OK) {
-                return SCHEMA_HTTP;
+                return new DockerRegistrySchema(SCHEMA_HTTP, result.authUrl);
             }
         } catch (final IOException e) {
             LOGGER.debug("Error fnding schema for host {}", host, e);
@@ -259,7 +266,7 @@ public final class DockerRegistryRestClient
         throw new RuntimeException("No response from the registry Server.");
     }
 
-    private static int getBase(final String endpoint)
+    private static RegistryBaseResult getBase(final String endpoint)
         throws IOException
     {
         // lightweight version checks and to validate registry authentication
@@ -275,8 +282,16 @@ public final class DockerRegistryRestClient
                         // https://distribution.github.io/distribution/spec/api/
                         // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
                         LOGGER.debug("Registry base url: {}, authentication methods: {}", endpoint, authMethods);
+                        if (authMethods == null) {
+                            return new RegistryBaseResult(code, null);
+                        }
+                        final Matcher matcher = AUTH_URL_PATTERN.matcher(authMethods);
+                        if (!matcher.find()) {
+                            return new RegistryBaseResult(code, null);
+                        }
+                        return new RegistryBaseResult(code, new DockerRegistryAuthUrl(matcher.group(1), matcher.group(2)));
                     }
-                    return code;
+                    return new RegistryBaseResult(code, null);
                 }
             );
         }
@@ -311,12 +326,10 @@ public final class DockerRegistryRestClient
         return "Basic " + authString;
     }
 
-    private static URI getDockerHubAuthUrl(final String repository) throws DockerRegistryException
+    private static URI getAuthUrl(final String url, final String service, final String repository)
+        throws DockerRegistryException
     {
         try {
-            final String url = "https://auth.docker.io/token";
-            final String service = "registry.docker.io";
-
             final URIBuilder uriBuilder = new URIBuilder(new URI(url));
             uriBuilder.addParameter("service", service);
             uriBuilder.addParameter("scope", "repository:" + repository + ":pull");
@@ -335,13 +348,16 @@ public final class DockerRegistryRestClient
     }
 
     public static String getAuthToken(
+        final DockerRegistryAuthUrl authUrl,
         final String registry,
         final String repository,
         final DockerRegistryAuthConfig registryAuth)
         throws DockerRegistryException
     {
-        if (isDockerHub(registry)) {
-            return "Bearer " + getDockerHubAuthToken(repository, registryAuth);
+        LOGGER.debug("Get AuthToken for registry: {}...", registry);
+
+        if (authUrl != null) {
+            return "Bearer " + getAuthToken(authUrl.getUrl(), authUrl.getService(), repository, registryAuth);
         }
         return getBasicRegistryAuth(registryAuth);
     }
@@ -351,13 +367,15 @@ public final class DockerRegistryRestClient
         return registry.equals(Constants.DEFAULT_REGISTRY);
     }
 
-    private static String getDockerHubAuthToken(
+    private static String getAuthToken(
+        final String url,
+        final String service,
         final String repository,
         final DockerRegistryAuthConfig authConfig)
         throws DockerRegistryException
     {
         // https://distribution.github.io/distribution/spec/auth/token/
-        final URI authUrl = getDockerHubAuthUrl(repository);
+        final URI authUrl = getAuthUrl(url, service, repository);
         final HttpGet httpGet = new HttpGet(authUrl);
 
         if (authConfig != null) {
@@ -398,6 +416,18 @@ public final class DockerRegistryRestClient
         {
             this.status = status;
             this.data = data;
+        }
+    }
+
+    private static class RegistryBaseResult
+    {
+        final int status;
+        final DockerRegistryAuthUrl authUrl;
+
+        RegistryBaseResult(final int status, final DockerRegistryAuthUrl authUrl)
+        {
+            this.status = status;
+            this.authUrl = authUrl;
         }
     }
 }
