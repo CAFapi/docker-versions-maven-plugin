@@ -71,7 +71,7 @@ public final class IgnoreVersionsHelper
             isMatch = "regex".equals(iVersion.getType())
                 ? Pattern.matches(iVersion.getVersion(), tag)
                 : iVersion.getVersion().equals(tag);
-            LOGGER.debug("Check if tag {} matches version pattern {} : {}", tag, iVersion.getVersion(), isMatch);
+            LOGGER.trace("Check if tag {} matches version pattern {} : {}", tag, iVersion.getVersion(), isMatch);
             if (isMatch) {
                 return true;
             }
@@ -97,7 +97,7 @@ public final class IgnoreVersionsHelper
                 continue;
             }
             for (final String img : images) {
-                LOGGER.debug("Check if image {} matches pattern {}", imageName, img);
+                LOGGER.trace("Check if image {} matches pattern {}", imageName, img);
                 if (Pattern.matches(img, imageName)) {
                     imageIgnoreVersions.add(iVersion);
                 }
@@ -105,7 +105,7 @@ public final class IgnoreVersionsHelper
         }
 
         imageIgnoreVersionsLookup.put(imageName, imageIgnoreVersions);
-        LOGGER.debug("Image ignore versions {} : {}", imageName, imageIgnoreVersionsLookup);
+        LOGGER.debug("Ignore versions for image {} : {}", imageName, imageIgnoreVersionsLookup);
         return imageIgnoreVersions;
     }
 
