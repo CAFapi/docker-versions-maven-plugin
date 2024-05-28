@@ -103,8 +103,8 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
 
             final DockerRegistryAuthConfig authConfig = AuthConfigHelper.getRegistryAuthConfig(settings, imageMoniker.getRegistry());
             final DockerRegistrySchema registrySchema = DockerRegistryRestClient.getSchema(imageMoniker.getRegistry());
-            final String authToken = DockerRegistryRestClient.getAuthToken(registrySchema.getAuthUrl(),
-                imageMoniker.getRegistry(), imageMoniker.getRepositoryWithoutRegistry(), authConfig);
+            final String authToken = DockerRegistryRestClient.getAuthToken(
+                registrySchema.getAuthUrl(), imageMoniker.getRegistry(), imageMoniker.getRepositoryWithoutRegistry(), authConfig);
 
             final String latestDigest = DockerRegistryRestClient.getDigest(
                 authToken, registrySchema.getSchema(), imageMoniker.getRegistry(), imageMoniker.getRepositoryWithoutRegistry(), latestTag);

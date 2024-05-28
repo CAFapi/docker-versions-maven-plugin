@@ -15,12 +15,12 @@
  */
 package com.github.cafapi.docker_versions.docker.client;
 
-final class DockerRegistryAuthUrl
+public final class DockerRegistryAuthUrl
 {
     private final String url;
     private final String service;
 
-    public DockerRegistryAuthUrl(final String url, final String service)
+    DockerRegistryAuthUrl(final String url, final String service)
     {
         this.url = url;
         this.service = service;

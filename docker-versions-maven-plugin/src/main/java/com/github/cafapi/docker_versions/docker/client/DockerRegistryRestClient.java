@@ -255,9 +255,10 @@ public final class DockerRegistryRestClient
 
         try {
             // Try "http"
-            final int code = getBase(SCHEMA_HTTP + "://" + host).status;
+            final RegistryBaseResult result = getBase(SCHEMA_HTTP + "://" + host);
+            final int code = result.status;
             if (code == HttpStatus.SC_OK) {
-                return new DockerRegistrySchema(SCHEMA_HTTP, null);
+                return new DockerRegistrySchema(SCHEMA_HTTP, result.authUrl);
             }
         } catch (final IOException e) {
             LOGGER.debug("Error fnding schema for host {}", host, e);
@@ -275,8 +276,9 @@ public final class DockerRegistryRestClient
                 httpGet, response -> {
                     final int code = response.getCode();
                     if (code == HttpStatus.SC_UNAUTHORIZED) {
-                        final String authMethods = response.getHeader("Www-Authenticate") == null ? null
-                            : response.getHeader("Www-Authenticate").getValue();
+                        final String authMethods = response.getHeader("Www-Authenticate") == null
+                        ? null
+                        : response.getHeader("Www-Authenticate").getValue();
                         // https://distribution.github.io/distribution/spec/api/
                         // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
                         LOGGER.debug("Registry base url: {}, authentication methods: {}", endpoint, authMethods);
@@ -354,7 +356,7 @@ public final class DockerRegistryRestClient
     {
         LOGGER.debug("Get AuthToken for registry: {}...", registry);
 
-        if(authUrl != null) {
+        if (authUrl != null) {
             return "Bearer " + getAuthToken(authUrl.getUrl(), authUrl.getService(), repository, registryAuth);
         }
         return getBasicRegistryAuth(registryAuth);
@@ -417,7 +419,7 @@ public final class DockerRegistryRestClient
         }
     }
 
-    static class RegistryBaseResult
+    private static class RegistryBaseResult
     {
         final int status;
         final DockerRegistryAuthUrl authUrl;
