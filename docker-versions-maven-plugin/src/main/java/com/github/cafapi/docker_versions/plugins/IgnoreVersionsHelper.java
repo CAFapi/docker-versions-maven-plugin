@@ -43,12 +43,11 @@ public final class IgnoreVersionsHelper
         LOGGER.debug("Configured ignore versions: {}", configuredIgnoreVersions);
         final Set<IgnoreVersion> imageIgnoreVersions = getImageIgnoreVersions(configuredIgnoreVersions, repository);
         return tags.stream()
-            .filter(t -> !isIgnoredVersion(configuredIgnoreVersions, imageIgnoreVersions, t))
+            .filter(t -> !isIgnoredVersion(imageIgnoreVersions, t))
             .collect(Collectors.toList());
     }
 
     private static boolean isIgnoredVersion(
-        final Set<IgnoreVersion> configuredIgnoreVersions,
         final Set<IgnoreVersion> imageIgnoreVersions,
         final String tag)
     {
@@ -56,7 +55,7 @@ public final class IgnoreVersionsHelper
             return true;
         }
 
-        if (configuredIgnoreVersions.isEmpty()) {
+        if (imageIgnoreVersions.isEmpty()) {
             return false;
         }
 
@@ -78,6 +77,9 @@ public final class IgnoreVersionsHelper
         final String imageName)
     {
         final Set<IgnoreVersion> imageIgnoreVersions = new HashSet<>();
+        if (configuredIgnoreVersions == null || configuredIgnoreVersions.isEmpty()) {
+            return imageIgnoreVersions;
+        }
 
         for (final IgnoreVersion iVersion : configuredIgnoreVersions) {
             final Set<String> images = iVersion.getImages();

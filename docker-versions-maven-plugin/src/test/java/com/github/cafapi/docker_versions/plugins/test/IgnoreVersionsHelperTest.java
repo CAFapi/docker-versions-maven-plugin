@@ -16,6 +16,7 @@
 package com.github.cafapi.docker_versions.plugins.test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -1083,5 +1084,39 @@ final class IgnoreVersionsHelperTest
                 || t.contains("-amazoncorretto")
                 || t.contains("-openjdk")),
             "maven tags were filtered");
+    }
+
+    @Test
+    public void testGetRelevantTagsNoIgnoreVersionsConfigured()
+    {
+        final List<String> tags = Arrays.asList(new String[]{
+            "1", "1.0", "1.0.0", "1.1", "1.1.0", "2", "2.0", "2.0.0",
+            "3", "3.0", "3.0.0", "3.1", "3.1.0", "3.10", "3.10.0", "3.10.1", "3.2", "3.2.0", "3.3", "3.3.0", "3.4",
+            "3.4.0", "3.4.1", "3.4.2", "3.4.3", "3.4.4", "3.4.5", "3.4.6", "3.5", "3.5.0", "3.6", "3.6.0", "3.6.1",
+            "3.6.2", "3.6.3", "3.6.4", "3.6.5", "3.6.6", "3.6.7", "3.7", "3.7.0", "3.7.1", "3.7.2", "3.8", "3.8.0",
+            "3.8.1", "3.8.2", "3.8.3", "3.9", "3.9.0", "3.9.1", "3.9.2", "3.9.3", "4", "4.0", "4.0.0", "latest"});
+        final String repository = "docker.io/cafapi/opensuse-jre11";
+
+        final List<String> relevantTags = IgnoreVersionsHelper.getRelevantTags(null, tags, repository);
+        LOGGER.info("Relevant Tags: from {} to {}, {}", tags.size(), relevantTags.size(), relevantTags);
+        Assertions.assertTrue(relevantTags.size() == tags.size() - 1 && !relevantTags.contains("latest"),
+            "cafapi/opensuse-jre11 tags were filtered");
+    }
+
+    @Test
+    public void testGetRelevantTagsEmptyIgnoreVersions()
+    {
+        final List<String> tags = Arrays.asList(new String[]{
+            "1", "1.0", "1.0.0", "1.1", "1.1.0", "2", "2.0", "2.0.0",
+            "3", "3.0", "3.0.0", "3.1", "3.1.0", "3.10", "3.10.0", "3.10.1", "3.2", "3.2.0", "3.3", "3.3.0", "3.4",
+            "3.4.0", "3.4.1", "3.4.2", "3.4.3", "3.4.4", "3.4.5", "3.4.6", "3.5", "3.5.0", "3.6", "3.6.0", "3.6.1",
+            "3.6.2", "3.6.3", "3.6.4", "3.6.5", "3.6.6", "3.6.7", "3.7", "3.7.0", "3.7.1", "3.7.2", "3.8", "3.8.0",
+            "3.8.1", "3.8.2", "3.8.3", "3.9", "3.9.0", "3.9.1", "3.9.2", "3.9.3", "4", "4.0", "4.0.0", "latest"});
+        final String repository = "docker.io/cafapi/opensuse-jre11";
+
+        final List<String> relevantTags = IgnoreVersionsHelper.getRelevantTags(Collections.emptySet(), tags, repository);
+        LOGGER.info("Relevant Tags: from {} to {}, {}", tags.size(), relevantTags.size(), relevantTags);
+        Assertions.assertTrue(relevantTags.size() == tags.size() - 1 && !relevantTags.contains("latest"),
+            "cafapi/opensuse-jre11 tags were filtered");
     }
 }
