@@ -769,7 +769,7 @@ final class IgnoreVersionsHelperTest
     }
 
     @Test
-    public void testGetRelevantTagsmaven()
+    public void testGetRelevantTagsMaven()
     {
         final List<String> tags = Arrays.asList(new String[]{
             "3", "3-adoptopenjdk", "3-adoptopenjdk-11",
