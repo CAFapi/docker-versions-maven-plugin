@@ -16,11 +16,9 @@
 package com.github.cafapi.docker_versions.plugins;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -43,16 +41,15 @@ public final class IgnoreVersionsHelper
         final String repository)
     {
         LOGGER.debug("Configured ignore versions: {}", configuredIgnoreVersions);
-        final Map<String, Set<IgnoreVersion>> imageIgnoreVersionsLookup = new HashMap<>();
+        final Set<IgnoreVersion> imageIgnoreVersions = getImageIgnoreVersions(configuredIgnoreVersions, repository);
         return tags.stream()
-            .filter(t -> !isIgnoredVersion(configuredIgnoreVersions, imageIgnoreVersionsLookup, repository, t))
+            .filter(t -> !isIgnoredVersion(configuredIgnoreVersions, imageIgnoreVersions, t))
             .collect(Collectors.toList());
     }
 
     private static boolean isIgnoredVersion(
         final Set<IgnoreVersion> configuredIgnoreVersions,
-        final Map<String, Set<IgnoreVersion>> imageIgnoreVersionsLookup,
-        final String imageName,
+        final Set<IgnoreVersion> imageIgnoreVersions,
         final String tag)
     {
         if (DEFAULT_IGNORE_VERSIONS.contains(tag.toLowerCase(Locale.ENGLISH))) {
@@ -62,9 +59,6 @@ public final class IgnoreVersionsHelper
         if (configuredIgnoreVersions.isEmpty()) {
             return false;
         }
-
-        final Set<IgnoreVersion> imageIgnoreVersions
-            = getImageIgnoreVersions(configuredIgnoreVersions, imageName, imageIgnoreVersionsLookup);
 
         boolean isMatch;
         for (final IgnoreVersion iVersion : imageIgnoreVersions) {
@@ -81,13 +75,8 @@ public final class IgnoreVersionsHelper
 
     private static Set<IgnoreVersion> getImageIgnoreVersions(
         final Set<IgnoreVersion> configuredIgnoreVersions,
-        final String imageName,
-        final Map<String, Set<IgnoreVersion>> imageIgnoreVersionsLookup)
+        final String imageName)
     {
-        if (imageIgnoreVersionsLookup.containsKey(imageName)) {
-            return imageIgnoreVersionsLookup.get(imageName);
-        }
-
         final Set<IgnoreVersion> imageIgnoreVersions = new HashSet<>();
 
         for (final IgnoreVersion iVersion : configuredIgnoreVersions) {
@@ -104,8 +93,7 @@ public final class IgnoreVersionsHelper
             }
         }
 
-        imageIgnoreVersionsLookup.put(imageName, imageIgnoreVersions);
-        LOGGER.debug("Ignore versions for image {} : {}", imageName, imageIgnoreVersionsLookup);
+        LOGGER.debug("Ignore versions for image {} : {}", imageName, imageIgnoreVersions);
         return imageIgnoreVersions;
     }
 }
