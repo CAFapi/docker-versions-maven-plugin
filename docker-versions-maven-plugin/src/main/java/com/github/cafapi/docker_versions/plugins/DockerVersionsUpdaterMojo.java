@@ -43,8 +43,6 @@ import com.github.cafapi.docker_versions.docker.client.ImageNotFoundException;
 
 abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
 {
-    protected static final List<String> DEFAULT_IGNORE_VERSIONS = Arrays.asList(new String[]{"latest", "stable"});
-
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsUpdaterMojo.class);
 
     @Component

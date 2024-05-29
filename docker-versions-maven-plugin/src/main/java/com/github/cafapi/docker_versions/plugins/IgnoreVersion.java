@@ -16,6 +16,7 @@
 package com.github.cafapi.docker_versions.plugins;
 
 import java.util.Objects;
+import java.util.Set;
 
 import org.apache.maven.plugins.annotations.Parameter;
 
@@ -32,6 +33,23 @@ public final class IgnoreVersion
      */
     @Parameter(required = true, defaultValue = "exact")
     private String type;
+
+    /**
+     * The set of regular expressions representing images the ignore pattern applies to.
+     */
+    @Parameter
+    private Set<String> images;
+
+    public IgnoreVersion()
+    {
+    }
+
+    public IgnoreVersion(final String type, final String version, final Set<String> images)
+    {
+        this.type = type;
+        this.version = version;
+        this.images = images;
+    }
 
     /**
      * Get the type of ignore mechanism to use. Allowed values are 'exact' and 'regex'.
@@ -54,6 +72,16 @@ public final class IgnoreVersion
     }
 
     /**
+     * Get the list of images this ignore rule applies to.
+     *
+     * @return Set of regular expressions representing images.
+     */
+    public Set<String> getImages()
+    {
+        return this.images;
+    }
+
+    /**
      * Set the type of ignore mechanism to use. Allowed values are 'exact' and 'regex'.
      *
      * @param type a type object.
@@ -73,16 +101,26 @@ public final class IgnoreVersion
         this.version = version;
     }
 
+    /**
+     * Set the list of images this ignore rule applies to.
+     *
+     * @param images a set of images.
+     */
+    public void setImages(final Set<String> images)
+    {
+        this.images = images;
+    }
+
     @Override
     public String toString()
     {
-        return "IgnoreVersion [version=" + version + ", type=" + type + "]";
+        return "IgnoreVersion [version=" + version + ", type=" + type + ", images=" + images + "]";
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(type, version);
+        return Objects.hash(type, version, images);
     }
 
     @Override
@@ -95,6 +133,8 @@ public final class IgnoreVersion
             return false;
         }
         final IgnoreVersion other = (IgnoreVersion) obj;
-        return Objects.equals(type, other.type) && Objects.equals(version, other.version);
+        return Objects.equals(type, other.type)
+            && Objects.equals(version, other.version)
+            && Objects.equals(images, other.images);
     }
 }
