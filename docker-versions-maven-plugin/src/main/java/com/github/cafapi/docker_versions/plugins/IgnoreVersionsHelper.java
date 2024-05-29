@@ -59,9 +59,8 @@ public final class IgnoreVersionsHelper
             return false;
         }
 
-        boolean isMatch;
         for (final IgnoreVersion iVersion : imageIgnoreVersions) {
-            isMatch = "regex".equals(iVersion.getType())
+            final boolean isMatch = "regex".equals(iVersion.getType())
                 ? Pattern.matches(iVersion.getVersion(), tag)
                 : iVersion.getVersion().equals(tag);
             LOGGER.trace("Check if tag {} matches version pattern {} : {}", tag, iVersion.getVersion(), isMatch);
