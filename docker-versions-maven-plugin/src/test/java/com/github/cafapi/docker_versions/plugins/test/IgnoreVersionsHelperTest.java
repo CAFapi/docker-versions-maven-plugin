@@ -82,7 +82,7 @@ final class IgnoreVersionsHelperTest
             "3.4.0", "3.4.1", "3.4.2", "3.4.3", "3.4.4", "3.4.5", "3.4.6", "3.5", "3.5.0", "3.6", "3.6.0", "3.6.1",
             "3.6.2", "3.6.3", "3.6.4", "3.6.5", "3.6.6", "3.6.7", "3.7", "3.7.0", "3.7.1", "3.7.2", "3.8", "3.8.0",
             "3.8.1", "3.8.2", "3.8.3", "3.9", "3.9.0", "3.9.1", "3.9.2", "3.9.3", "4", "4.0", "4.0.0", "latest"});
-        final String repository = "dockerhub-public.svsartifactory.swinfra.net/cafapi/opensuse-jre11";
+        final String repository = "docker.io/cafapi/opensuse-jre11";
 
         final List<String> relevantTags = IgnoreVersionsHelper.getRelevantTags(ignoreVersions, tags, repository);
         LOGGER.info("Relevant Tags: from {} to {}, {}", tags.size(), relevantTags.size(), relevantTags);
@@ -100,7 +100,7 @@ final class IgnoreVersionsHelperTest
             "1.5.0-rc2", "1.5.1-rc1", "1.5.2", "1.5.2-rc1", "1.5.2-rc2", "1.5.3-rc1", "1.6.0-rc1", "1.6.1-rc2", "1.6.2",
             "1.7.0", "1.7.0-rc1", "1.7.0-rc2", "1.7.0-rc3", "1.7.1"});
 
-        final String repository = "dockerhub-public.svsartifactory.swinfra.net/mesosphere/mesos-master";
+        final String repository = "docker.io/mesosphere/mesos-master";
 
         final List<String> relevantTags = IgnoreVersionsHelper.getRelevantTags(ignoreVersions, tags, repository);
         LOGGER.info("Relevant Tags: from {} to {}, {}", tags.size(), relevantTags.size(), relevantTags);
@@ -118,7 +118,7 @@ final class IgnoreVersionsHelperTest
             "1.5.0-rc2", "1.5.1-rc1", "1.5.2", "1.5.2-rc1", "1.5.2-rc2", "1.5.3-rc1", "1.6.0-rc1", "1.6.1-rc2", "1.6.2",
             "1.7.0", "1.7.0-rc1", "1.7.0-rc2", "1.7.0-rc3", "1.7.1"});
 
-        final String repository = "dockerhub-public.svsartifactory.swinfra.net/mesosphere/mesos-agent";
+        final String repository = "docker.io/mesosphere/mesos-agent";
 
         final List<String> relevantTags = IgnoreVersionsHelper.getRelevantTags(ignoreVersions, tags, repository);
         LOGGER.info("Relevant Tags: from {} to {}, {}", tags.size(), relevantTags.size(), relevantTags);
@@ -513,7 +513,7 @@ final class IgnoreVersionsHelperTest
             "9.6.9-alpine", "alpine", "alpine3.13", "alpine3.14", "alpine3.15", "alpine3.16", "alpine3.17",
             "alpine3.18", "alpine3.19", "bookworm", "bullseye", "buster", "latest"});
 
-        final String repository = "dockerhub-public.svsartifactory.swinfra.net/library/postgres";
+        final String repository = "docker.io/library/postgres";
 
         final List<String> relevantTags = IgnoreVersionsHelper.getRelevantTags(ignoreVersions, tags, repository);
         LOGGER.info("Relevant Tags: from {} to {}, {}", tags.size(), relevantTags.size(), relevantTags);
@@ -761,7 +761,7 @@ final class IgnoreVersionsHelperTest
             "3.9.8-alpine", "3.9.8-management", "3.9.8-management-alpine", "3.9.9", "3.9.9-alpine", "3.9.9-management",
             "3.9.9-management-alpine", "alpine", "latest", "management", "management-alpine"});
 
-        final String repository = "dockerhub-public.svsartifactory.swinfra.net/library/rabbitmq";
+        final String repository = "docker.io/library/rabbitmq";
 
         final List<String> relevantTags = IgnoreVersionsHelper.getRelevantTags(ignoreVersions, tags, repository);
         LOGGER.info("Relevant Tags: from {} to {}, {}", tags.size(), relevantTags.size(), relevantTags);
@@ -1070,7 +1070,7 @@ final class IgnoreVersionsHelperTest
             "ibmjava-alpine", "latest", "latest-onbuild", "onbuild", "onbuild-alpine", "openjdk", "sapmachine",
             "slim"});
 
-        final String repository = "dockerhub-public.svsartifactory.swinfra.net/library/maven";
+        final String repository = "docker.io/library/maven";
 
         final List<String> relevantTags = IgnoreVersionsHelper.getRelevantTags(ignoreVersions, tags, repository);
         LOGGER.info("Relevant Tags: from {} to {}, {}", tags.size(), relevantTags.size(), relevantTags);
