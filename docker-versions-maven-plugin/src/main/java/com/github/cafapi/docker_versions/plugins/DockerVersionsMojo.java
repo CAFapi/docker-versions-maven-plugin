@@ -16,6 +16,8 @@
 package com.github.cafapi.docker_versions.plugins;
 
 import java.util.List;
+import java.util.Set;
+
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
@@ -34,6 +36,9 @@ abstract class DockerVersionsMojo extends AbstractMojo
 
     @Parameter(required = true)
     protected List<ImageConfiguration> imageManagement;
+
+    @Parameter
+    protected Set<IgnoreVersion> ignoreVersions;
 
     @Parameter
     protected HttpConfiguration httpConfiguration;

@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -47,9 +46,6 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
 
     @Component
     protected ProjectBuilder projectBuilder;
-
-    @Parameter
-    protected Set<IgnoreVersion> ignoreVersions;
 
     @Parameter(property = "docker.ignore.versions")
     protected String ignoreVersionsConfigPath;
