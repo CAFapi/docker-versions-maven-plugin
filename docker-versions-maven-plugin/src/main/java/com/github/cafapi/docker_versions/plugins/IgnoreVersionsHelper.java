@@ -108,5 +108,4 @@ public final class IgnoreVersionsHelper
         LOGGER.debug("Ignore versions for image {} : {}", imageName, imageIgnoreVersionsLookup);
         return imageIgnoreVersions;
     }
-
 }

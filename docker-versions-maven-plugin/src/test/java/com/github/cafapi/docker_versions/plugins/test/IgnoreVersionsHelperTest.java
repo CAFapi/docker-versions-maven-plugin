@@ -46,37 +46,38 @@ final class IgnoreVersionsHelperTest
         ignoreVersions.add(new IgnoreVersion("regex", "(?i).*-rc.*", null));
 
         ignoreVersions.add(new IgnoreVersion("regex", "(?i).*-bullseye.*",
-            new HashSet<>(Arrays.asList(new String[]{"(?i).*postgres.*"}))));
+                                             new HashSet<>(Arrays.asList(new String[]{"(?i).*postgres.*"}))));
 
         ignoreVersions.add(new IgnoreVersion("regex", "(?i).*-alpine.*",
-            new HashSet<>(Arrays.asList(new String[]{"(?i).*rabbitmq.*", "(?i).*maven.*"}))));
+                                             new HashSet<>(Arrays.asList(new String[]{"(?i).*rabbitmq.*", "(?i).*maven.*"}))));
 
         ignoreVersions.add(new IgnoreVersion("regex", "(?i).*-debian.*",
-            new HashSet<>(Arrays.asList(new String[]{"(?i).*maven.*"}))));
+                                             new HashSet<>(Arrays.asList(new String[]{"(?i).*maven.*"}))));
 
         ignoreVersions.add(new IgnoreVersion("regex", "(?i).*-ibm.*",
-            new HashSet<>(Arrays.asList(new String[]{"(?i).*maven.*"}))));
+                                             new HashSet<>(Arrays.asList(new String[]{"(?i).*maven.*"}))));
 
         ignoreVersions.add(new IgnoreVersion("regex", "(?i).*-slim.*",
-            new HashSet<>(Arrays.asList(new String[]{"(?i).*maven.*"}))));
+                                             new HashSet<>(Arrays.asList(new String[]{"(?i).*maven.*"}))));
 
         ignoreVersions.add(new IgnoreVersion("regex", "(?i).*-amazoncorretto.*",
-            new HashSet<>(Arrays.asList(new String[]{"(?i).*maven.*"}))));
+                                             new HashSet<>(Arrays.asList(new String[]{"(?i).*maven.*"}))));
 
         ignoreVersions.add(new IgnoreVersion("regex", "(?i).*-openjdk.*",
-            new HashSet<>(Arrays.asList(new String[]{"(?i).*maven.*"}))));
+                                             new HashSet<>(Arrays.asList(new String[]{"(?i).*maven.*"}))));
 
         ignoreVersions.add(new IgnoreVersion("regex", "(?!1\\.7\\.1$).*",
-            new HashSet<>(Arrays.asList(new String[]{"(?i).*mesosphere/mesos-.*"}))));
+                                             new HashSet<>(Arrays.asList(new String[]{"(?i).*mesosphere/mesos-.*"}))));
 
         ignoreVersions.add(new IgnoreVersion("regex", "(?!7\\.10\\.2$).*",
-            new HashSet<>(Arrays.asList(new String[]{"(?i).*elasticsearch/elasticsearch-oss.*"}))));
+                                             new HashSet<>(Arrays.asList(new String[]{"(?i).*elasticsearch/elasticsearch-oss.*"}))));
     }
 
     @Test
     public void testGetRelevantTagsOpenSuseJre11()
     {
-        final List<String> tags = Arrays.asList(new String[] {"1", "1.0", "1.0.0", "1.1", "1.1.0", "2", "2.0", "2.0.0",
+        final List<String> tags = Arrays.asList(new String[]{
+            "1", "1.0", "1.0.0", "1.1", "1.1.0", "2", "2.0", "2.0.0",
             "3", "3.0", "3.0.0", "3.1", "3.1.0", "3.10", "3.10.0", "3.10.1", "3.2", "3.2.0", "3.3", "3.3.0", "3.4",
             "3.4.0", "3.4.1", "3.4.2", "3.4.3", "3.4.4", "3.4.5", "3.4.6", "3.5", "3.5.0", "3.6", "3.6.0", "3.6.1",
             "3.6.2", "3.6.3", "3.6.4", "3.6.5", "3.6.6", "3.6.7", "3.7", "3.7.0", "3.7.1", "3.7.2", "3.8", "3.8.0",
@@ -91,7 +92,8 @@ final class IgnoreVersionsHelperTest
     @Test
     public void testGetRelevantTagsMesosMaster()
     {
-        final List<String> tags = Arrays.asList(new String[] {"1.0.4-rc2", "1.1.1", "1.1.1-rc2", "1.1.2-rc1",
+        final List<String> tags = Arrays.asList(new String[]{
+            "1.0.4-rc2", "1.1.1", "1.1.1-rc2", "1.1.2-rc1",
             "1.1.2-rc2", "1.1.3", "1.1.3-rc1", "1.2.0", "1.2.0-rc2", "1.2.1", "1.2.1-rc1", "1.2.2", "1.2.2-rc1",
             "1.2.3", "1.2.3-rc1", "1.3.0", "1.3.0-rc1", "1.3.0-rc2", "1.3.1", "1.3.2", "1.3.2-rc1", "1.4.0",
             "1.4.0-rc2", "1.4.0-rc3", "1.4.0-rc4", "1.4.0-rc5", "1.4.1", "1.4.1-rc1", "1.4.3-rc1", "1.5.0", "1.5.0-rc1",
@@ -108,7 +110,8 @@ final class IgnoreVersionsHelperTest
     @Test
     public void testGetRelevantTagsMesosAgent()
     {
-        final List<String> tags = Arrays.asList(new String[] {"1.0.4-rc2", "1.1.1", "1.1.1-rc2", "1.1.2-rc1",
+        final List<String> tags = Arrays.asList(new String[]{
+            "1.0.4-rc2", "1.1.1", "1.1.1-rc2", "1.1.2-rc1",
             "1.1.2-rc2", "1.1.3", "1.1.3-rc1", "1.2.0", "1.2.0-rc2", "1.2.1", "1.2.1-rc1", "1.2.2", "1.2.2-rc1",
             "1.2.3", "1.2.3-rc1", "1.3.0", "1.3.0-rc1", "1.3.0-rc2", "1.3.1", "1.3.2", "1.3.2-rc1", "1.4.0",
             "1.4.0-rc2", "1.4.0-rc3", "1.4.0-rc4", "1.4.0-rc5", "1.4.1", "1.4.1-rc1", "1.4.3-rc1", "1.5.0", "1.5.0-rc1",
@@ -125,7 +128,8 @@ final class IgnoreVersionsHelperTest
     @Test
     public void testGetRelevantTagsEsOss()
     {
-        final List<String> tags = Arrays.asList(new String[] { "6.0.0-rc2", "6.0.0", "6.0.1", "6.1.0", "6.1.1", "6.1.2",
+        final List<String> tags = Arrays.asList(new String[]{
+            "6.0.0-rc2", "6.0.0", "6.0.1", "6.1.0", "6.1.1", "6.1.2",
             "6.1.3", "6.1.4", "6.2.0", "6.2.1", "6.2.2", "6.2.3", "6.2.4", "6.3.0", "6.3.1", "6.3.2", "6.3.3-SNAPSHOT",
             "6.4-SNAPSHOT", "6.4.0-SNAPSHOT", "6.4.0", "6.4.1-SNAPSHOT", "6.4.1", "6.4.2-SNAPSHOT", "6.4.2",
             "6.4.3-SNAPSHOT", "6.4.3", "6.4.4-SNAPSHOT", "6.5-SNAPSHOT", "6.5.0-SNAPSHOT", "6.5.0", "6.5.1-SNAPSHOT",
@@ -379,7 +383,8 @@ final class IgnoreVersionsHelperTest
     @Test
     public void testGetRelevantTagsPostgres()
     {
-        final List<String> tags = Arrays.asList(new String[] {"10", "10-alpine", "10-alpine3.13", "10-alpine3.14",
+        final List<String> tags = Arrays.asList(new String[]{
+            "10", "10-alpine", "10-alpine3.13", "10-alpine3.14",
             "10-alpine3.15", "10-alpine3.16", "10-beta1", "10-beta1-alpine", "10-beta2", "10-beta2-alpine", "10-beta3",
             "10-beta3-alpine", "10-beta4", "10-beta4-alpine", "10-bullseye", "10-buster", "10-rc1", "10-rc1-alpine",
             "10-stretch", "10.0", "10.0-alpine", "10.1", "10.1-alpine", "10.10", "10.10-alpine", "10.11",
@@ -518,7 +523,8 @@ final class IgnoreVersionsHelperTest
     @Test
     public void testGetRelevantTagsRabbitMQ()
     {
-        final List<String> tags = Arrays.asList(new String[] {"3", "3-alpine", "3-management", "3-management-alpine",
+        final List<String> tags = Arrays.asList(new String[]{
+            "3", "3-alpine", "3-management", "3-management-alpine",
             "3.10", "3.10-alpine", "3.10-management", "3.10-management-alpine", "3.10-rc", "3.10-rc-alpine",
             "3.10-rc-management", "3.10-rc-management-alpine", "3.10.0", "3.10.0-alpine", "3.10.0-beta.4",
             "3.10.0-beta.4-alpine", "3.10.0-beta.4-management", "3.10.0-beta.4-management-alpine", "3.10.0-beta.5",
@@ -765,7 +771,8 @@ final class IgnoreVersionsHelperTest
     @Test
     public void testGetRelevantTagsmaven()
     {
-        final List<String> tags = Arrays.asList(new String[] {"3", "3-adoptopenjdk", "3-adoptopenjdk-11",
+        final List<String> tags = Arrays.asList(new String[]{
+            "3", "3-adoptopenjdk", "3-adoptopenjdk-11",
             "3-adoptopenjdk-11-openj9", "3-adoptopenjdk-14", "3-adoptopenjdk-14-openj9", "3-adoptopenjdk-15",
             "3-adoptopenjdk-15-openj9", "3-adoptopenjdk-16", "3-adoptopenjdk-16-openj9", "3-adoptopenjdk-8",
             "3-adoptopenjdk-8-openj9", "3-alpine", "3-amazoncorretto", "3-amazoncorretto-11",
