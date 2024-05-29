@@ -35,7 +35,7 @@ public final class IgnoreVersion
     private String type;
 
     /**
-     * The set of images the ignore pattern applies to.
+     * The set of regular expressions representing images the ignore pattern applies to.
      */
     @Parameter
     private Set<String> images;
@@ -74,7 +74,7 @@ public final class IgnoreVersion
     /**
      * Get the list of images this ignore rule applies to.
      *
-     * @return Set<String>
+     * @return Set of regular expressions representing images.
      */
     public Set<String> getImages()
     {
