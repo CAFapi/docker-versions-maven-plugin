@@ -1100,7 +1100,7 @@ final class IgnoreVersionsHelperTest
         final List<String> relevantTags = IgnoreVersionsHelper.getRelevantTags(null, tags, repository);
         LOGGER.info("Relevant Tags: from {} to {}, {}", tags.size(), relevantTags.size(), relevantTags);
         Assertions.assertTrue(relevantTags.size() == tags.size() - 1 && !relevantTags.contains("latest"),
-            "cafapi/opensuse-jre11 tags were filtered");
+                              "cafapi/opensuse-jre11 tags were filtered");
     }
 
     @Test
@@ -1117,6 +1117,6 @@ final class IgnoreVersionsHelperTest
         final List<String> relevantTags = IgnoreVersionsHelper.getRelevantTags(Collections.emptySet(), tags, repository);
         LOGGER.info("Relevant Tags: from {} to {}, {}", tags.size(), relevantTags.size(), relevantTags);
         Assertions.assertTrue(relevantTags.size() == tags.size() - 1 && !relevantTags.contains("latest"),
-            "cafapi/opensuse-jre11 tags were filtered");
+                              "cafapi/opensuse-jre11 tags were filtered");
     }
 }
