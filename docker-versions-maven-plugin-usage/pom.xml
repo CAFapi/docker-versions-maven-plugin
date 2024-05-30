@@ -24,7 +24,7 @@
     <parent>
         <groupId>com.github.cafapi.plugins.docker.versions</groupId>
         <artifactId>docker-versions</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0-29</version>
     </parent>
 
     <artifactId>docker-versions-maven-plugin-usage</artifactId>
@@ -39,7 +39,7 @@
             <plugin>
                 <groupId>com.github.cafapi.plugins.docker.versions</groupId>
                 <artifactId>docker-versions-maven-plugin</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.0.0-29</version>
                 <executions>
                     <execution>
                         <id>populate-project-registry</id>
