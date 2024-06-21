@@ -101,9 +101,17 @@ public final class DockerRestClient
             pullCommand.withAuthConfig(authConfig);
         }
 
-        return pullCommand
+        final PullImageResultCallback callback = new PullImageResultCallback() {
+            @Override
+            public void onError(final Throwable throwable) {
+                LOGGER.error("Error pulling image {}:{} ", repository, tag, throwable);
+                super.onError(throwable);
+            }
+        };
+
+         return pullCommand
             .withTag(tag)
-            .exec(new PullImageResultCallback())
+            .exec(callback)
             .awaitCompletion(downloadImageTimeout, TimeUnit.SECONDS);
     }
 
