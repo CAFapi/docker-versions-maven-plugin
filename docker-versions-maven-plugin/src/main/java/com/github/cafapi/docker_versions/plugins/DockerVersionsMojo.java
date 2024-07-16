@@ -16,6 +16,7 @@
 package com.github.cafapi.docker_versions.plugins;
 
 import java.util.List;
+import org.apache.maven.model.Profile;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
@@ -53,6 +54,9 @@ abstract class DockerVersionsMojo extends AbstractMojo
         final String sanitizedProjectDockerRegistry = RegistryNameHelper.sanitizeRegistryName(projectDockerRegistry);
 
         project.getProperties().put(PROJECT_DOCKER_REGISTRY, sanitizedProjectDockerRegistry);
+
+        final List<Profile> activeProfiles = project.getActiveProfiles();
+        activeProfiles.stream().forEach(p -> p.getProperties().put(PROJECT_DOCKER_REGISTRY, sanitizedProjectDockerRegistry));
 
         return sanitizedProjectDockerRegistry;
     }
