@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.cafapi.docker_versions.plugins.DockerVersionsHelper;
+import com.github.cafapi.docker_versions.plugins.RegistryNameHelper;
 
 /**
  * This maven build extension adds the populate-project-registry and depopulate-project-registry goals to the maven session.
@@ -47,6 +48,8 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 
     private static final List<String> AVOID_AUTO_POPULATE_PHASES = Arrays.asList(new String[]{"clean", "validate", "site"});
     private static final List<String> AVOID_AUTO_DEPOPULATE_PHASES = Arrays.asList(new String[]{"validate", "site"});
+
+    protected static final String PROJECT_DOCKER_REGISTRY = "projectDockerRegistry";
 
     @Override
     public void afterProjectsRead(final MavenSession session) throws MavenExecutionException
@@ -62,6 +65,8 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
             LOGGER.debug("DockerVersionsLifecycleParticipant no tasks in session.");
             return;
         }
+
+        setProjectDockerRegister(session);
 
         final List<String> phasesInSession = getPhases(sessionTasks);
         if (phasesInSession.size() == 0) {
@@ -175,5 +180,36 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         final int totalModules = projects.size();
         LOGGER.debug("--- Build order of {} projects --- ", totalModules);
         projects.stream().forEach(p -> LOGGER.debug("{}", p.getName()));
+    }
+
+    private static void setProjectDockerRegister(final MavenSession session) {
+        LOGGER.info("DockerVersionsLifecycleParticipant afterSessionStart...");
+        final List<MavenProject> projects = session.getProjects();
+        final MavenProject topLevelProject = session.getTopLevelProject();
+
+        for (int i = 0; i < projects.size(); i++) {
+            final MavenProject project = projects.get(i);
+
+            final Plugin plugin = DockerVersionsHelper.getPlugin(project);
+            if (plugin == null) {
+                continue;
+            }
+
+            Xpp3Dom pluginConfig = DockerVersionsHelper.getPluginConfig(plugin);
+            if (pluginConfig == null) {
+                pluginConfig = new Xpp3Dom("configuration");
+            }
+
+            final Xpp3Dom projRegPluginConfigParam = pluginConfig.getChild(PROJECT_DOCKER_REGISTRY);
+            if (projRegPluginConfigParam != null) {
+                final String projRegConfigValue = projRegPluginConfigParam.getValue();
+                final String projectDockerRegistry = projRegConfigValue == null || projRegConfigValue.trim().length() == 0
+                    ? topLevelProject.getArtifactId() + "-" + topLevelProject.getVersion() + ".project-registries.local"
+                    : projRegConfigValue;
+                final String sanitizedProjectDockerRegistry = RegistryNameHelper.sanitizeRegistryName(projectDockerRegistry);
+                topLevelProject.getProperties().setProperty(PROJECT_DOCKER_REGISTRY, sanitizedProjectDockerRegistry);
+                break;
+            }
+        }
     }
 }

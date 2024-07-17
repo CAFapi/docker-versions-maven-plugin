@@ -17,6 +17,7 @@ package com.github.cafapi.docker_versions.plugins;
 
 import java.util.List;
 import org.apache.maven.model.Profile;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
@@ -27,6 +28,9 @@ abstract class DockerVersionsMojo extends AbstractMojo
     protected static final String PROJECT_DOCKER_REGISTRY = "projectDockerRegistry";
     protected static final String LATEST_TAG = "latest";
 
+    @Parameter(defaultValue = "${session}", readonly = true, required = true)
+    protected MavenSession session;
+
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     protected MavenProject project;
 
@@ -35,6 +39,9 @@ abstract class DockerVersionsMojo extends AbstractMojo
 
     @Parameter(required = true)
     protected List<ImageConfiguration> imageManagement;
+
+    @Parameter
+    protected String projectDockerRegistry;
 
     @Parameter
     protected HttpConfiguration httpConfiguration;
@@ -47,17 +54,7 @@ abstract class DockerVersionsMojo extends AbstractMojo
 
     protected String getAndSetProjectDockerRegister()
     {
-        final String projectDockerRegistry = project.getProperties().getProperty(
-            PROJECT_DOCKER_REGISTRY,
-            project.getArtifactId() + "-" + project.getVersion() + ".project-registries.local");
-
-        final String sanitizedProjectDockerRegistry = RegistryNameHelper.sanitizeRegistryName(projectDockerRegistry);
-
-        project.getProperties().put(PROJECT_DOCKER_REGISTRY, sanitizedProjectDockerRegistry);
-
-        final List<Profile> activeProfiles = project.getActiveProfiles();
-        activeProfiles.stream().forEach(p -> p.getProperties().put(PROJECT_DOCKER_REGISTRY, sanitizedProjectDockerRegistry));
-
-        return sanitizedProjectDockerRegistry;
+        final MavenProject topLevelProject = session.getTopLevelProject();
+        return topLevelProject.getProperties().getProperty(PROJECT_DOCKER_REGISTRY);
     }
 }

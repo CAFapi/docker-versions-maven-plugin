@@ -6,6 +6,6 @@ ${version-number}
 #### New Features
 
 #### Bug Fixes
-- **I941175**: Propagate sanitized project registry name to all active profiles to fix build errors.
+- **I941175**: Moved project registry name sanitization to plugin extension.
 
 #### Known Issues
