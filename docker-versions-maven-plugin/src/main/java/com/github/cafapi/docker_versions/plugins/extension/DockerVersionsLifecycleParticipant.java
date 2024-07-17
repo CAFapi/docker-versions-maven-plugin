@@ -183,9 +183,19 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
     }
 
     private static void setProjectDockerRegister(final MavenSession session) {
-        LOGGER.info("DockerVersionsLifecycleParticipant afterSessionStart...");
-        final List<MavenProject> projects = session.getProjects();
+        final String sanitizedProjectDockerRegistry = getProjectDockerRegistry(session);
+
+        session.getProjects()
+            .forEach(project -> project.getProperties().setProperty(PROJECT_DOCKER_REGISTRY, sanitizedProjectDockerRegistry));
+    }
+
+    private static String getProjectDockerRegistry(final MavenSession session)
+    {
         final MavenProject topLevelProject = session.getTopLevelProject();
+        final String defaultProjectDockerRegistry = topLevelProject.getArtifactId()
+            + "-" + topLevelProject.getVersion() + ".project-registries.local";
+
+        final List<MavenProject> projects = session.getProjects();
 
         for (int i = 0; i < projects.size(); i++) {
             final MavenProject project = projects.get(i);
@@ -203,13 +213,11 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
             final Xpp3Dom projRegPluginConfigParam = pluginConfig.getChild(PROJECT_DOCKER_REGISTRY);
             if (projRegPluginConfigParam != null) {
                 final String projRegConfigValue = projRegPluginConfigParam.getValue();
-                final String projectDockerRegistry = projRegConfigValue == null || projRegConfigValue.trim().length() == 0
-                    ? topLevelProject.getArtifactId() + "-" + topLevelProject.getVersion() + ".project-registries.local"
-                    : projRegConfigValue;
-                final String sanitizedProjectDockerRegistry = RegistryNameHelper.sanitizeRegistryName(projectDockerRegistry);
-                topLevelProject.getProperties().setProperty(PROJECT_DOCKER_REGISTRY, sanitizedProjectDockerRegistry);
-                break;
+                if (projRegConfigValue != null && projRegConfigValue.trim().length() > 0) {
+                    return RegistryNameHelper.sanitizeRegistryName(projRegConfigValue);
+                }
             }
         }
+        return defaultProjectDockerRegistry;
     }
 }
