@@ -54,6 +54,9 @@ abstract class DockerVersionsUpdaterMojo extends DockerVersionsMojo
     @Parameter(property = "docker.ignore.versions")
     protected String ignoreVersionsConfigPath;
 
+    @Parameter(defaultValue = "${session}", readonly = true, required = true)
+    private MavenSession session;
+
     protected Plugin dockerVersionsPlugin;
     protected Xpp3Dom pluginConfig;
     protected List<Xpp3Dom> imagesConfig;
