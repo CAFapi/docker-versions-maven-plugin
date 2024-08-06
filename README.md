@@ -148,6 +148,7 @@ Example snippet of plugin entry with minimal required configuration in build:
     <version>1.0.0-SNAPSHOT</version>
     <extensions>true</extensions>
     <configuration>
+        <projectDockerRegistry>${project.name}-${project.version}.project-registries.local</projectDockerRegistry>
         <imageManagement>
             <image>
                 <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
@@ -212,6 +213,7 @@ In case more control is needed, it can be manually configured with the execution
         </execution>
     </executions>
     <configuration>
+        <projectDockerRegistry>${project.name}-${project.version}.project-registries.local</projectDockerRegistry>
         <imageManagement>
             <image>
                 <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
@@ -239,12 +241,10 @@ by specifying the maven `-N` [option](https://maven.apache.org/ref/3.9.6/maven-e
 > mvn -N -Ddocker.ignore.versions=/tmp/ignoreDockerVersions.yaml docker-versions:use-latest-releases
 > ```
 
-A Maven property could be used to specify the project registry:
+The plugin configuration could include the `<projectDockerRegistry>` parameter to specify the project registry:
 
 ```
-<properties>
-    <projectDockerRegistry>${project.name}-${project.version}.project-registries.local</projectDockerRegistry>
-</properties>
+<projectDockerRegistry>${project.name}-${project.version}.project-registries.local</projectDockerRegistry>
 ```
 The Maven plugin will pull the images if necessary, and then retag them into the project registry that is specified by the property.
 
@@ -413,6 +413,7 @@ The execution of the plugin or any of its goals can be skipped by setting any th
     <version>1.0.0-SNAPSHOT</version>
     <configuration>
         <skip>true</skip>
+        <projectDockerRegistry>${project.name}-${project.version}.project-registries.local</projectDockerRegistry>
         <imageManagement>
             <image>
                 <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
