@@ -66,7 +66,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
             return;
         }
 
-        setProjectDockerRegister(session);
+        getAndSetProjectDockerRegistry(session);
 
         final List<String> phasesInSession = getPhases(sessionTasks);
         if (phasesInSession.size() == 0) {
@@ -182,7 +182,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         projects.stream().forEach(p -> LOGGER.debug("{}", p.getName()));
     }
 
-    private static void setProjectDockerRegister(final MavenSession session) {
+    private static void getAndSetProjectDockerRegistry(final MavenSession session) {
         final String sanitizedProjectDockerRegistry = getProjectDockerRegistry(session);
 
         session.getProjects()
