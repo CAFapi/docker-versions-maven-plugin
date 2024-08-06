@@ -47,7 +47,7 @@ abstract class DockerVersionsMojo extends AbstractMojo
     @Parameter(property = "docker.host")
     protected String dockerHost;
 
-    protected String getAndSetProjectDockerRegister()
+    protected String getProjectDockerRegistry()
     {
         return project.getProperties().getProperty(PROJECT_DOCKER_REGISTRY);
     }
