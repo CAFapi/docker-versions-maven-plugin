@@ -31,7 +31,6 @@
     <packaging>pom</packaging>
 
     <properties>
-        <projectDockerRegistry>PluginUsageExample-${project.version}.project-registries.local</projectDockerRegistry>
     </properties>
 
     <build>
@@ -57,6 +56,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <projectDockerRegistry>PluginUsageExample-${project.version}.project-registries.local</projectDockerRegistry>
                     <imageManagement>
                         <image>
                             <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
