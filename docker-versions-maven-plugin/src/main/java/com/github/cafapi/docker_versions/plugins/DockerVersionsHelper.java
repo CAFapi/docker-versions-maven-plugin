@@ -67,7 +67,7 @@ public final class DockerVersionsHelper
         "/project"
         + "(/profiles/profile)?"
         + "((/build(/pluginManagement)?/plugins/plugin))?"
-        + "(/configuration/imageManagement/image)((/repository)|(/tag)|(/digest))");
+        + "(/configuration/imageManagement/image)((/repository)|(/targetRepository)|(/tag)|(/digest))");
 
     private DockerVersionsHelper()
     {
@@ -93,7 +93,8 @@ public final class DockerVersionsHelper
         boolean madeReplacement = false;
         boolean hasDigest = false;
 
-        String repository;
+        String repository = null;
+        String targetRepository = null;
         String newVersion = null;
         String newDigest = null;
 
@@ -108,8 +109,12 @@ public final class DockerVersionsHelper
                 if (IMAGE_CONFIG_MATCH_PATTERN.matcher(path).matches()) {
                     if ("repository".equals(elementName)) {
                         repository = PomHelper.evaluate(pom.getElementText().trim(), implicitProperties);
-
-                        final Optional<Xpp3Dom> repo = findRepository(repository, imagesConfig);
+                        path = stack.pop();
+                    } else if ("targetRepository".equals(elementName)) {
+                        targetRepository = pom.getElementText().trim();
+                        path = stack.pop();
+                    } else if ("tag".equals(elementName)) {
+                        final Optional<Xpp3Dom> repo = findRepository(repository, targetRepository, imagesConfig);
                         if (!repo.isPresent()) {
                             needsUpdate = false;
                         } else {
@@ -121,10 +126,9 @@ public final class DockerVersionsHelper
                             newDigest = repoToUpdate.getChild("digest").getValue();
                             hasDigest = false;
                         }
-
-                        path = stack.pop();
-                    } else if (needsUpdate && "tag".equals(elementName)) {
-                        pom.mark(0);
+                        if (needsUpdate) {
+                            pom.mark(0);
+                        }
                     } else if (needsUpdate && "digest".equals(elementName)) {
                         hasDigest = true;
                         pom.mark(0);
@@ -178,6 +182,24 @@ public final class DockerVersionsHelper
     {
         return imagesConfig.stream()
             .filter(img -> img.getChild("repository").getValue().endsWith(repository))
+            .findFirst();
+    }
+
+    public static Optional<Xpp3Dom> findRepository(
+        final String repository,
+        final String targetRepository,
+        final List<Xpp3Dom> imagesConfig)
+    {
+        LOGGER.info("Finding config with {} and {}...", repository, targetRepository);
+        if (targetRepository == null) {
+            return imagesConfig.stream()
+                .filter(img -> img.getChild("repository").getValue().endsWith(repository))
+                .findFirst();
+        }
+        return imagesConfig.stream()
+            .filter(img -> img.getChild("targetRepository") != null
+                && img.getChild("targetRepository").getValue().equals(targetRepository)
+                && img.getChild("repository").getValue().endsWith(repository))
             .findFirst();
     }
 

@@ -113,7 +113,8 @@ public final class UseLatestReleasesMojo extends DockerVersionsUpdaterMojo
             final String staticTag = getLatestStaticTag(authToken, registrySchema.getSchema(), imageMoniker, latestTag, latestDigest);
 
             final Xpp3Dom imageToUpdate
-                = DockerVersionsHelper.findRepository(imageMoniker.getRepositoryFromConfigSansRegistry(), imagesConfig)
+                = DockerVersionsHelper.findRepository(
+                    imageMoniker.getRepositoryFromConfigSansRegistry(), imageConfig.getTargetRepository(), imagesConfig)
                     .orElseThrow(()
                         -> new IllegalArgumentException("Image configuration not found '" + imageMoniker.getFullImageNameWithoutTag()));
 
