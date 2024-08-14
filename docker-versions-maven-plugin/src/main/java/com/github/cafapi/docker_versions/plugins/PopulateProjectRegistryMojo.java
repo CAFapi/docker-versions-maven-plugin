@@ -78,6 +78,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
 
         public void executeImpl()
             throws DockerRegistryAuthException,
+                   ProjectRegistryNotSetException,
                    ImagePullException,
                    ImageTaggingException,
                    IncorrectDigestException,

@@ -36,9 +36,6 @@ abstract class DockerVersionsMojo extends AbstractMojo
     protected List<ImageConfiguration> imageManagement;
 
     @Parameter
-    protected String projectDockerRegistry;
-
-    @Parameter
     protected HttpConfiguration httpConfiguration;
 
     @Parameter(property = "docker.versions.skip", defaultValue = "false")
@@ -47,8 +44,13 @@ abstract class DockerVersionsMojo extends AbstractMojo
     @Parameter(property = "docker.host")
     protected String dockerHost;
 
-    protected String getProjectDockerRegistry()
+    protected String getProjectDockerRegistry() throws ProjectRegistryNotSetException
     {
-        return project.getProperties().getProperty(PROJECT_DOCKER_REGISTRY);
+        final String projectDockerRegistry = project.getProperties().getProperty(PROJECT_DOCKER_REGISTRY);
+        if (projectDockerRegistry == null) {
+            throw new ProjectRegistryNotSetException();
+        }
+
+        return projectDockerRegistry;
     }
 }
