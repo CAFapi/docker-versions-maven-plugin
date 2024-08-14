@@ -67,7 +67,7 @@ public final class DockerVersionsHelper
         "/project"
         + "(/profiles/profile)?"
         + "((/build(/pluginManagement)?/plugins/plugin))?"
-        + "(/configuration/imageManagement/image)((/repository)|(/tag)|(/digest))");
+        + "(/configuration/imageManagement/image)((/repository)|(/targetRepository)|(/tag)|(/digest))");
 
     private DockerVersionsHelper()
     {
@@ -86,16 +86,33 @@ public final class DockerVersionsHelper
             implicitProperties.put((String) entry.getKey(), (String) entry.getValue());
         });
 
+        // Update tags
+        final boolean updatedTags = setElement(pom, imagesConfig, implicitProperties, "tag");
+
+        // Update digests
+        pom.rewind();
+
+        final boolean updatedDigests = setElement(pom, imagesConfig, implicitProperties, "digest");
+
+        final boolean madeReplacement = updatedTags || updatedDigests;
+        LOGGER.debug("Completed image version updates in plugin configuration. Made {}replacements.", madeReplacement ? "" : "no ");
+        return madeReplacement;
+    }
+
+    private static boolean setElement(
+        final ModifiedPomXMLEventReader pom,
+        final List<Xpp3Dom> imagesConfig,
+        final Map<String, String> properties,
+        final String element)
+        throws XMLStreamException
+    {
         final Stack<String> stack = new Stack<>();
         String path = "";
 
-        boolean needsUpdate = false;
-        boolean madeReplacement = false;
-        boolean hasDigest = false;
+        String repository = null;
+        String targetRepository = null;
 
-        String repository;
-        String newVersion = null;
-        String newDigest = null;
+        boolean madeReplacement = false;
 
         while (pom.hasNext()) {
             final XMLEvent event = pom.nextEvent();
@@ -107,77 +124,72 @@ public final class DockerVersionsHelper
 
                 if (IMAGE_CONFIG_MATCH_PATTERN.matcher(path).matches()) {
                     if ("repository".equals(elementName)) {
-                        repository = PomHelper.evaluate(pom.getElementText().trim(), implicitProperties);
-
-                        final Optional<Xpp3Dom> repo = findRepository(repository, imagesConfig);
-                        if (!repo.isPresent()) {
-                            needsUpdate = false;
-                        } else {
-                            LOGGER.debug("Updating repo : {}", repository);
-                            needsUpdate = true;
-                            final Xpp3Dom repoToUpdate = repo.get();
-
-                            newVersion = repoToUpdate.getChild("tag").getValue();
-                            newDigest = repoToUpdate.getChild("digest").getValue();
-                            hasDigest = false;
-                        }
-
+                        repository = PomHelper.evaluate(pom.getElementText().trim(), properties);
                         path = stack.pop();
-                    } else if (needsUpdate && "tag".equals(elementName)) {
-                        pom.mark(0);
-                    } else if (needsUpdate && "digest".equals(elementName)) {
-                        hasDigest = true;
+                    } else if ("targetRepository".equals(elementName)) {
+                        targetRepository = pom.getElementText().trim();
+                        path = stack.pop();
+                    } else if (element.equals(elementName)) {
                         pom.mark(0);
                     }
                 }
             }
             if (event.isEndElement()) {
-                if (needsUpdate && IMAGE_CONFIG_MATCH_PATTERN.matcher(path).matches()) {
-                    if ("tag".equals(event.asEndElement().getName().getLocalPart())) {
+                if (IMAGE_CONFIG_MATCH_PATTERN.matcher(path).matches()) {
+                    if (element.equals(event.asEndElement().getName().getLocalPart())) {
                         pom.mark(1);
-                        if (pom.hasMark(0) && pom.hasMark(1)) {
-                            pom.replaceBetween(0, 1, newVersion);
-                            pom.clearMark(0);
-                            pom.clearMark(1);
-                            madeReplacement = true;
-                        }
-                    } else if ("digest".equals(event.asEndElement().getName().getLocalPart())) {
-                        pom.mark(1);
-                        if (pom.hasMark(0) && pom.hasMark(1)) {
-                            pom.replaceBetween(0, 1, newDigest);
-                            pom.clearMark(0);
-                            pom.clearMark(1);
-                            madeReplacement = true;
-                        }
                     }
                 }
                 if (IMAGE_MATCH_PATTERN.matcher(path).matches()) {
-                    if (needsUpdate && !hasDigest) {
-                        final StringBuffer builder = new StringBuffer("    <digest>");
-                        builder.append(newDigest).append("</digest>").append('\n');
-                        final int endTagLocation = event.asEndElement().getLocation().getColumnNumber();
-                        final String endTag = "</image>";
-                        final String endImageTag = endTagLocation <= 0
-                            ? endTag
-                            : StringUtils.leftPad(endTag, endTagLocation + endTag.length());
+                    // Update the digest if necessary
+                    final Optional<Xpp3Dom> repo = findRepository(repository, targetRepository, imagesConfig);
+                    if (repo.isPresent()) {
+                        final Xpp3Dom repoToUpdate = repo.get();
 
-                        builder.append(endImageTag);
-                        pom.replace(builder.toString());
+                        final String newValue = repoToUpdate.getChild(element).getValue();
+
+                        if (pom.hasMark(0) && pom.hasMark(1)) {
+                            LOGGER.debug("Updating {} for repo : {}", element, repository);
+                            pom.replaceBetween(0, 1, newValue);
+                            pom.clearMark(0);
+                            pom.clearMark(1);
+                        } else if ("digest".equals(element)) {
+                            LOGGER.debug("Setting digest for repo : {}", repository);
+                            final StringBuffer builder = new StringBuffer("    <digest>");
+                            builder.append(newValue).append("</digest>").append('\n');
+                            final int endTagLocation = event.asEndElement().getLocation().getColumnNumber();
+                            final String endTag = "</image>";
+                            final String endImageTag = endTagLocation <= 0
+                                ? endTag
+                                : StringUtils.leftPad(endTag, endTagLocation + endTag.length());
+
+                            builder.append(endImageTag);
+                            pom.replace(builder.toString());
+                        }
                         madeReplacement = true;
                     }
-                    needsUpdate = false;
                 }
                 path = stack.pop();
             }
         }
-        LOGGER.debug("Completed image version updates in plugin configuration. Made {}replacements.", madeReplacement ? "" : "no ");
         return madeReplacement;
     }
 
-    public static Optional<Xpp3Dom> findRepository(final String repository, final List<Xpp3Dom> imagesConfig)
+    public static Optional<Xpp3Dom> findRepository(
+        final String repository,
+        final String targetRepository,
+        final List<Xpp3Dom> imagesConfig)
     {
+        LOGGER.debug("Finding config with repository {} and targetRepository {}...", repository, targetRepository);
+        if (targetRepository == null) {
+            return imagesConfig.stream()
+                .filter(img -> img.getChild("repository").getValue().endsWith(repository))
+                .findFirst();
+        }
         return imagesConfig.stream()
-            .filter(img -> img.getChild("repository").getValue().endsWith(repository))
+            .filter(img -> img.getChild("targetRepository") != null
+                && img.getChild("targetRepository").getValue().equals(targetRepository)
+                && img.getChild("repository").getValue().endsWith(repository))
             .findFirst();
     }
 

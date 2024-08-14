@@ -74,6 +74,118 @@ final class DockerVersionsHelperTest
         Assertions.assertTrue(madeReplacement, "Pom file was updated");
     }
 
+    @Test
+    public void testSetImageVersionSameRepo() throws XMLStreamException, URISyntaxException, IOException
+    {
+        final URL pomUrl = DockerVersionsHelperTest.class.getResource("testSameRepoPluginPom.xml");
+        final File pomFile = new File(pomUrl.toURI());
+        final StringBuilder input = DockerVersionsHelper.readFile(pomFile);
+        final ModifiedPomXMLEventReader pomToUpdate = DockerVersionsHelper.createPomXmlEventReader(input, pomFile.getAbsolutePath());
+
+        final List<Xpp3Dom> imagesConfig = new ArrayList<>();
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/jobservice/job-service-postgres",
+            "jobservice/job-service-postgres-liquibase",
+            "3.5",
+            "3.5.0",
+            "sha256:676c166c8749f81c07d0e24ec6528fd8b5f3950514d9f29e6514cad64b1c0dc3"));
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/jobservice/job-service-postgres",
+            "jobservice/job-service-postgres-flyway",
+            "7.0",
+            "7.0.2",
+            "sha256:676c166c8749f81c07d0e24ec6528fd8b5f3950514d9f29e6514cad64b1c0dc3"));
+
+        final Properties properties = new Properties();
+        properties.load(DockerVersionsHelperTest.class.getResourceAsStream("test.properties"));
+
+        final boolean madeReplacement = DockerVersionsHelper.setImageVersion(pomToUpdate, imagesConfig, properties);
+
+        LOGGER.info("Updated pom : {}", pomToUpdate.asStringBuilder());
+
+        Assertions.assertTrue(madeReplacement, "Pom file was updated");
+    }
+
+    @Test
+    public void testSetImageVersionMixedRepos() throws XMLStreamException, URISyntaxException, IOException
+    {
+        final URL pomUrl = DockerVersionsHelperTest.class.getResource("testSameRepoPluginPom.xml");
+        final File pomFile = new File(pomUrl.toURI());
+        final StringBuilder input = DockerVersionsHelper.readFile(pomFile);
+        final ModifiedPomXMLEventReader pomToUpdate = DockerVersionsHelper.createPomXmlEventReader(input, pomFile.getAbsolutePath());
+
+        final List<Xpp3Dom> imagesConfig = new ArrayList<>();
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/jobservice/job-service-postgres",
+            "jobservice/job-service-postgres-liquibase",
+            "3.5",
+            "3.5.0",
+            "sha256:676c166c8749f81c07d0e24ec6528fd8b5f3950514d9f29e6514cad64b1c0dc3"));
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre17",
+            "1.5.0",
+            "sha256:6308e00f71d9c3fe6b5181aafe08abe72824301fd917887b8b644436f0de9740"));
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/jobservice/job-service-postgres",
+            "jobservice/job-service-postgres-flyway",
+            "7.0",
+            "7.0.2",
+            "sha256:676c166c8749f81c07d0e24ec6528fd8b5f3950514d9f29e6514cad64b1c0dc3"));
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre8",
+            "3.10.0",
+            "sha256:7fb9a3aecb3e8112e61569f5510a602b9a18a5712c5e90497f77feaedec2c66c"));
+
+        final Properties properties = new Properties();
+        properties.load(DockerVersionsHelperTest.class.getResourceAsStream("test.properties"));
+
+        final boolean madeReplacement = DockerVersionsHelper.setImageVersion(pomToUpdate, imagesConfig, properties);
+
+        LOGGER.info("Updated pom : {}", pomToUpdate.asStringBuilder());
+
+        Assertions.assertTrue(madeReplacement, "Pom file was updated");
+    }
+
+    @Test
+    public void testSetImageVersionCheckOrder() throws XMLStreamException, URISyntaxException, IOException
+    {
+        final URL pomUrl = DockerVersionsHelperTest.class.getResource("testCheckOrderPluginPom.xml");
+        final File pomFile = new File(pomUrl.toURI());
+        final StringBuilder input = DockerVersionsHelper.readFile(pomFile);
+        final ModifiedPomXMLEventReader pomToUpdate = DockerVersionsHelper.createPomXmlEventReader(input, pomFile.getAbsolutePath());
+
+        final List<Xpp3Dom> imagesConfig = new ArrayList<>();
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/jobservice/job-service-postgres",
+            "jobservice/job-service-postgres-liquibase",
+            "3.5",
+            "3.5.0",
+            "sha256:5323cd5945f90795e6448480b8cc622a9472b76f93c0eb97510ca15058e7b337"));
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre17",
+            "1.5.0",
+            "sha256:6308e00f71d9c3fe6b5181aafe08abe72824301fd917887b8b644436f0de9740"));
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/jobservice/job-service-postgres",
+            "jobservice/job-service-postgres-flyway",
+            "7.0",
+            "7.0.2",
+            "sha256:676c166c8749f81c07d0e24ec6528fd8b5f3950514d9f29e6514cad64b1c0dc3"));
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre8",
+            "3.10.0",
+            "sha256:7fb9a3aecb3e8112e61569f5510a602b9a18a5712c5e90497f77feaedec2c66c"));
+
+        final Properties properties = new Properties();
+        properties.load(DockerVersionsHelperTest.class.getResourceAsStream("test.properties"));
+
+        final boolean madeReplacement = DockerVersionsHelper.setImageVersion(pomToUpdate, imagesConfig, properties);
+
+        LOGGER.info("Updated pom : {}", pomToUpdate.asStringBuilder());
+
+        Assertions.assertTrue(madeReplacement, "Pom file was updated");
+    }
+
     private static Xpp3Dom createImage(final String repository, final String tag, final String digest)
     {
         final Xpp3Dom image = new Xpp3Dom("image");
@@ -94,4 +206,36 @@ final class DockerVersionsHelperTest
         return image;
     }
 
+    private static Xpp3Dom createImage(
+        final String repository,
+        final String targetRepository,
+        final String tag,
+        final String latestTag,
+        final String digest)
+    {
+        final Xpp3Dom image = new Xpp3Dom("image");
+
+        final Xpp3Dom repoElm = new Xpp3Dom("repository");
+        repoElm.setValue(repository);
+
+        final Xpp3Dom targetRepoElm = new Xpp3Dom("targetRepository");
+        targetRepoElm.setValue(targetRepository);
+
+        final Xpp3Dom tagElm = new Xpp3Dom("tag");
+        tagElm.setValue(tag);
+
+        final Xpp3Dom latestTagElm = new Xpp3Dom("latestTag");
+        latestTagElm.setValue(latestTag);
+
+        final Xpp3Dom digestElm = new Xpp3Dom("digest");
+        digestElm.setValue(digest);
+
+        image.addChild(repoElm);
+        image.addChild(targetRepoElm);
+        image.addChild(tagElm);
+        image.addChild(latestTagElm);
+        image.addChild(digestElm);
+
+        return image;
+    }
 }
