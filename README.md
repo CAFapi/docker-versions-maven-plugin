@@ -197,6 +197,7 @@ In this case the plugin's lifecycle participant did not add any `docker-version`
 
 In case more control is needed, it can be manually configured with the executions bound to required phases.  
 The `<projectDockerRegistry>` will need to be set as a pom property instead of the plugin configuration parameter.
+`<projectDockerRegistry>` value can only have alphabets (a-z) (A-Z), digits (0-9), minus sign (-), and period (.).
 
 ```
 <plugin>
