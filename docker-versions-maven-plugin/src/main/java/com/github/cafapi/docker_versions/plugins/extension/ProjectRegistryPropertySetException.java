@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.cafapi.docker_versions.plugins;
+package com.github.cafapi.docker_versions.plugins.extension;
 
-import org.apache.maven.plugin.MojoExecutionException;
-
-final class ProjectRegistryNotSetException extends MojoExecutionException
+final class ProjectRegistryPropertySetException extends RuntimeException
 {
-    private static final long serialVersionUID = -1039129656470149283L;
+    private static final long serialVersionUID = -7252047895418654391L;
 
-    public ProjectRegistryNotSetException()
+    public ProjectRegistryPropertySetException()
     {
-        super("The projectDockerRegistry property is not set.");
+        super("'projectDockerRegistry' is expected to be set as a configuration parameter in the plugin, not as a property.");
     }
 }

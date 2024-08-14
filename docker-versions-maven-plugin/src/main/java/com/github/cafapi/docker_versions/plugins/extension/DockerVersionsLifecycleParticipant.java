@@ -184,13 +184,21 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
 
     private static void setProjectDockerRegistryProperty(final MavenSession session)
     {
-        // TODO: Throw an exception if the property is already set
-
+        if (isProjectDockerRegistryPropertySet(session)) {
+            throw new ProjectRegistryPropertySetException();
+        }
         final String projectDockerRegistry = getProjectDockerRegistry(session);
         final String sanitizedProjectDockerRegistry = RegistryNameHelper.sanitizeRegistryName(projectDockerRegistry);
 
         session.getProjects()
             .forEach(project -> project.getProperties().setProperty(PROJECT_DOCKER_REGISTRY, sanitizedProjectDockerRegistry));
+    }
+
+    private static boolean isProjectDockerRegistryPropertySet(final MavenSession session)
+    {
+        final List<MavenProject> projects = session.getProjects();
+        return session.getUserProperties().containsKey(PROJECT_DOCKER_REGISTRY)
+            || projects.stream().anyMatch(p -> p.getProperties().containsKey(PROJECT_DOCKER_REGISTRY));
     }
 
     private static String getProjectDockerRegistry(final MavenSession session)
