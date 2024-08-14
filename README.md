@@ -151,7 +151,7 @@ Example snippet of plugin entry with minimal required configuration in build:
 <plugin>
     <groupId>com.github.cafapi.plugins.docker.versions</groupId>
     <artifactId>docker-versions-maven-plugin</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <extensions>true</extensions>
     <configuration>
         <projectDockerRegistry>${project.name}-${project.version}.project-registries.local</projectDockerRegistry>
@@ -203,7 +203,7 @@ The `<projectDockerRegistry>` will need to be set as a pom property instead of t
 <plugin>
     <groupId>com.github.cafapi.plugins.docker.versions</groupId>
     <artifactId>docker-versions-maven-plugin</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <executions>
         <execution>
             <id>populate-project-registry</id>
@@ -412,7 +412,7 @@ The execution of the plugin or any of its goals can be skipped by setting any th
 <plugin>
     <groupId>com.github.cafapi.plugins.docker.versions</groupId>
     <artifactId>docker-versions-maven-plugin</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <extensions>true</extensions>
     <configuration>
         <skip>true</skip>
