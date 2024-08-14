@@ -139,6 +139,12 @@ Using this plugin in build could be done in multiple ways.
 
 The simplest way is to add the plugin to the build with required configuration and define it as an `extension`. The plugin's `LifecycleParticipant` will automatically include the `populate-project-registry` and `depopulate-project-registry` based on the maven phases and goals being executed. 
 
+The plugin configuration could include the `<projectDockerRegistry>` parameter to specify the project registry:
+
+```
+<projectDockerRegistry>${project.name}-${project.version}.project-registries.local</projectDockerRegistry>
+```
+
 Example snippet of plugin entry with minimal required configuration in build:
 
 ```
@@ -189,7 +195,8 @@ The plugin's lifecycle participant added both `populate-project-registry` and `d
 In this case the plugin's lifecycle participant did not add any `docker-version` goals to the mvn execution, since the tasks being executed do not need them.
 
 
-In case more control is needed, it can be manually configured with the executions bound to required phases.
+In case more control is needed, it can be manually configured with the executions bound to required phases.  
+The `<projectDockerRegistry>` will need to be set as a pom property instead of the plugin configuration parameter.
 
 ```
 <plugin>
@@ -213,7 +220,6 @@ In case more control is needed, it can be manually configured with the execution
         </execution>
     </executions>
     <configuration>
-        <projectDockerRegistry>${project.name}-${project.version}.project-registries.local</projectDockerRegistry>
         <imageManagement>
             <image>
                 <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
@@ -241,11 +247,6 @@ by specifying the maven `-N` [option](https://maven.apache.org/ref/3.9.6/maven-e
 > mvn -N -Ddocker.ignore.versions=/tmp/ignoreDockerVersions.yaml docker-versions:use-latest-releases
 > ```
 
-The plugin configuration could include the `<projectDockerRegistry>` parameter to specify the project registry:
-
-```
-<projectDockerRegistry>${project.name}-${project.version}.project-registries.local</projectDockerRegistry>
-```
 The Maven plugin will pull the images if necessary, and then retag them into the project registry that is specified by the property.
 
 Source code references to:
@@ -411,6 +412,7 @@ The execution of the plugin or any of its goals can be skipped by setting any th
     <groupId>com.github.cafapi.plugins.docker.versions</groupId>
     <artifactId>docker-versions-maven-plugin</artifactId>
     <version>1.0.0-SNAPSHOT</version>
+    <extensions>true</extensions>
     <configuration>
         <skip>true</skip>
         <projectDockerRegistry>${project.name}-${project.version}.project-registries.local</projectDockerRegistry>
