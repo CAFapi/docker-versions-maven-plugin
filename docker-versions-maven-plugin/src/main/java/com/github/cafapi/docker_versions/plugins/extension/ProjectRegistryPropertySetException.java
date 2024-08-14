@@ -15,12 +15,15 @@
  */
 package com.github.cafapi.docker_versions.plugins.extension;
 
-final class ProjectRegistryPropertySetException extends RuntimeException
+import org.apache.maven.MavenExecutionException;
+
+final class ProjectRegistryPropertySetException extends MavenExecutionException
 {
     private static final long serialVersionUID = -7252047895418654391L;
 
     public ProjectRegistryPropertySetException()
     {
-        super("'projectDockerRegistry' is expected to be set as a configuration parameter in the plugin, not as a property.");
+        super("'projectDockerRegistry' is expected to be set as a configuration parameter in the plugin, not as a property.",
+            (Exception)null);
     }
 }

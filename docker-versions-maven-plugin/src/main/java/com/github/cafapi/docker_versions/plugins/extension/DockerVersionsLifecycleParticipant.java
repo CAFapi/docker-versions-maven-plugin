@@ -182,7 +182,7 @@ public final class DockerVersionsLifecycleParticipant extends AbstractMavenLifec
         projects.stream().forEach(p -> LOGGER.debug("{}", p.getName()));
     }
 
-    private static void setProjectDockerRegistryProperty(final MavenSession session)
+    private static void setProjectDockerRegistryProperty(final MavenSession session) throws ProjectRegistryPropertySetException
     {
         if (isProjectDockerRegistryPropertySet(session)) {
             throw new ProjectRegistryPropertySetException();
