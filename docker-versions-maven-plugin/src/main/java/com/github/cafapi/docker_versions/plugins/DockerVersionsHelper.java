@@ -111,7 +111,6 @@ public final class DockerVersionsHelper
 
         String repository = null;
         String targetRepository = null;
-        String newValue = null;
 
         boolean madeReplacement = false;
 
@@ -147,7 +146,7 @@ public final class DockerVersionsHelper
                     if (repo.isPresent()) {
                         final Xpp3Dom repoToUpdate = repo.get();
 
-                        newValue = repoToUpdate.getChild(element).getValue();
+                        final String newValue = repoToUpdate.getChild(element).getValue();
 
                         if (pom.hasMark(0) && pom.hasMark(1)) {
                             LOGGER.debug("Updating {} for repo : {}", element, repository);
