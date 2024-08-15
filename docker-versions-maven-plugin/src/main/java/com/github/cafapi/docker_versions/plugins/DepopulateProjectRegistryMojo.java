@@ -62,7 +62,7 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
             dockerClient = new DockerRestClient(httpConfiguration, dockerHost);
         }
 
-        public void executeImpl() throws ImageTaggingException
+        public void executeImpl() throws ImageTaggingException, ProjectRegistryNotSetException
         {
             LOGGER.debug("DepopulateProjectRegistry with this configuration {}", imageManagement);
 
@@ -76,7 +76,7 @@ public final class DepopulateProjectRegistryMojo extends DockerVersionsMojo
                     ? imageConfig.getTargetRepository()
                     : imageMoniker.getRepositoryWithoutRegistry();
 
-                final String projectDockerRegistryImageName = getAndSetProjectDockerRegister() + "/" + targetRepository;
+                final String projectDockerRegistryImageName = getProjectDockerRegistry() + "/" + targetRepository;
 
                 final String imageName = projectDockerRegistryImageName + ":" + LATEST_TAG;
 
