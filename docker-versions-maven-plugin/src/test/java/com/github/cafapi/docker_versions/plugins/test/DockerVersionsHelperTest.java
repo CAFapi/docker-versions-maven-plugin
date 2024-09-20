@@ -17,6 +17,7 @@ package com.github.cafapi.docker_versions.plugins.test;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -27,6 +28,8 @@ import javax.xml.stream.XMLStreamException;
 
 import org.codehaus.mojo.versions.rewriting.ModifiedPomXMLEventReader;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.codehaus.plexus.util.xml.Xpp3DomBuilder;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +42,7 @@ import com.github.cafapi.docker_versions.plugins.DockerVersionsHelper;
 final class DockerVersionsHelperTest
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerVersionsHelperTest.class);
+    private static final String IMAGES_PATH = "build/pluginManagement/plugins/plugin/configuration/imageManagement";
 
     @BeforeEach
     void init(final TestInfo testInfo) throws IOException
@@ -286,6 +290,14 @@ final class DockerVersionsHelperTest
         final URL pomUrl = DockerVersionsHelperTest.class.getResource(fileName);
         final File pomFile = new File(pomUrl.toURI());
         final StringBuilder input = DockerVersionsHelper.readFile(pomFile);
+        try {
+            final Xpp3Dom originalPom  = Xpp3DomBuilder.build(new StringReader(input.toString()));
+            final Xpp3Dom configImageManagement = findByPath(originalPom, IMAGES_PATH);
+            LOGGER.info("ImageManagement config in original pom : {}", configImageManagement);
+        } catch (final XmlPullParserException | IOException e) {
+            Assertions.fail(e.getMessage());
+        }
+
         return DockerVersionsHelper.createPomXmlEventReader(input, pomFile.getAbsolutePath());
     }
 
@@ -296,10 +308,18 @@ final class DockerVersionsHelperTest
         properties.load(DockerVersionsHelperTest.class.getResourceAsStream("test.properties"));
 
         final boolean madeReplacement = DockerVersionsHelper.setImageVersion(pomToUpdate, imagesConfig, properties);
-
-        LOGGER.info("Updated pom : {}", pomToUpdate.asStringBuilder());
+        final String updatedPomStr = pomToUpdate.asStringBuilder().toString();
 
         Assertions.assertTrue(madeReplacement, "Pom file was updated");
+
+        try {
+            final Xpp3Dom updatePom = Xpp3DomBuilder.build(new StringReader(updatedPomStr));
+            final Xpp3Dom configImageManagement = findByPath(updatePom, IMAGES_PATH);
+            LOGGER.info("ImageManagement config in updated pom : {}", configImageManagement);
+            Assertions.assertTrue(containsAll(configImageManagement, imagesConfig), "Image config in pom file was updated correctly");
+        } catch (final XmlPullParserException | IOException e) {
+            Assertions.fail(e.getMessage());
+        }
     }
 
     private static List<Xpp3Dom> getTestImagesToUpdate()
@@ -413,5 +433,88 @@ final class DockerVersionsHelperTest
         image.addChild(digestElm);
 
         return image;
+    }
+
+    public static Xpp3Dom findByPath(final Xpp3Dom root, final String path)
+    {
+        if (root == null || path == null || path.isEmpty()) {
+            return null;
+        }
+
+        final String[] elements = path.split("/");
+        Xpp3Dom current = root;
+
+        for (final String element : elements) {
+            if (current == null) {
+                return null;
+            }
+            current = current.getChild(element);
+        }
+
+        return current;
+    }
+
+    public static boolean containsAll(final Xpp3Dom parent, final List<Xpp3Dom> children)
+    {
+        for (final Xpp3Dom child : children) {
+            if (!contains(parent, child)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean contains(final Xpp3Dom parent, final Xpp3Dom child) {
+        if (parent == null || child == null) {
+            return false;
+        }
+        for (int i = 0; i < parent.getChildCount(); i++) {
+            final Xpp3Dom currentChild = parent.getChild(i);
+            LOGGER.info("Comparing elements of image {}: {} with {}", (i + 1), currentChild, child);
+            if (currentChild.getChildCount() != child.getChildCount()) {
+                LOGGER.info("Images do not have same number of elements");
+                continue;
+            }
+            boolean repoValuesMatch = isEqual(currentChild, child, "repository");
+            if (repoValuesMatch) {
+                LOGGER.info("Repository values match, checking other elements...");
+                if (isEqual(currentChild, child, "targetRepository")
+                    && isEqual(currentChild, child, "tag")
+                    && isEqual(currentChild, child, "latestTag")
+                    && isEqual(currentChild, child, "digest")) {
+                    return true;
+                }
+            }
+            else {
+                LOGGER.info("------- Repository values don't match, check next image ...");
+            }
+        }
+        return false;
+    }
+
+    private static boolean isEqual(final Xpp3Dom parent, final Xpp3Dom child, final String elementName)
+    {
+        final Xpp3Dom elementInChild = child.getChild(elementName);
+        final Xpp3Dom elementInParent = parent.getChild(elementName);
+        if (elementInChild == null && elementInParent == null) {
+            return true;
+        }
+        if (elementInChild != null && elementInParent != null) {
+            return valuesMatch(elementInParent, elementInChild);
+        }
+        return false;
+    }
+
+    private static boolean valuesMatch(final Xpp3Dom dom1, final Xpp3Dom dom2)
+    {
+        if ("repository".equals(dom2.getName())) {
+            // drop the registry part
+            final String dom1Repo = dom1.getValue().substring(dom1.getValue().indexOf('/'));
+            final String dom2Repo = dom2.getValue().substring(dom2.getValue().indexOf('/'));
+            LOGGER.info("Comparing repository {} and {}", dom1Repo, dom2Repo);
+            return dom1Repo.equals(dom2Repo);
+        }
+        LOGGER.info("Comparing {}-{} and {}-{}", dom1.getName(), dom1.getValue(), dom2.getName(), dom2.getValue());
+        return dom1.getValue().equals(dom2.getValue());
     }
 }
