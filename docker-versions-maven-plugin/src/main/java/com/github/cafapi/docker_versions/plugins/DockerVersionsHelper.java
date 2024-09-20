@@ -138,6 +138,7 @@ public final class DockerVersionsHelper
                 if (IMAGE_CONFIG_MATCH_PATTERN.matcher(path).matches()) {
                     if (element.equals(event.asEndElement().getName().getLocalPart())) {
                         pom.mark(1);
+                        targetRepository = null;
                     }
                 }
                 if (IMAGE_MATCH_PATTERN.matcher(path).matches()) {
