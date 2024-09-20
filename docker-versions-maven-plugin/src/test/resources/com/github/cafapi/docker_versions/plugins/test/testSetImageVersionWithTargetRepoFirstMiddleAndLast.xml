@@ -86,6 +86,7 @@
                             <image>
                                 <repository>${dockerHubPublic}/cafapi/opensuse-jre8</repository>
                                 <tag>3.9.3</tag>
+                                <digest>sha256:76b8dc916151a5ede5d8a999fcd0929ca3cd3a9dbf67085f65ef98b5255559f4</digest>
                             </image>
                             <image>
                                 <targetRepository>jobservice/job-service-postgres-flyway</targetRepository>
