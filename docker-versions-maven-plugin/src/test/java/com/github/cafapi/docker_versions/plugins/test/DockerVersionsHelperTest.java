@@ -49,6 +49,7 @@ final class DockerVersionsHelperTest
     @Test
     public void testSetImageVersion() throws XMLStreamException, URISyntaxException, IOException
     {
+        // No images with "targetRepository"
         final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testPluginPom.xml");
 
         final List<Xpp3Dom> imagesConfig = new ArrayList<>();
@@ -67,8 +68,11 @@ final class DockerVersionsHelperTest
     @Test
     public void testSetImageVersionSameRepo() throws XMLStreamException, URISyntaxException, IOException
     {
+        // Two images with same repo and different "targetRepository"
+        // both images are at the end of the list
         final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSameRepoPluginPom.xml");
 
+        // Updating only images with "targetRepository"
         final List<Xpp3Dom> imagesConfig = new ArrayList<>();
         imagesConfig.add(createImage(
             "dockerhub-public.artifactory.acme.net/jobservice/job-service-postgres",
@@ -89,68 +93,115 @@ final class DockerVersionsHelperTest
     @Test
     public void testSetImageVersionMixedRepos() throws XMLStreamException, URISyntaxException, IOException
     {
+        // Two images with same repo and different "targetRepository",
+        // both images are at the end of the list
         final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSameRepoPluginPom.xml");
-
-        final List<Xpp3Dom> imagesConfig = new ArrayList<>();
-        imagesConfig.add(createImage(
-            "dockerhub-public.artifactory.acme.net/jobservice/job-service-postgres",
-            "jobservice/job-service-postgres-liquibase",
-            "3.5",
-            "3.5.0",
-            "sha256:676c166c8749f81c07d0e24ec6528fd8b5f3950514d9f29e6514cad64b1c0dc3"));
-        imagesConfig.add(createImage(
-            "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre17",
-            "1.5.0",
-            "sha256:6308e00f71d9c3fe6b5181aafe08abe72824301fd917887b8b644436f0de9740"));
-        imagesConfig.add(createImage(
-            "dockerhub-public.artifactory.acme.net/jobservice/job-service-postgres",
-            "jobservice/job-service-postgres-flyway",
-            "7.0",
-            "7.0.2",
-            "sha256:676c166c8749f81c07d0e24ec6528fd8b5f3950514d9f29e6514cad64b1c0dc3"));
-        imagesConfig.add(createImage(
-            "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre8",
-            "3.10.0",
-            "sha256:7fb9a3aecb3e8112e61569f5510a602b9a18a5712c5e90497f77feaedec2c66c"));
-
-        final Properties properties = new Properties();
-        properties.load(DockerVersionsHelperTest.class.getResourceAsStream("test.properties"));
-
-        final boolean madeReplacement = DockerVersionsHelper.setImageVersion(pomToUpdate, imagesConfig, properties);
-
-        LOGGER.info("Updated pom : {}", pomToUpdate.asStringBuilder());
-
-        Assertions.assertTrue(madeReplacement, "Pom file was updated");
+        // Updating images with and without "targetRepository"
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdate());
     }
 
     @Test
     public void testSetImageVersionCheckOrder() throws XMLStreamException, URISyntaxException, IOException
     {
+        // Two images with same repo and different "targetRepository",
+        // both images are at the end of the list
+        // Order of the child elements of <image> is different in the 2 images with "targetRepository"
         final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testCheckOrderPluginPom.xml");
+        // Updating images with and without "targetRepository"
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdate());
+    }
 
+    @Test
+    public void testSetImageVersionNonTargetReop() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // Two images with same repo and different "targetRepository"
+        // both images are at the end of the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSameRepoPluginPom.xml");
+
+        // Updating only images without "targetRepository"
         final List<Xpp3Dom> imagesConfig = new ArrayList<>();
-        imagesConfig.add(createImage(
-            "dockerhub-public.artifactory.acme.net/jobservice/job-service-postgres",
-            "jobservice/job-service-postgres-liquibase",
-            "3.5",
-            "3.5.0",
-            "sha256:5323cd5945f90795e6448480b8cc622a9472b76f93c0eb97510ca15058e7b337"));
         imagesConfig.add(createImage(
             "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre17",
             "1.5.0",
             "sha256:6308e00f71d9c3fe6b5181aafe08abe72824301fd917887b8b644436f0de9740"));
-        imagesConfig.add(createImage(
-            "dockerhub-public.artifactory.acme.net/jobservice/job-service-postgres",
-            "jobservice/job-service-postgres-flyway",
-            "7.0",
-            "7.0.2",
-            "sha256:676c166c8749f81c07d0e24ec6528fd8b5f3950514d9f29e6514cad64b1c0dc3"));
         imagesConfig.add(createImage(
             "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre8",
             "3.10.0",
             "sha256:7fb9a3aecb3e8112e61569f5510a602b9a18a5712c5e90497f77feaedec2c66c"));
 
         verifyPomUpdate(pomToUpdate, imagesConfig);
+    }
+
+    @Test
+    public void testSetImageVersionWithOneTargetRepoFirst() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // One image with "targetRepository" first in the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithOneTargetRepoFirst.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdateOneWithTargetRepo());
+    }
+
+    @Test
+    public void testSetImageVersionWithOneTargetRepoMiddle() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // One image with "targetRepository" not first or last in the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithOneTargetRepoMiddle.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdateOneWithTargetRepo());
+    }
+
+    @Test
+    public void testSetImageVersionWithOneTargetRepoLast() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // One image with "targetRepository" last in the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithOneTargetRepoLast.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdateOneWithTargetRepo());
+    }
+
+    @Test
+    public void testSetImageVersionWithTargetRepoFirst() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // Multiple images with "targetRepository" all at the beginning of the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithTargetRepoFirst.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdate());
+    }
+
+    @Test
+    public void testSetImageVersionWithTargetRepoMiddle() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // Multiple images with "targetRepository" all not first or last in the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithTargetRepoMiddle.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdate());
+    }
+
+    @Test
+    public void testSetImageVersionWithTargetRepoFirstAndLast() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // Multiple images with "targetRepository" first and last in the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithTargetRepoFirstAndLast.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdate());
+    }
+
+    @Test
+    public void testSetImageVersionWithTargetRepoFirstAndMiddle() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // Multiple images with "targetRepository" first and middle of the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithTargetRepoFirstAndMiddle.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdate());
+    }
+
+    @Test
+    public void testSetImageVersionWithTargetRepoMiddleAndLast() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // Multiple images with "targetRepository" middle and last in the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithTargetRepoMiddleAndLast.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdate());
+    }
+
+    @Test
+    public void testSetImageVersionWithTargetRepoFirstMiddleAndLast() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // Multiple images with "targetRepository" first, middle and last in the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithTargetRepoFirstMiddleAndLast.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdate());
     }
 
     private static ModifiedPomXMLEventReader getPomToUpdate(final String fileName)
@@ -173,6 +224,52 @@ final class DockerVersionsHelperTest
         LOGGER.info("Updated pom : {}", pomToUpdate.asStringBuilder());
 
         Assertions.assertTrue(madeReplacement, "Pom file was updated");
+    }
+
+    private static List<Xpp3Dom> getTestImagesToUpdate()
+    {
+        final List<Xpp3Dom> imagesConfig = new ArrayList<>();
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/jobservice/job-service-postgres",
+            "jobservice/job-service-postgres-liquibase",
+            "3.5",
+            "3.5.0",
+            "sha256:5323cd5945f90795e6448480b8cc622a9472b76f93c0eb97510ca15058e7b337"));
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre17",
+            "1.5.0",
+            "sha256:6308e00f71d9c3fe6b5181aafe08abe72824301fd917887b8b644436f0de9740"));
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/jobservice/job-service-postgres",
+            "jobservice/job-service-postgres-flyway",
+            "7.0",
+            "7.0.2",
+            "sha256:676c166c8749f81c07d0e24ec6528fd8b5f3950514d9f29e6514cad64b1c0dc3"));
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre8",
+            "3.10.0",
+            "sha256:7fb9a3aecb3e8112e61569f5510a602b9a18a5712c5e90497f77feaedec2c66c"));
+        return imagesConfig;
+    }
+
+    private static List<Xpp3Dom> getTestImagesToUpdateOneWithTargetRepo()
+    {
+        final List<Xpp3Dom> imagesConfig = new ArrayList<>();
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/jobservice/job-service-postgres",
+            "jobservice/job-service-postgres-liquibase",
+            "3.5",
+            "3.5.0",
+            "sha256:5323cd5945f90795e6448480b8cc622a9472b76f93c0eb97510ca15058e7b337"));
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre17",
+            "1.5.0",
+            "sha256:6308e00f71d9c3fe6b5181aafe08abe72824301fd917887b8b644436f0de9740"));
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre8",
+            "3.10.0",
+            "sha256:7fb9a3aecb3e8112e61569f5510a602b9a18a5712c5e90497f77feaedec2c66c"));
+        return imagesConfig;
     }
 
     private static Xpp3Dom createImage(final String repository, final String tag, final String digest)

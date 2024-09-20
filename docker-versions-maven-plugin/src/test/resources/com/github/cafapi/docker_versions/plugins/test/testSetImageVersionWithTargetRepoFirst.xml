@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright 2024 Open Text.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.acme.versions</groupId>
+    <artifactId>acme-versions</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <properties>
+        <corporateRepositoryManager>artifactory.acme.net</corporateRepositoryManager>
+        <homeDockerPrereleaseRegistry>acme-docker-prerelease.${corporateRepositoryManager}</homeDockerPrereleaseRegistry>
+        <homeDockerReleaseRegistry>acme-docker-release.${corporateRepositoryManager}</homeDockerReleaseRegistry>
+        <snapshotTag>SNAPSHOT</snapshotTag>
+        <viewServiceBaseImage>${homeDockerPrereleaseRegistry}/apollo/view-service-base</viewServiceBaseImage>
+    </properties>
+
+    <modules>
+        <module>acme-versions-maven-plugin</module>
+        <module>acme-versions-maven-plugin-usage</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.github.docker-java</groupId>
+                <artifactId>docker-java-api</artifactId>
+                <version>3.3.6</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>com.github.cafapi.plugins.docker.versions</groupId>
+                    <artifactId>docker-versions-maven-plugin</artifactId>
+                    <version>1.0.0-SNAPSHOT</version>
+                    <configuration>
+                        <imageManagement>
+                            <image>
+                                <latestTag>3.5.0</latestTag>
+                                <repository>${dockerHubPublic}/jobservice/job-service-postgres</repository>
+                                <tag>3.5.0</tag>
+                                <targetRepository>jobservice/job-service-postgres-liquibase</targetRepository>
+                                <digest>sha256:5323cd5945f90795e6448480b8cc622a9472b76f93c0eb97510ca15058e7b337</digest>
+                            </image>
+                            <image>
+                                <targetRepository>jobservice/job-service-postgres-flyway</targetRepository>
+                                <tag>7.0.2</tag>
+                                <repository>${dockerHubPublic}/jobservice/job-service-postgres</repository>
+                                <latestTag>7.0.2</latestTag>
+                                <digest>sha256:676c166c8749f81c07d0e24ec6528fd8b5f3950514d9f29e6514cad64b1c0dc3</digest>
+                            </image>
+                            <image>
+                                <repository>${homeDockerReleaseRegistry}/caf/search-and-analytics</repository>
+                                <tag>8.1.0</tag>
+                                <digest>sha256:8f4cb0832ac99c1163decdbd446b367e4a90a5e6380e2b0429d0273013968b38</digest>
+                            </image>
+                            <image>
+                                <tag>1.4.3</tag>
+                                <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
+                                <digest>sha256:76b8dc916151a5ede5d8a999fcd0929ca3cd3a9dbf67085f65ef98b5279359f4</digest>
+                            </image>
+                            <image>
+                                <repository>${dockerHubPublic}/cafapi/opensuse-jre8</repository>
+                                <tag>3.9.3</tag>
+                            </image>
+                        </imageManagement>
+                        <ignoreVersions>
+                            <ignoreVersion>
+                                <type>regex</type>
+                                <version>(?i).*alpha.*</version>
+                            </ignoreVersion>
+                            <ignoreVersion>
+                                <type>regex</type>
+                                <version>(?i).*beta.*</version>
+                            </ignoreVersion>
+                        </ignoreVersions>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>
