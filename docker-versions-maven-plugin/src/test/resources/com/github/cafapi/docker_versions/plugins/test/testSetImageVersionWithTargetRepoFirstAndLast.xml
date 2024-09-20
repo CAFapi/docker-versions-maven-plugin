@@ -60,19 +60,33 @@
                     <configuration>
                         <imageManagement>
                             <image>
+                                <latestTag>3.5.0</latestTag>
+                                <repository>${dockerHubPublic}/jobservice/job-service-postgres</repository>
+                                <tag>3.5.0</tag>
+                                <targetRepository>jobservice/job-service-postgres-liquibase</targetRepository>
+                                <digest>sha256:5323cd5945f90795e6448480b8cc622a9472b76f93c0eb97510ca15058e7b337</digest>
+                            </image>
+                            <image>
                                 <repository>${homeDockerReleaseRegistry}/caf/search-and-analytics</repository>
                                 <tag>8.1.0</tag>
                                 <digest>sha256:8f4cb0832ac99c1163decdbd446b367e4a90a5e6380e2b0429d0273013968b38</digest>
                             </image>
                             <image>
-                                <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
                                 <tag>1.4.3</tag>
+                                <repository>${dockerHubPublic}/cafapi/opensuse-jre17</repository>
                                 <digest>sha256:76b8dc916151a5ede5d8a999fcd0929ca3cd3a9dbf67085f65ef98b5279359f4</digest>
                             </image>
                             <image>
                                 <repository>${dockerHubPublic}/cafapi/opensuse-jre8</repository>
                                 <tag>3.9.3</tag>
                                 <digest>sha256:76b8dc916151a5ede5d8a999fcd0929ca3cd3a9dbf67085f65ef98b5255559f4</digest>
+                            </image>
+                            <image>
+                                <targetRepository>jobservice/job-service-postgres-flyway</targetRepository>
+                                <tag>7.0.2</tag>
+                                <repository>${dockerHubPublic}/jobservice/job-service-postgres</repository>
+                                <latestTag>7.0.2</latestTag>
+                                <digest>sha256:676c166c8749f81c07d0e24ec6528fd8b5f3950514d9f29e6514cad64b1c0dc3</digest>
                             </image>
                         </imageManagement>
                         <ignoreVersions>
