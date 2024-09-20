@@ -138,7 +138,6 @@ public final class DockerVersionsHelper
                 if (IMAGE_CONFIG_MATCH_PATTERN.matcher(path).matches()) {
                     if (element.equals(event.asEndElement().getName().getLocalPart())) {
                         pom.mark(1);
-                        targetRepository = null;
                     }
                 }
                 if (IMAGE_MATCH_PATTERN.matcher(path).matches()) {
@@ -152,8 +151,6 @@ public final class DockerVersionsHelper
                         if (pom.hasMark(0) && pom.hasMark(1)) {
                             LOGGER.debug("Updating {} for repo : {}", element, repository);
                             pom.replaceBetween(0, 1, newValue);
-                            pom.clearMark(0);
-                            pom.clearMark(1);
                         } else if ("digest".equals(element)) {
                             LOGGER.debug("Setting digest for repo : {}", repository);
                             final StringBuffer builder = new StringBuffer("    <digest>");
@@ -169,6 +166,9 @@ public final class DockerVersionsHelper
                         }
                         madeReplacement = true;
                     }
+                    pom.clearMark(0);
+                    pom.clearMark(1);
+                    targetRepository = null;
                 }
                 path = stack.pop();
             }
