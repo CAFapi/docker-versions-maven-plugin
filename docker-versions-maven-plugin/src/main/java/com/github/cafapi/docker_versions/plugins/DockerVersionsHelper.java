@@ -151,23 +151,11 @@ public final class DockerVersionsHelper
                         if (pom.hasMark(0) && pom.hasMark(1)) {
                             LOGGER.debug("Updating {} for repo : {}", element, repository);
                             pom.replaceBetween(0, 1, newValue);
-                        } else if ("digest".equals(element)) {
-                            LOGGER.debug("Setting digest for repo : {}", repository);
-                            final StringBuffer builder = new StringBuffer("    <digest>");
-                            builder.append(newValue).append("</digest>").append('\n');
-                            final int endTagLocation = event.asEndElement().getLocation().getColumnNumber();
-                            final String endTag = "</image>";
-                            final String endImageTag = endTagLocation <= 0
-                                ? endTag
-                                : StringUtils.leftPad(endTag, endTagLocation + endTag.length());
-
-                            builder.append(endImageTag);
-                            pom.replace(builder.toString());
+                            pom.clearMark(0);
+                            pom.clearMark(1);
                         }
                         madeReplacement = true;
                     }
-                    pom.clearMark(0);
-                    pom.clearMark(1);
                     targetRepository = null;
                 }
                 path = stack.pop();
