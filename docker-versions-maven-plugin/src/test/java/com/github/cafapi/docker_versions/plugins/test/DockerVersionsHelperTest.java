@@ -204,6 +204,82 @@ final class DockerVersionsHelperTest
         verifyPomUpdate(pomToUpdate, getTestImagesToUpdate());
     }
 
+    @Test
+    public void testSetImageVersionWithOneTargetRepoFirstNoTargetRepoUpdate() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // One image with "targetRepository" first in the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithOneTargetRepoFirst.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdateNoTargetRepo());
+    }
+
+    @Test
+    public void testSetImageVersionWithOneTargetRepoMiddleNoTargetRepoUpdate() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // One image with "targetRepository" not first or last in the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithOneTargetRepoMiddle.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdateOneWithTargetRepo());
+    }
+
+    @Test
+    public void testSetImageVersionWithOneTargetRepoLastNoTargetRepoUpdate() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // One image with "targetRepository" last in the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithOneTargetRepoLast.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdateNoTargetRepo());
+    }
+
+    @Test
+    public void testSetImageVersionWithTargetRepoFirstNoTargetRepoUpdate() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // Multiple images with "targetRepository" all at the beginning of the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithTargetRepoFirst.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdate());
+    }
+
+    @Test
+    public void testSetImageVersionWithTargetRepoMiddleNoTargetRepoUpdate() throws XMLStreamException, URISyntaxException, IOException
+    {
+        // Multiple images with "targetRepository" all not first or last in the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithTargetRepoMiddle.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdateNoTargetRepo());
+    }
+
+    @Test
+    public void testSetImageVersionWithTargetRepoFirstAndLastNoTargetRepoUpdate()
+        throws XMLStreamException, URISyntaxException, IOException
+    {
+        // Multiple images with "targetRepository" first and last in the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithTargetRepoFirstAndLast.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdateNoTargetRepo());
+    }
+
+    @Test
+    public void testSetImageVersionWithTargetRepoFirstAndMiddleNoTargetRepoUpdate()
+        throws XMLStreamException, URISyntaxException, IOException
+    {
+        // Multiple images with "targetRepository" first and middle of the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithTargetRepoFirstAndMiddle.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdateNoTargetRepo());
+    }
+
+    @Test
+    public void testSetImageVersionWithTargetRepoMiddleAndLastNoTargetRepoUpdate()
+        throws XMLStreamException, URISyntaxException, IOException
+    {
+        // Multiple images with "targetRepository" middle and last in the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithTargetRepoMiddleAndLast.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdateNoTargetRepo());
+    }
+
+    @Test
+    public void testSetImageVersionWithTargetRepoFirstMiddleAndLastNoTargetRepoUpdate()
+        throws XMLStreamException, URISyntaxException, IOException
+    {
+        // Multiple images with "targetRepository" first, middle and last in the list
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSetImageVersionWithTargetRepoFirstMiddleAndLast.xml");
+        verifyPomUpdate(pomToUpdate, getTestImagesToUpdateNoTargetRepo());
+    }
+
     private static ModifiedPomXMLEventReader getPomToUpdate(final String fileName)
         throws URISyntaxException, IOException, XMLStreamException
     {
@@ -261,6 +337,20 @@ final class DockerVersionsHelperTest
             "3.5",
             "3.5.0",
             "sha256:5323cd5945f90795e6448480b8cc622a9472b76f93c0eb97510ca15058e7b337"));
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre17",
+            "1.5.0",
+            "sha256:6308e00f71d9c3fe6b5181aafe08abe72824301fd917887b8b644436f0de9740"));
+        imagesConfig.add(createImage(
+            "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre8",
+            "3.10.0",
+            "sha256:7fb9a3aecb3e8112e61569f5510a602b9a18a5712c5e90497f77feaedec2c66c"));
+        return imagesConfig;
+    }
+
+    private static List<Xpp3Dom> getTestImagesToUpdateNoTargetRepo()
+    {
+        final List<Xpp3Dom> imagesConfig = new ArrayList<>();
         imagesConfig.add(createImage(
             "dockerhub-public.artifactory.acme.net/cafapi/opensuse-jre17",
             "1.5.0",
