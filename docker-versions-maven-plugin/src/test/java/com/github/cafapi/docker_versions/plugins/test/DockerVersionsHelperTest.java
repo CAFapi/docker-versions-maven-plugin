@@ -49,10 +49,7 @@ final class DockerVersionsHelperTest
     @Test
     public void testSetImageVersion() throws XMLStreamException, URISyntaxException, IOException
     {
-        final URL pomUrl = DockerVersionsHelperTest.class.getResource("testPluginPom.xml");
-        final File pomFile = new File(pomUrl.toURI());
-        final StringBuilder input = DockerVersionsHelper.readFile(pomFile);
-        final ModifiedPomXMLEventReader pomToUpdate = DockerVersionsHelper.createPomXmlEventReader(input, pomFile.getAbsolutePath());
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testPluginPom.xml");
 
         final List<Xpp3Dom> imagesConfig = new ArrayList<>();
         imagesConfig.add(createImage(
@@ -64,23 +61,13 @@ final class DockerVersionsHelperTest
             "3.10.0",
             "sha256:7fb9a3aecb3e8112e61569f5510a602b9a18a5712c5e90497f77feaedec2c66c"));
 
-        final Properties properties = new Properties();
-        properties.load(DockerVersionsHelperTest.class.getResourceAsStream("test.properties"));
-
-        final boolean madeReplacement = DockerVersionsHelper.setImageVersion(pomToUpdate, imagesConfig, properties);
-
-        LOGGER.info("Updated pom : {}", pomToUpdate.asStringBuilder());
-
-        Assertions.assertTrue(madeReplacement, "Pom file was updated");
+        verifyPomUpdate(pomToUpdate, imagesConfig);
     }
 
     @Test
     public void testSetImageVersionSameRepo() throws XMLStreamException, URISyntaxException, IOException
     {
-        final URL pomUrl = DockerVersionsHelperTest.class.getResource("testSameRepoPluginPom.xml");
-        final File pomFile = new File(pomUrl.toURI());
-        final StringBuilder input = DockerVersionsHelper.readFile(pomFile);
-        final ModifiedPomXMLEventReader pomToUpdate = DockerVersionsHelper.createPomXmlEventReader(input, pomFile.getAbsolutePath());
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSameRepoPluginPom.xml");
 
         final List<Xpp3Dom> imagesConfig = new ArrayList<>();
         imagesConfig.add(createImage(
@@ -96,23 +83,13 @@ final class DockerVersionsHelperTest
             "7.0.2",
             "sha256:676c166c8749f81c07d0e24ec6528fd8b5f3950514d9f29e6514cad64b1c0dc3"));
 
-        final Properties properties = new Properties();
-        properties.load(DockerVersionsHelperTest.class.getResourceAsStream("test.properties"));
-
-        final boolean madeReplacement = DockerVersionsHelper.setImageVersion(pomToUpdate, imagesConfig, properties);
-
-        LOGGER.info("Updated pom : {}", pomToUpdate.asStringBuilder());
-
-        Assertions.assertTrue(madeReplacement, "Pom file was updated");
+        verifyPomUpdate(pomToUpdate, imagesConfig);
     }
 
     @Test
     public void testSetImageVersionMixedRepos() throws XMLStreamException, URISyntaxException, IOException
     {
-        final URL pomUrl = DockerVersionsHelperTest.class.getResource("testSameRepoPluginPom.xml");
-        final File pomFile = new File(pomUrl.toURI());
-        final StringBuilder input = DockerVersionsHelper.readFile(pomFile);
-        final ModifiedPomXMLEventReader pomToUpdate = DockerVersionsHelper.createPomXmlEventReader(input, pomFile.getAbsolutePath());
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testSameRepoPluginPom.xml");
 
         final List<Xpp3Dom> imagesConfig = new ArrayList<>();
         imagesConfig.add(createImage(
@@ -149,10 +126,7 @@ final class DockerVersionsHelperTest
     @Test
     public void testSetImageVersionCheckOrder() throws XMLStreamException, URISyntaxException, IOException
     {
-        final URL pomUrl = DockerVersionsHelperTest.class.getResource("testCheckOrderPluginPom.xml");
-        final File pomFile = new File(pomUrl.toURI());
-        final StringBuilder input = DockerVersionsHelper.readFile(pomFile);
-        final ModifiedPomXMLEventReader pomToUpdate = DockerVersionsHelper.createPomXmlEventReader(input, pomFile.getAbsolutePath());
+        final ModifiedPomXMLEventReader pomToUpdate = getPomToUpdate("testCheckOrderPluginPom.xml");
 
         final List<Xpp3Dom> imagesConfig = new ArrayList<>();
         imagesConfig.add(createImage(
@@ -176,6 +150,21 @@ final class DockerVersionsHelperTest
             "3.10.0",
             "sha256:7fb9a3aecb3e8112e61569f5510a602b9a18a5712c5e90497f77feaedec2c66c"));
 
+        verifyPomUpdate(pomToUpdate, imagesConfig);
+    }
+
+    private static ModifiedPomXMLEventReader getPomToUpdate(final String fileName)
+        throws URISyntaxException, IOException, XMLStreamException
+    {
+        final URL pomUrl = DockerVersionsHelperTest.class.getResource(fileName);
+        final File pomFile = new File(pomUrl.toURI());
+        final StringBuilder input = DockerVersionsHelper.readFile(pomFile);
+        return DockerVersionsHelper.createPomXmlEventReader(input, pomFile.getAbsolutePath());
+    }
+
+    private static void verifyPomUpdate(final ModifiedPomXMLEventReader pomToUpdate, final List<Xpp3Dom> imagesConfig)
+        throws IOException, XMLStreamException
+    {
         final Properties properties = new Properties();
         properties.load(DockerVersionsHelperTest.class.getResourceAsStream("test.properties"));
 
