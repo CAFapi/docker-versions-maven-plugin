@@ -29,7 +29,7 @@
 
     <groupId>com.github.cafapi.plugins.docker.versions</groupId>
     <artifactId>docker-versions</artifactId>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.0.1-64</version>
     <packaging>pom</packaging>
 
     <description>This Maven plugin helps to manage Docker images versions that are used by a project.</description>
