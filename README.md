@@ -51,7 +51,7 @@ Retags the Docker images that are used by a project, to a project specific name.
   <tr>
     <td> &lt;skipPull&gt; </td>
     <td> boolean </td>
-    <td> If true the image is expected to be in the registry and no attempt will be made to pull the image. It is `false` by default. </td>
+    <td> If `true` the image is expected to be in the registry and no attempt will be made to pull it. It is `false` by default. </td>
   </tr>
   <tr>
     <td> &lt;targetRepository&gt; </td>
