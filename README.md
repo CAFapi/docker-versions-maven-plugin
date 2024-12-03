@@ -49,6 +49,11 @@ Retags the Docker images that are used by a project, to a project specific name.
     <td> The digest value of docker image. It will be used to ensure that the correct image is being tagged. </td>
   </tr>
   <tr>
+    <td> &lt;skipPull&gt; </td>
+    <td> boolean </td>
+    <td> If `true` the image is expected to be in the registry and no attempt will be made to pull it. It is `false` by default. </td>
+  </tr>
+  <tr>
     <td> &lt;targetRepository&gt; </td>
     <td> String </td>
     <td> This string will be used in the project specific name tag instead of the repository value. </td>
