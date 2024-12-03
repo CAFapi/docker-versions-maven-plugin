@@ -18,6 +18,7 @@ package com.github.cafapi.docker_versions.plugins;
 import com.github.cafapi.docker_versions.docker.auth.AuthConfigHelper;
 import com.github.cafapi.docker_versions.docker.auth.DockerRegistryAuthException;
 import com.github.cafapi.docker_versions.docker.client.DockerRestClient;
+import com.github.cafapi.docker_versions.docker.client.ImageNotFoundException;
 import com.github.cafapi.docker_versions.docker.client.ImageTaggingException;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.model.AuthConfig;
@@ -55,6 +56,8 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             new ExecutionImpl().executeImpl();
         } catch (final DockerRegistryAuthException ex) {
             throw new MojoExecutionException("Unable to find auth configuration", ex);
+        } catch (final ImageNotFoundException ex) {
+            throw new MojoExecutionException("Expected image is not found in the registry, unable to retag image", ex);
         } catch (final ImagePullException ex) {
             throw new MojoExecutionException("Unable to pull and retag image", ex);
         } catch (final ImageTaggingException ex) {
@@ -79,6 +82,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
         public void executeImpl()
             throws DockerRegistryAuthException,
                    ProjectRegistryNotSetException,
+                   ImageNotFoundException,
                    ImagePullException,
                    ImageTaggingException,
                    IncorrectDigestException,
@@ -92,9 +96,10 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
                     imageConfig.getTag(),
                     imageConfig.getDigest());
 
+                // Skip pull if image is configured with 'skipPull=true'
                 // Always pull image if digest is not specified
                 // Avoid pull if image already exists and its digest matches specified digest, else pull image again
-                final InspectImageResponse image = getImageToTag(imageMoniker);
+                final InspectImageResponse image = getImageToTag(imageMoniker, imageConfig.isSkipPull());
 
                 final String targetRepository = StringUtils.isNotBlank(imageConfig.getTargetRepository())
                     ? imageConfig.getTargetRepository()
@@ -106,15 +111,28 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
             }
         }
 
-        private InspectImageResponse getImageToTag(final ImageMoniker imageMoniker)
-            throws DockerRegistryAuthException, ImagePullException, IncorrectDigestException, InterruptedException
+        private InspectImageResponse getImageToTag(final ImageMoniker imageMoniker, final boolean skipPull)
+            throws DockerRegistryAuthException,
+                   ImageNotFoundException,
+                   ImagePullException,
+                   IncorrectDigestException,
+                   InterruptedException
         {
+            final String imageName = imageMoniker.getFullImageNameWithTag();
+            if (skipPull) {
+                // Most likely a dev image which is expected to be in the registry
+                LOGGER.debug("Image pull is skipped...check if image '{}' is already present...", imageName);
+                final Optional<InspectImageResponse> existingImage = dockerClient.findImage(imageName);
+                if (existingImage.isPresent()) {
+                    return existingImage.get();
+                }
+                throw new ImageNotFoundException("Image pull is skipped but image is not found: " + imageName);
+            }
+
             if (!imageMoniker.hasDigest()) {
                 LOGGER.debug("Digest not specified for image '{}', pull it...", imageMoniker.getFullImageNameWithTag());
                 return pullImage(imageMoniker);
             }
-
-            final String imageName = imageMoniker.getFullImageNameWithTag();
 
             LOGGER.debug("Check if image '{}' is already present...", imageName);
             final Optional<InspectImageResponse> existingImage = dockerClient.findImage(imageName);

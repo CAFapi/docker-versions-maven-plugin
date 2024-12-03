@@ -31,6 +31,9 @@ public final class ImageConfiguration
     @Parameter
     private String latestTag;
 
+    @Parameter(defaultValue = "false")
+    private boolean skipPull;
+
     @Parameter
     private String targetRepository;
 
@@ -74,6 +77,16 @@ public final class ImageConfiguration
         this.latestTag = latestTag;
     }
 
+    public boolean isSkipPull()
+    {
+        return skipPull;
+    }
+
+    public void setSkipPull(final boolean skipPull)
+    {
+        this.skipPull = skipPull;
+    }
+
     public String getTargetRepository()
     {
         return targetRepository;
@@ -92,6 +105,7 @@ public final class ImageConfiguration
             + ", tag=" + tag
             + ", digest=" + digest
             + ", latestTag=" + latestTag
+            + ", skipPull=" + skipPull
             + ", targetRepository=" + targetRepository
             + "]";
     }
