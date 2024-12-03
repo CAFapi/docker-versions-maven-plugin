@@ -57,7 +57,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
         } catch (final DockerRegistryAuthException ex) {
             throw new MojoExecutionException("Unable to find auth configuration", ex);
         } catch (final ImageNotFoundException ex) {
-            throw new MojoExecutionException("Expected image is not found in the registry, unable to retag image", ex);
+            throw new MojoExecutionException("Unable to retag image", ex);
         } catch (final ImagePullException ex) {
             throw new MojoExecutionException("Unable to pull and retag image", ex);
         } catch (final ImageTaggingException ex) {
