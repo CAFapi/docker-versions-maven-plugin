@@ -96,7 +96,7 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
                     imageConfig.getTag(),
                     imageConfig.getDigest());
 
-                // Skip pull if image is configured with 'skipPull=true'
+                // Skip pull if explicitly configured
                 // Always pull image if digest is not specified
                 // Avoid pull if image already exists and its digest matches specified digest, else pull image again
                 final InspectImageResponse image = getImageToTag(imageMoniker, imageConfig.isSkipPull());
@@ -120,7 +120,6 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
         {
             final String imageName = imageMoniker.getFullImageNameWithTag();
             if (skipPull) {
-                // Most likely a dev image which is expected to be in the registry
                 LOGGER.debug("Image pull is skipped...check if image '{}' is already present...", imageName);
                 final Optional<InspectImageResponse> existingImage = dockerClient.findImage(imageName);
                 if (existingImage.isPresent()) {
