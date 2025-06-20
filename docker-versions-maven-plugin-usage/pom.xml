@@ -28,6 +28,7 @@
     </parent>
 
     <artifactId>docker-versions-maven-plugin-usage</artifactId>
+    <name>docker-versions-maven-plugin-usage</name>
     <packaging>pom</packaging>
 
     <properties>

@@ -32,6 +32,7 @@
     <version>2.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <name>docker-versions</name>
     <description>This Maven plugin helps to manage Docker images versions that are used by a project.</description>
     <url>https://github.com/CAFapi/docker-versions-maven-plugin</url>
 
