@@ -22,6 +22,7 @@ import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.AuthConfig;
+import com.github.dockerjava.api.model.PullResponseItem;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -32,7 +33,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
@@ -102,10 +105,39 @@ public final class DockerRestClient
         }
 
         final PullImageResultCallback callback = new PullImageResultCallback() {
+
+            final Map<String, Long> currentBytes = new ConcurrentHashMap<>();
+            final Map<String, Long> totalBytes = new ConcurrentHashMap<>();
+            int pullPercentage = 0;
+
             @Override
             public void onError(final Throwable throwable) {
                 LOGGER.error("Error pulling image {}:{} ", repository, tag, throwable);
                 super.onError(throwable);
+            }
+
+            @Override
+            public void onNext(final PullResponseItem item) {
+                super.onNext(item);
+
+                if (item.getId() != null && item.getProgressDetail() != null) {
+                    currentBytes.put(item.getId(),
+                        Optional.ofNullable(item.getProgressDetail().getCurrent()).orElse(0L));
+
+                    totalBytes.put(item.getId(),
+                        Optional.ofNullable(item.getProgressDetail().getTotal()).orElse(0L));
+
+                    long current = currentBytes.values().stream().mapToLong(Long::longValue).sum();
+                    long total = totalBytes.values().stream().mapToLong(Long::longValue).sum();
+                    if (total > 0) {
+                        int percent = (int) Math.round(current * 100.0 / total);
+                        int progress = (percent / 10) * 10;
+                        if (progress > pullPercentage) {
+                            pullPercentage = progress;
+                            LOGGER.info("Image pull progress: {}%", progress);
+                        }
+                    }
+                }
             }
         };
 

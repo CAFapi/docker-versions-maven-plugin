@@ -70,8 +70,14 @@
                             <tag>3-management</tag>
                         </image>
                         <image>
-                            <repository>cafapi/opensuse-jre8</repository>
-                            <tag>3.9.3</tag>
+                            <repository>cafapi/opensuse-jre21</repository>
+                            <tag>7.0.2</tag>
+                            <digest>sha256:d1b8c3467a16cab3aa81e35a3db364f8d94f7d328b53f5aa8dd5b0059ea274b2</digest>
+                        </image>
+<!--                        DDD remove this, for manual test only-->
+                        <image>
+                            <repository>${dockerHubPublic}/ibmcom/db2</repository>
+                            <tag>11.5.0.0</tag>
                         </image>
                     </imageManagement>
                 </configuration>
