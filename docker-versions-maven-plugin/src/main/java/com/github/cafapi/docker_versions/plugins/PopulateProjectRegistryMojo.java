@@ -20,10 +20,14 @@ import com.github.cafapi.docker_versions.docker.auth.DockerRegistryAuthException
 import com.github.cafapi.docker_versions.docker.client.DockerRestClient;
 import com.github.cafapi.docker_versions.docker.client.ImageNotFoundException;
 import com.github.cafapi.docker_versions.docker.client.ImageTaggingException;
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.model.AuthConfig;
 import java.util.List;
 import java.util.Optional;
+
+import com.github.dockerjava.api.model.PullResponseItem;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -155,16 +159,12 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
         {
             final AuthConfig authConfig = AuthConfigHelper.getAuthConfig(settings, imageMoniker.getRegistry());
 
-            final boolean imagePullCompleted = dockerClient.pullImage(
+            final PullImageCmd imagePullCompleted = dockerClient.pullImage(
                 imageMoniker.getFullImageNameWithoutTag(),
                 imageMoniker.getTag(),
                 authConfig);
 
             final String imageName = imageMoniker.getFullImageNameWithTag();
-
-            if (!imagePullCompleted) {
-                throw new ImagePullException("Image was not pulled: " + imageName);
-            }
 
             LOGGER.debug("Pulled image '{}', verify that it is now present...", imageName);
             final Optional<InspectImageResponse> image = dockerClient.findImage(imageName);

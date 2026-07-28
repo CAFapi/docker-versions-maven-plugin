@@ -149,7 +149,7 @@ public final class DockerRestClient
             .exec(callback)
             .awaitCompletion();
 
-        // DDD returning this is not neccessary
+        // DDD returning this is not necessary
         return pullCommand;
     }
 
