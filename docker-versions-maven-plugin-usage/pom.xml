@@ -77,7 +77,7 @@
 <!--                        DDD remove this, for manual test only-->
                         <image>
                             <repository>${dockerHubPublic}/ibmcom/db2</repository>
-                            <tag>11.5.0.0</tag>
+                            <tag>11.5.8.0</tag>
                         </image>
                     </imageManagement>
                 </configuration>
