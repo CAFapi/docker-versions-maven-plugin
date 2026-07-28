@@ -148,7 +148,8 @@ public final class DockerRestClient
             .withTag(tag)
             .exec(callback)
             .awaitCompletion();
-         
+
+        // DDD returning this is not neccessary
         return pullCommand;
     }
 
