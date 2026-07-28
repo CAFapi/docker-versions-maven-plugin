@@ -17,6 +17,7 @@ package com.github.cafapi.docker_versions.docker.client;
 
 import com.github.cafapi.docker_versions.plugins.HttpConfiguration;
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PullImageResultCallback;
@@ -35,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -47,6 +49,7 @@ public final class DockerRestClient
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerRestClient.class);
 
+    // DDD remove downloadImageTimeout and associated cfg if not using
     private final long downloadImageTimeout;
     private final DockerClient dockerClient;
 
@@ -91,7 +94,7 @@ public final class DockerRestClient
         }
     }
 
-    public boolean pullImage(
+    public PullImageCmd pullImage(
         final String repository,
         final String tag,
         final AuthConfig authConfig
@@ -108,43 +111,45 @@ public final class DockerRestClient
 
             final Map<String, Long> currentBytes = new ConcurrentHashMap<>();
             final Map<String, Long> totalBytes = new ConcurrentHashMap<>();
+            final Set<String> countedLayers = ConcurrentHashMap.newKeySet();
+            volatile long aggregateTotal = 0L;
             int pullPercentage = 0;
-
-            @Override
-            public void onError(final Throwable throwable) {
-                LOGGER.error("Error pulling image {}:{} ", repository, tag, throwable);
-                super.onError(throwable);
-            }
 
             @Override
             public void onNext(final PullResponseItem item) {
                 super.onNext(item);
 
                 if (item.getId() != null && item.getProgressDetail() != null) {
-                    currentBytes.put(item.getId(),
-                        Optional.ofNullable(item.getProgressDetail().getCurrent()).orElse(0L));
+                    final Long layerCurrent = Optional.ofNullable(item.getProgressDetail().getCurrent()).orElse(0L);
+                    final Long layerTotal = Optional.ofNullable(item.getProgressDetail().getTotal()).orElse(0L);
 
-                    totalBytes.put(item.getId(),
-                        Optional.ofNullable(item.getProgressDetail().getTotal()).orElse(0L));
+                    currentBytes.put(item.getId(), layerCurrent);
+                    totalBytes.put(item.getId(), layerTotal);
 
-                    long current = currentBytes.values().stream().mapToLong(Long::longValue).sum();
-                    long total = totalBytes.values().stream().mapToLong(Long::longValue).sum();
-                    if (total > 0) {
-                        int percent = (int) Math.round(current * 100.0 / total);
-                        int progress = (percent / 10) * 10;
+                    // Add to aggregate total only on first progress for this layer
+                    if (layerTotal > 0 && countedLayers.add(item.getId())) {
+                        aggregateTotal += layerTotal;
+                    }
+
+                    final long current = currentBytes.values().stream().mapToLong(Long::longValue).sum();
+                    if (aggregateTotal > 0) {
+                        final int percent = (int) Math.round(current * 100.0 / aggregateTotal);
+                        final int progress = (percent / 10) * 10;
                         if (progress > pullPercentage) {
                             pullPercentage = progress;
-                            LOGGER.info("Image pull progress: {}%", progress);
+                            LOGGER.info("Image pull progress: {}% of {}GB", progress, String.format("%.2f", aggregateTotal / 1_000_000_000.0));
                         }
                     }
                 }
             }
         };
 
-         return pullCommand
+        pullCommand
             .withTag(tag)
             .exec(callback)
-            .awaitCompletion(downloadImageTimeout, TimeUnit.SECONDS);
+            .awaitCompletion();
+         
+        return pullCommand;
     }
 
     public void tagImage(
