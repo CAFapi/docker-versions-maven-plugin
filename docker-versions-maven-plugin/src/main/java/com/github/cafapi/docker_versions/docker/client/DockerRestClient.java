@@ -49,8 +49,6 @@ public final class DockerRestClient
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerRestClient.class);
 
-    // DDD remove downloadImageTimeout and associated cfg if not using
-    private final long downloadImageTimeout;
     private final DockerClient dockerClient;
 
     public DockerRestClient(final HttpConfiguration httpConfiguration, final String dockerHost)
@@ -77,7 +75,6 @@ public final class DockerRestClient
             .responseTimeout(Duration.ofSeconds(httpConfig.getResponseTimout()))
             .build();
 
-        this.downloadImageTimeout = httpConfig.getDownloadImageTimout();
         this.dockerClient = DockerClientImpl.getInstance(config, httpClient);
     }
 
@@ -94,7 +91,7 @@ public final class DockerRestClient
         }
     }
 
-    public PullImageCmd pullImage(
+    public void pullImage(
         final String repository,
         final String tag,
         final AuthConfig authConfig
@@ -137,7 +134,7 @@ public final class DockerRestClient
                         final int progress = (percent / 10) * 10;
                         if (progress > pullPercentage) {
                             pullPercentage = progress;
-                            LOGGER.info("Image pull progress: {}% of {}GB", progress, String.format("%.2f", aggregateTotal / 1_000_000_000.0));
+                            LOGGER.info("Image pull progress: {}% of {}GB", progress, String.format("%.2f",  (aggregateTotal / 1_000_000_000.0)));
                         }
                     }
                 }
@@ -148,9 +145,6 @@ public final class DockerRestClient
             .withTag(tag)
             .exec(callback)
             .awaitCompletion();
-
-        // DDD returning this is not necessary
-        return pullCommand;
     }
 
     public void tagImage(
