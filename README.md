@@ -396,7 +396,7 @@ The following configuration options can be set via environment variables.
   </tr>
   <tr>
     <td> RESPONSE_TIMEOUT_SECONDS </td>
-    <td> Determines the timeout until arrival of a response from the DOCKER_HOST, default is 120s. </td>
+    <td> Determines the timeout until arrival of a response from the DOCKER_HOST, default is 300s. </td>
   </tr>
 </table>
 

@@ -20,16 +20,13 @@ import org.apache.maven.plugins.annotations.Parameter;
 public final class HttpConfiguration
 {
     private static final int CONNECTION_TIMEOUT_SECONDS = getIntPropertyOrEnvVar("CONNECTION_TIMEOUT_SECONDS", "30");
-    private static final int RESPONSE_TIMEOUT_SECONDS = getIntPropertyOrEnvVar("RESPONSE_TIMEOUT_SECONDS", "120");
+    private static final int RESPONSE_TIMEOUT_SECONDS = getIntPropertyOrEnvVar("RESPONSE_TIMEOUT_SECONDS", "300");
 
     @Parameter
     private int connectionTimout = CONNECTION_TIMEOUT_SECONDS;
 
     @Parameter()
     private int responseTimout = RESPONSE_TIMEOUT_SECONDS;
-
-    @Parameter()
-    private long downloadImageTimout = -1;
 
     public int getConnectionTimout()
     {
@@ -39,16 +36,6 @@ public final class HttpConfiguration
     public int getResponseTimout()
     {
         return responseTimout;
-    }
-
-    /**
-     * @deprecated No longer used, kept only for backward compatibility with existing Maven configs.
-     */
-    @Deprecated
-    @SuppressWarnings("unused")
-    public long getDownloadImageTimout()
-    {
-        return downloadImageTimout;
     }
 
     @Override

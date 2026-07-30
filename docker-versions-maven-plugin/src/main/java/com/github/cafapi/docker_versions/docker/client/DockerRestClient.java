@@ -17,13 +17,13 @@ package com.github.cafapi.docker_versions.docker.client;
 
 import com.github.cafapi.docker_versions.plugins.HttpConfiguration;
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.PullResponseItem;
+import com.github.dockerjava.api.model.ResponseItem;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -38,7 +38,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -106,38 +107,83 @@ public final class DockerRestClient
 
         final PullImageResultCallback callback = new PullImageResultCallback() {
 
-            final Map<String, Long> currentBytes = new ConcurrentHashMap<>();
-            final Map<String, Long> totalBytes = new ConcurrentHashMap<>();
-            final Set<String> countedLayers = ConcurrentHashMap.newKeySet();
-            volatile long aggregateTotal = 0L;
-            int pullPercentage = 0;
+            private static final double ONE_GB = 1_000_000_000.0;
+            private static final double ONE_MB = 1_000_000.0;
+            private final Map<String, Long> layerBytes = new ConcurrentHashMap<>();
+            private final Map<String, Long> totalBytes = new ConcurrentHashMap<>();
+            private final Set<String> countedLayers = ConcurrentHashMap.newKeySet();
+            private final Map<String, String> lastStatusByLayer = new ConcurrentHashMap<>();
+            private final AtomicLong knownTotalBytesExpected = new AtomicLong(0L);
+            private final AtomicInteger pullPercentage = new AtomicInteger(0);
+
+            @Override
+            public void onError(final Throwable throwable)
+            {
+                LOGGER.error("Error pulling image {}:{} ", repository, tag, throwable);
+                super.onError(throwable);
+            }
 
             @Override
             public void onNext(final PullResponseItem item) {
                 super.onNext(item);
 
                 if (item.getId() != null && item.getProgressDetail() != null) {
-                    final Long layerCurrent = Optional.ofNullable(item.getProgressDetail().getCurrent()).orElse(0L);
-                    final Long layerTotal = Optional.ofNullable(item.getProgressDetail().getTotal()).orElse(0L);
+                    final String layerId = item.getId();
+                    final ResponseItem.ProgressDetail progressDetail = item.getProgressDetail();
+                    final String status = item.getStatus();
+                    final String previous = lastStatusByLayer.get(layerId);
+                    lastStatusByLayer.put(layerId, status);
+                    final Long layerCurrent = Optional.ofNullable(progressDetail.getCurrent()).orElse(0L);
+                    final Long layerTotal = Optional.ofNullable(progressDetail.getTotal()).orElse(0L);
 
-                    currentBytes.put(item.getId(), layerCurrent);
-                    totalBytes.put(item.getId(), layerTotal);
+                    if ("Extracting".equalsIgnoreCase(status)) {
+                        final long pulledBytes = totalBytes.getOrDefault(layerId, 0L);
+                        if (!"Extracting".equalsIgnoreCase(previous)) {
+                            LOGGER.info("Extracting Layer {} ({})", layerId, stringifyBytes(pulledBytes));
+                        }
+                        return;
+                    } else if ("Downloading".equalsIgnoreCase(status)) {
+                        if (layerCurrent > 0) {
+                            layerBytes.put(layerId, layerCurrent);
+                        }
 
-                    // Add to aggregate total only on first progress for this layer
-                    if (layerTotal > 0 && countedLayers.add(item.getId())) {
-                        aggregateTotal += layerTotal;
-                    }
+                        // Add to aggregate total only on first progress for this layer
+                        if (layerTotal > 0 && countedLayers.add(layerId)) {
+                            LOGGER.info("Pulling Layer {} ({})", layerId, stringifyBytes(layerTotal));
+                            totalBytes.put(layerId, layerTotal);
+                            knownTotalBytesExpected.addAndGet(layerTotal);
+                            // If a new layer is received pull percentage is now invalid.
+                            pullPercentage.set(0);
+                        }
 
-                    final long current = currentBytes.values().stream().mapToLong(Long::longValue).sum();
-                    if (aggregateTotal > 0) {
-                        final int percent = (int) Math.round(current * 100.0 / aggregateTotal);
-                        final int progress = (percent / 10) * 10;
-                        if (progress > pullPercentage) {
-                            pullPercentage = progress;
-                            LOGGER.info("Image pull progress: {}% of {}GB", progress, String.format("%.2f",  (aggregateTotal / 1_000_000_000.0)));
+                        final long bytesDownloaded = layerBytes.values().stream().mapToLong(Long::longValue).sum();
+                        if (knownTotalBytesExpected.get() > 0) {
+                            final int percent = (int) Math.round(bytesDownloaded * 100.0 / knownTotalBytesExpected.get());
+                            final int progress = (percent / 10) * 10;
+                            if (LOGGER.isInfoEnabled() && progress > pullPercentage.get()) {
+                                pullPercentage.set(progress);
+                                LOGGER.info("Pulling layer {} ({}) {}% of {} layer{} completed, {} of {}",
+                                    layerId,
+                                    stringifyBytes(totalBytes.get(layerId)),
+                                    progress,
+                                    countedLayers.size(),
+                                    (countedLayers.size() > 1)?"s":"",
+                                    stringifyBytes(bytesDownloaded),
+                                    stringifyBytes(knownTotalBytesExpected.get()));
+                            }
                         }
                     }
                 }
+            }
+
+            private String stringifyBytes(final long bytes)
+            {
+                if (bytes >= ONE_GB) {
+                    return String.format("%.2fGB",  (bytes / ONE_GB));
+                } else if (bytes >= ONE_MB) {
+                    return String.format("%.2fMB",  (bytes / ONE_MB));
+                }
+                return bytes + "bytes";
             }
         };
 
