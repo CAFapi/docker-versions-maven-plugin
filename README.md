@@ -296,7 +296,7 @@ Http connection timeout can be set in the plugin configuration. This configurati
 ```
 <httpConfiguration>
     <connectionTimout>30</connectionTimout>
-    <responseTimout>120</responseTimout>
+    <responseTimout>300</responseTimout>
 </httpConfiguration>
 ```
 
