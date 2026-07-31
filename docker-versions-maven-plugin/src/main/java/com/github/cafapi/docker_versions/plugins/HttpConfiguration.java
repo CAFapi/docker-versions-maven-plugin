@@ -20,17 +20,13 @@ import org.apache.maven.plugins.annotations.Parameter;
 public final class HttpConfiguration
 {
     private static final int CONNECTION_TIMEOUT_SECONDS = getIntPropertyOrEnvVar("CONNECTION_TIMEOUT_SECONDS", "30");
-    private static final int RESPONSE_TIMEOUT_SECONDS = getIntPropertyOrEnvVar("RESPONSE_TIMEOUT_SECONDS", "45");
-    private static final long DOWNLOAD_IMAGE_TIMEOUT_SECONDS = getLongPropertyOrEnvVar("DOWNLOAD_IMAGE_TIMEOUT_SECONDS", "300");
+    private static final int RESPONSE_TIMEOUT_SECONDS = getIntPropertyOrEnvVar("RESPONSE_TIMEOUT_SECONDS", "300");
 
     @Parameter
     private int connectionTimout = CONNECTION_TIMEOUT_SECONDS;
 
     @Parameter()
     private int responseTimout = RESPONSE_TIMEOUT_SECONDS;
-
-    @Parameter()
-    private long downloadImageTimout = DOWNLOAD_IMAGE_TIMEOUT_SECONDS;
 
     public int getConnectionTimout()
     {
@@ -42,30 +38,18 @@ public final class HttpConfiguration
         return responseTimout;
     }
 
-    public long getDownloadImageTimout()
-    {
-        return downloadImageTimout;
-    }
-
     @Override
     public String toString()
     {
         return "HttpConfiguration [ "
             + "connectionTimout=" + connectionTimout + "s, "
-            + "responseTimout=" + responseTimout + "s, "
-            + "downloadImageTimout=" + downloadImageTimout + "s ]";
+            + "responseTimout=" + responseTimout + "s";
     }
 
     private static int getIntPropertyOrEnvVar(final String key, final String defaultValue)
     {
         final String propertyValue = getPropertyOrEnvVar(key, defaultValue);
         return Integer.parseInt(propertyValue);
-    }
-
-    private static long getLongPropertyOrEnvVar(final String key, final String defaultValue)
-    {
-        final String propertyValue = getPropertyOrEnvVar(key, defaultValue);
-        return Long.parseLong(propertyValue);
     }
 
     private static String getPropertyOrEnvVar(final String key, final String defaultValue)

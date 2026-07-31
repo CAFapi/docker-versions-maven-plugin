@@ -296,8 +296,7 @@ Http connection timeout can be set in the plugin configuration. This configurati
 ```
 <httpConfiguration>
     <connectionTimout>30</connectionTimout>
-    <responseTimout>45</responseTimout>
-    <downloadImageTimout>100</downloadImageTimout>
+    <responseTimout>300</responseTimout>
 </httpConfiguration>
 ```
 
@@ -397,11 +396,7 @@ The following configuration options can be set via environment variables.
   </tr>
   <tr>
     <td> RESPONSE_TIMEOUT_SECONDS </td>
-    <td> Determines the timeout until arrival of a response from the DOCKER_HOST, default is 45s. </td>
-  </tr>
-  <tr>
-    <td> DOWNLOAD_IMAGE_TIMEOUT_SECONDS </td>
-    <td> Determines the timeout for an image pull to be completed, default is 300s. </td>
+    <td> Determines the timeout until arrival of a response from the DOCKER_HOST, default is 300s. </td>
   </tr>
 </table>
 

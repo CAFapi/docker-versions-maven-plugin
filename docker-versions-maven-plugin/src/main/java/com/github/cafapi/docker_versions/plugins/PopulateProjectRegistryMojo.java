@@ -155,16 +155,12 @@ public final class PopulateProjectRegistryMojo extends DockerVersionsMojo
         {
             final AuthConfig authConfig = AuthConfigHelper.getAuthConfig(settings, imageMoniker.getRegistry());
 
-            final boolean imagePullCompleted = dockerClient.pullImage(
+            dockerClient.pullImage(
                 imageMoniker.getFullImageNameWithoutTag(),
                 imageMoniker.getTag(),
                 authConfig);
 
             final String imageName = imageMoniker.getFullImageNameWithTag();
-
-            if (!imagePullCompleted) {
-                throw new ImagePullException("Image was not pulled: " + imageName);
-            }
 
             LOGGER.debug("Pulled image '{}', verify that it is now present...", imageName);
             final Optional<InspectImageResponse> image = dockerClient.findImage(imageName);
