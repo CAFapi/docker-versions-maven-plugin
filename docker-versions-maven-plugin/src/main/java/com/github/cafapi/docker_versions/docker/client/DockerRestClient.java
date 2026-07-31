@@ -109,11 +109,11 @@ public final class DockerRestClient
 
             private static final double ONE_GB = 1_000_000_000.0;
             private static final double ONE_MB = 1_000_000.0;
-            private final Map<String, Long> layerBytes = new ConcurrentHashMap<>();
+            private final Map<String, Long> itemBytes = new ConcurrentHashMap<>();
             private final Map<String, Long> totalBytes = new ConcurrentHashMap<>();
-            private final Set<String> countedLayers = ConcurrentHashMap.newKeySet();
-            private final Set<String> loggedLayers = ConcurrentHashMap.newKeySet();
-            private final Map<String, String> lastStatusByLayer = new ConcurrentHashMap<>();
+            private final Set<String> countedItems = ConcurrentHashMap.newKeySet();
+            private final Set<String> loggedItems = ConcurrentHashMap.newKeySet();
+            private final Map<String, String> lastStatusByItem = new ConcurrentHashMap<>();
             private final AtomicLong knownTotalBytesExpected = new AtomicLong(0L);
             private final AtomicInteger pullPercentage = new AtomicInteger(0);
 
@@ -136,10 +136,10 @@ public final class DockerRestClient
                 if (item.getId() != null && item.getProgressDetail() != null) {
                     final String itemId = item.getId();
                     final ResponseItem.ProgressDetail progressDetail = item.getProgressDetail();
-                    final String previous = lastStatusByLayer.get(itemId);
-                    lastStatusByLayer.put(itemId, status);
-                    final Long layerCurrent = Optional.ofNullable(progressDetail.getCurrent()).orElse(0L);
-                    final Long layerTotal = Optional.ofNullable(progressDetail.getTotal()).orElse(0L);
+                    final String previous = lastStatusByItem.get(itemId);
+                    lastStatusByItem.put(itemId, status);
+                    final Long itemCurrent = Optional.ofNullable(progressDetail.getCurrent()).orElse(0L);
+                    final Long itemTotal = Optional.ofNullable(progressDetail.getTotal()).orElse(0L);
                     if ("Extracting".equalsIgnoreCase(status)) {
                         final long pulledBytes = totalBytes.getOrDefault(itemId, 0L);
                         if (!"Extracting".equalsIgnoreCase(previous)) {
@@ -147,19 +147,19 @@ public final class DockerRestClient
                         }
                         return;
                     } else if ("Downloading".equalsIgnoreCase(status)) {
-                        if (layerCurrent > 0) {
-                            layerBytes.put(itemId, layerCurrent);
+                        if (itemCurrent > 0) {
+                            itemBytes.put(itemId, itemCurrent);
                         }
 
                         // Add to aggregate total only on first progress for this item
-                        if (layerTotal > 0 && countedLayers.add(itemId)) {
-                            totalBytes.put(itemId, layerTotal);
-                            knownTotalBytesExpected.addAndGet(layerTotal);
+                        if (itemTotal > 0 && countedItems.add(itemId)) {
+                            totalBytes.put(itemId, itemTotal);
+                            knownTotalBytesExpected.addAndGet(itemTotal);
                             // If a new item is received pull percentage is now invalid.
                             pullPercentage.set(0);
                         }
 
-                        final long bytesDownloaded = layerBytes.values().stream().mapToLong(Long::longValue).sum();
+                        final long bytesDownloaded = itemBytes.values().stream().mapToLong(Long::longValue).sum();
                         if (knownTotalBytesExpected.get() > 0) {
                             final int percent = (int) Math.round(bytesDownloaded * 100.0 / knownTotalBytesExpected.get());
                             final int progress = (percent / 10) * 10;
@@ -169,16 +169,16 @@ public final class DockerRestClient
                                     itemId,
                                     stringifyBytes(totalBytes.get(itemId)),
                                     progress,
-                                    countedLayers.size(),
-                                    (countedLayers.size() > 1)?"s":"",
+                                    countedItems.size(),
+                                    (countedItems.size() > 1)?"s":"",
                                     stringifyBytes(bytesDownloaded),
                                     stringifyBytes(knownTotalBytesExpected.get()));
-                                loggedLayers.add(itemId);
+                                loggedItems.add(itemId);
                             }
                         }
-                        if (loggedLayers.add(itemId)) {
+                        if (loggedItems.add(itemId)) {
                             // Ensures each item is logged at least once with its size
-                            LOGGER.info("Pulling {} ({})", itemId, stringifyBytes(layerTotal));
+                            LOGGER.info("Pulling {} ({})", itemId, stringifyBytes(itemTotal));
                         }
                     }
                 }
