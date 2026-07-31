@@ -112,6 +112,7 @@ public final class DockerRestClient
             private final Map<String, Long> layerBytes = new ConcurrentHashMap<>();
             private final Map<String, Long> totalBytes = new ConcurrentHashMap<>();
             private final Set<String> countedLayers = ConcurrentHashMap.newKeySet();
+            private final Set<String> loggedLayers = ConcurrentHashMap.newKeySet();
             private final Map<String, String> lastStatusByLayer = new ConcurrentHashMap<>();
             private final AtomicLong knownTotalBytesExpected = new AtomicLong(0L);
             private final AtomicInteger pullPercentage = new AtomicInteger(0);
@@ -123,36 +124,39 @@ public final class DockerRestClient
                 super.onError(throwable);
             }
 
+            /**
+             * This method logs pull progress when images are pulled from docker.
+             * @param item
+             */
             @Override
             public void onNext(final PullResponseItem item) {
                 super.onNext(item);
 
+                final String status = item.getStatus();
+
                 if (item.getId() != null && item.getProgressDetail() != null) {
-                    final String layerId = item.getId();
+                    final String itemId = item.getId();
                     final ResponseItem.ProgressDetail progressDetail = item.getProgressDetail();
-                    final String status = item.getStatus();
-                    final String previous = lastStatusByLayer.get(layerId);
-                    lastStatusByLayer.put(layerId, status);
+                    final String previous = lastStatusByLayer.get(itemId);
+                    lastStatusByLayer.put(itemId, status);
                     final Long layerCurrent = Optional.ofNullable(progressDetail.getCurrent()).orElse(0L);
                     final Long layerTotal = Optional.ofNullable(progressDetail.getTotal()).orElse(0L);
-
                     if ("Extracting".equalsIgnoreCase(status)) {
-                        final long pulledBytes = totalBytes.getOrDefault(layerId, 0L);
+                        final long pulledBytes = totalBytes.getOrDefault(itemId, 0L);
                         if (!"Extracting".equalsIgnoreCase(previous)) {
-                            LOGGER.info("Extracting Layer {} ({})", layerId, stringifyBytes(pulledBytes));
+                            LOGGER.info("Extracting {} ({})", itemId, stringifyBytes(pulledBytes));
                         }
                         return;
                     } else if ("Downloading".equalsIgnoreCase(status)) {
                         if (layerCurrent > 0) {
-                            layerBytes.put(layerId, layerCurrent);
+                            layerBytes.put(itemId, layerCurrent);
                         }
 
-                        // Add to aggregate total only on first progress for this layer
-                        if (layerTotal > 0 && countedLayers.add(layerId)) {
-                            LOGGER.info("Pulling Layer {} ({})", layerId, stringifyBytes(layerTotal));
-                            totalBytes.put(layerId, layerTotal);
+                        // Add to aggregate total only on first progress for this item
+                        if (layerTotal > 0 && countedLayers.add(itemId)) {
+                            totalBytes.put(itemId, layerTotal);
                             knownTotalBytesExpected.addAndGet(layerTotal);
-                            // If a new layer is received pull percentage is now invalid.
+                            // If a new item is received pull percentage is now invalid.
                             pullPercentage.set(0);
                         }
 
@@ -162,15 +166,20 @@ public final class DockerRestClient
                             final int progress = (percent / 10) * 10;
                             if (LOGGER.isInfoEnabled() && progress > pullPercentage.get()) {
                                 pullPercentage.set(progress);
-                                LOGGER.info("Pulling layer {} ({}) {}% of {} layer{} completed, {} of {}",
-                                    layerId,
-                                    stringifyBytes(totalBytes.get(layerId)),
+                                LOGGER.info("Pulling {} ({}) {}% of {} item{} completed, {} of {}",
+                                    itemId,
+                                    stringifyBytes(totalBytes.get(itemId)),
                                     progress,
                                     countedLayers.size(),
                                     (countedLayers.size() > 1)?"s":"",
                                     stringifyBytes(bytesDownloaded),
                                     stringifyBytes(knownTotalBytesExpected.get()));
+                                loggedLayers.add(itemId);
                             }
+                        }
+                        if (loggedLayers.add(itemId)) {
+                            // Ensures each item is logged at least once with its size
+                            LOGGER.info("Pulling {} ({})", itemId, stringifyBytes(layerTotal));
                         }
                     }
                 }

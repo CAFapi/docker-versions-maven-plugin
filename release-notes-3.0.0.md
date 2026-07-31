@@ -4,9 +4,8 @@
 ${version-number}
 
 #### Breaking Changes
-- **D1200007**: Changes in image pull timeouts. Image pull will only time out if no response is received from the Docker Daemon 
-within the configured time.
-  * DOWNLOAD_IMAGE_TIMEOUT_SECONDS : No longer used.
+- **D1200007**: An image pull request will only time out if no response is received from the Docker Daemon within the configured RESPONSE_TIMEOUT_SECONDS.
+  * DOWNLOAD_IMAGE_TIMEOUT_SECONDS : No longer used. Where it is present in the plugin cfg, downloadImageTimout should be removed.
   * RESPONSE_TIMEOUT_SECONDS : default increased to 300 seconds. 
 
 #### New Features
