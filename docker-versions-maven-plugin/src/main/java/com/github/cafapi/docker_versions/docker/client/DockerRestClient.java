@@ -118,8 +118,7 @@ public final class DockerRestClient
             private final AtomicInteger pullPercentage = new AtomicInteger(0);
 
             @Override
-            public void onError(final Throwable throwable)
-            {
+            public void onError(final Throwable throwable) {
                 LOGGER.error("Error pulling image {}:{} ", repository, tag, throwable);
                 super.onError(throwable);
             }
