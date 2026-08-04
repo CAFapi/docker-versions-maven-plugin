@@ -22,8 +22,6 @@ import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.AuthConfig;
-import com.github.dockerjava.api.model.PullResponseItem;
-import com.github.dockerjava.api.model.ResponseItem;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -34,12 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -105,95 +98,7 @@ public final class DockerRestClient
             pullCommand.withAuthConfig(authConfig);
         }
 
-        final PullImageResultCallback callback = new PullImageResultCallback() {
-
-            private static final double ONE_GB = 1_000_000_000.0;
-            private static final double ONE_MB = 1_000_000.0;
-            private final Map<String, Long> itemBytes = new ConcurrentHashMap<>();
-            private final Map<String, Long> totalBytes = new ConcurrentHashMap<>();
-            private final Set<String> countedItems = ConcurrentHashMap.newKeySet();
-            private final Set<String> loggedItems = ConcurrentHashMap.newKeySet();
-            private final Map<String, String> lastStatusByItem = new ConcurrentHashMap<>();
-            private final AtomicLong knownTotalBytesExpected = new AtomicLong(0L);
-            private final AtomicInteger pullPercentage = new AtomicInteger(0);
-
-            @Override
-            public void onError(final Throwable throwable) {
-                LOGGER.error("Error pulling image {}:{} ", repository, tag, throwable);
-                super.onError(throwable);
-            }
-
-            /**
-             * This method logs pull progress when images are pulled from docker.
-             * @param item
-             */
-            @Override
-            public void onNext(final PullResponseItem item) {
-                super.onNext(item);
-
-                final String status = item.getStatus();
-
-                if (item.getId() != null && item.getProgressDetail() != null) {
-                    final String itemId = item.getId();
-                    final ResponseItem.ProgressDetail progressDetail = item.getProgressDetail();
-                    final String previous = lastStatusByItem.get(itemId);
-                    lastStatusByItem.put(itemId, status);
-                    final Long itemCurrent = Optional.ofNullable(progressDetail.getCurrent()).orElse(0L);
-                    final Long itemTotal = Optional.ofNullable(progressDetail.getTotal()).orElse(0L);
-                    if ("Extracting".equalsIgnoreCase(status)) {
-                        final long pulledBytes = totalBytes.getOrDefault(itemId, 0L);
-                        if (!"Extracting".equalsIgnoreCase(previous)) {
-                            LOGGER.info("Extracting {} ({})", itemId, stringifyBytes(pulledBytes));
-                        }
-                        return;
-                    } else if ("Downloading".equalsIgnoreCase(status)) {
-                        if (itemCurrent > 0) {
-                            itemBytes.put(itemId, itemCurrent);
-                        }
-
-                        // Add to aggregate total only on first progress for this item
-                        if (itemTotal > 0 && countedItems.add(itemId)) {
-                            totalBytes.put(itemId, itemTotal);
-                            knownTotalBytesExpected.addAndGet(itemTotal);
-                            // If a new item is received pull percentage is now invalid.
-                            pullPercentage.set(0);
-                        }
-
-                        final long bytesDownloaded = itemBytes.values().stream().mapToLong(Long::longValue).sum();
-                        if (knownTotalBytesExpected.get() > 0) {
-                            final int percent = (int) Math.round(bytesDownloaded * 100.0 / knownTotalBytesExpected.get());
-                            final int progress = (percent / 10) * 10;
-                            if (LOGGER.isInfoEnabled() && progress > pullPercentage.get()) {
-                                pullPercentage.set(progress);
-                                LOGGER.info("Pulling {} ({}) {}% of {} item{} completed, {} of {}",
-                                    itemId,
-                                    stringifyBytes(totalBytes.get(itemId)),
-                                    progress,
-                                    countedItems.size(),
-                                    (countedItems.size() > 1)?"s":"",
-                                    stringifyBytes(bytesDownloaded),
-                                    stringifyBytes(knownTotalBytesExpected.get()));
-                                loggedItems.add(itemId);
-                            }
-                        }
-                        if (loggedItems.add(itemId)) {
-                            // Ensures each item is logged at least once with its size
-                            LOGGER.info("Pulling {} ({})", itemId, stringifyBytes(itemTotal));
-                        }
-                    }
-                }
-            }
-
-            private String stringifyBytes(final long bytes)
-            {
-                if (bytes >= ONE_GB) {
-                    return String.format("%.2fGB",  (bytes / ONE_GB));
-                } else if (bytes >= ONE_MB) {
-                    return String.format("%.2fMB",  (bytes / ONE_MB));
-                }
-                return bytes + "bytes";
-            }
-        };
+        final PullImageResultCallback callback = new PullProgressCallback(repository, tag);
 
         pullCommand
             .withTag(tag)
