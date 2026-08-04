@@ -154,10 +154,6 @@ public final class DockerRestClient
                     LOGGER.info("{}: Pull complete", itemId);
                     return;
                 }
-                if ("Verifying Checksum".equalsIgnoreCase(status)) {
-                    LOGGER.debug("{}: Verifying Checksum", itemId);
-                    return;
-                }
                 if ("Download complete".equalsIgnoreCase(status)) {
                     LOGGER.info("{}: Download complete", itemId);
                     return;
@@ -195,7 +191,8 @@ public final class DockerRestClient
                         final int progress = (percent / 10) * 10;
                         if (LOGGER.isInfoEnabled() && progress > pullPercentage.get()) {
                             pullPercentage.set(progress);
-                            LOGGER.info("Downloading: {}% complete, {} of {} ({} layer{})",
+                            LOGGER.info("{}: Downloading: {}% complete, {} of {} ({} layer{})",
+                                itemId,
                                 progress,
                                 stringifyBytes(bytesDownloaded),
                                 stringifyBytes(knownTotalBytesExpected.get()),
@@ -209,14 +206,23 @@ public final class DockerRestClient
                 }
             }
 
+            @Override
+            public void onComplete() {
+                final long elapsedMs = (System.nanoTime() - startTime) / 1_000_000;
+                LOGGER.info("Done pulling {}:{} in {}.{}s",
+                    repository, tag, elapsedMs / 1000, String.format("%03d", elapsedMs % 1000));
+                lastStatusByItem.clear(); // Clear all remaining layer tracking data
+                super.onComplete();
+            }
+
             private String stringifyBytes(final long bytes)
             {
                 if (bytes >= ONE_GB) {
-                    return String.format("%.2f GB", (bytes / ONE_GB));
+                    return String.format("%.2fGB", (bytes / ONE_GB));
                 } else if (bytes >= ONE_MB) {
-                    return String.format("%.2f MB", (bytes / ONE_MB));
+                    return String.format("%.2fMB", (bytes / ONE_MB));
                 }
-                return bytes + " bytes";
+                return bytes + "bytes";
             }
         };
 
@@ -224,10 +230,6 @@ public final class DockerRestClient
             .withTag(tag)
             .exec(callback)
             .awaitCompletion();
-
-        final long elapsedMs = (System.nanoTime() - startTime) / 1_000_000;
-        LOGGER.info("Pull complete for {}:{} in {}.{}s",
-            repository, tag, elapsedMs / 1000, String.format("%03d", elapsedMs % 1000));
     }
 
     public void tagImage(
