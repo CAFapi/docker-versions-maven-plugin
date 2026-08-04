@@ -99,7 +99,6 @@ public final class DockerRestClient
     ) throws InterruptedException
     {
         LOGGER.info("Pulling {}:{}...", repository, tag);
-        final long startTime = System.nanoTime();
         final PullImageCmd pullCommand = dockerClient.pullImageCmd(repository);
 
         if (authConfig != null) {
@@ -221,14 +220,6 @@ public final class DockerRestClient
                         LOGGER.info("{}: Pulling {}", layerId, stringifyBytes(layerSize));
                     }
                 }
-            }
-
-            @Override
-            public void onComplete() {
-                final long elapsedMs = (System.nanoTime() - startTime) / 1_000_000;
-                LOGGER.info("Done pulling {}:{} in {}.{}s",
-                    repository, tag, elapsedMs / 1000, String.format("%03d", elapsedMs % 1000));
-                super.onComplete();
             }
 
             private String stringifyBytes(final long bytes) {
