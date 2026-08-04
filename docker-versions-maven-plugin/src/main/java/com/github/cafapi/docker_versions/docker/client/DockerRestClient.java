@@ -99,6 +99,7 @@ public final class DockerRestClient
     ) throws InterruptedException
     {
         LOGGER.info("Pulling {}:{}...", repository, tag);
+        final long startTime = System.nanoTime();
         final PullImageCmd pullCommand = dockerClient.pullImageCmd(repository);
 
         if (authConfig != null) {
@@ -132,54 +133,78 @@ public final class DockerRestClient
                 super.onNext(item);
 
                 final String status = item.getStatus();
+                if (status == null) {
+                    return;
+                }
 
-                if (item.getId() != null && item.getProgressDetail() != null) {
-                    final String itemId = item.getId();
-                    final ResponseItem.ProgressDetail progressDetail = item.getProgressDetail();
-                    final String previous = lastStatusByItem.get(itemId);
-                    lastStatusByItem.put(itemId, status);
-                    final Long itemCurrent = Optional.ofNullable(progressDetail.getCurrent()).orElse(0L);
-                    final Long itemTotal = Optional.ofNullable(progressDetail.getTotal()).orElse(0L);
-                    if ("Extracting".equalsIgnoreCase(status)) {
-                        final long pulledBytes = totalBytes.getOrDefault(itemId, 0L);
-                        if (!"Extracting".equalsIgnoreCase(previous)) {
-                            LOGGER.info("Extracting {} ({})", itemId, stringifyBytes(pulledBytes));
-                        }
-                        return;
-                    } else if ("Downloading".equalsIgnoreCase(status)) {
-                        if (itemCurrent > 0) {
-                            itemBytes.put(itemId, itemCurrent);
-                        }
+                // Image-level messages (Digest, Status) have no layer ID
+                if (item.getId() == null) {
+                    LOGGER.info("{}", status);
+                    return;
+                }
 
-                        // Add to aggregate total only on first progress for this item
-                        if (itemTotal > 0 && countedItems.add(itemId)) {
-                            totalBytes.put(itemId, itemTotal);
-                            knownTotalBytesExpected.addAndGet(itemTotal);
-                            // If a new item is received pull percentage is now invalid.
-                            pullPercentage.set(0);
-                        }
+                final String itemId = item.getId();
 
-                        final long bytesDownloaded = itemBytes.values().stream().mapToLong(Long::longValue).sum();
-                        if (knownTotalBytesExpected.get() > 0) {
-                            final int percent = (int) Math.round(bytesDownloaded * 100.0 / knownTotalBytesExpected.get());
-                            final int progress = (percent / 10) * 10;
-                            if (LOGGER.isInfoEnabled() && progress > pullPercentage.get()) {
-                                pullPercentage.set(progress);
-                                LOGGER.info("Pulling {} ({}) {}% of {} item{} completed, {} of {}",
-                                    itemId,
-                                    stringifyBytes(totalBytes.get(itemId)),
-                                    progress,
-                                    countedItems.size(),
-                                    (countedItems.size() > 1)?"s":"",
-                                    stringifyBytes(bytesDownloaded),
-                                    stringifyBytes(knownTotalBytesExpected.get()));
-                                loggedItems.add(itemId);
-                            }
+                // Log layer statuses that don't carry progress detail
+                if ("Already exists".equalsIgnoreCase(status)) {
+                    LOGGER.info("{}: Already exists", itemId);
+                    return;
+                }
+                if ("Pull complete".equalsIgnoreCase(status)) {
+                    LOGGER.info("{}: Pull complete", itemId);
+                    return;
+                }
+                if ("Verifying Checksum".equalsIgnoreCase(status)) {
+                    LOGGER.debug("{}: Verifying Checksum", itemId);
+                    return;
+                }
+                if ("Download complete".equalsIgnoreCase(status)) {
+                    LOGGER.info("{}: Download complete", itemId);
+                    return;
+                }
+
+                if (item.getProgressDetail() == null) {
+                    return;
+                }
+
+                final ResponseItem.ProgressDetail progressDetail = item.getProgressDetail();
+                final String previous = lastStatusByItem.get(itemId);
+                lastStatusByItem.put(itemId, status);
+                final Long itemCurrent = Optional.ofNullable(progressDetail.getCurrent()).orElse(0L);
+                final Long itemTotal = Optional.ofNullable(progressDetail.getTotal()).orElse(0L);
+
+                if ("Extracting".equalsIgnoreCase(status)) {
+                    if (!"Extracting".equalsIgnoreCase(previous)) {
+                        final long layerSize = totalBytes.getOrDefault(itemId, 0L);
+                        LOGGER.info("{}: Extracting ({})", itemId, stringifyBytes(layerSize));
+                    }
+                } else if ("Downloading".equalsIgnoreCase(status)) {
+                    if (itemCurrent > 0) {
+                        itemBytes.put(itemId, itemCurrent);
+                    }
+
+                    if (itemTotal > 0 && countedItems.add(itemId)) {
+                        totalBytes.put(itemId, itemTotal);
+                        knownTotalBytesExpected.addAndGet(itemTotal);
+                        pullPercentage.set(0);
+                    }
+
+                    final long bytesDownloaded = itemBytes.values().stream().mapToLong(Long::longValue).sum();
+                    if (knownTotalBytesExpected.get() > 0) {
+                        final int percent = (int) Math.round(bytesDownloaded * 100.0 / knownTotalBytesExpected.get());
+                        final int progress = (percent / 10) * 10;
+                        if (LOGGER.isInfoEnabled() && progress > pullPercentage.get()) {
+                            pullPercentage.set(progress);
+                            LOGGER.info("Downloading: {}% complete, {} of {} ({} layer{})",
+                                progress,
+                                stringifyBytes(bytesDownloaded),
+                                stringifyBytes(knownTotalBytesExpected.get()),
+                                countedItems.size(),
+                                countedItems.size() > 1 ? "s" : "");
                         }
-                        if (loggedItems.add(itemId)) {
-                            // Ensures each item is logged at least once with its size
-                            LOGGER.info("Pulling {} ({})", itemId, stringifyBytes(itemTotal));
-                        }
+                    }
+                    if (loggedItems.add(itemId)) {
+                        LOGGER.info("{}: Downloading ({})", itemId, stringifyBytes(itemTotal));
                     }
                 }
             }
@@ -187,11 +212,11 @@ public final class DockerRestClient
             private String stringifyBytes(final long bytes)
             {
                 if (bytes >= ONE_GB) {
-                    return String.format("%.2fGB",  (bytes / ONE_GB));
+                    return String.format("%.2f GB", (bytes / ONE_GB));
                 } else if (bytes >= ONE_MB) {
-                    return String.format("%.2fMB",  (bytes / ONE_MB));
+                    return String.format("%.2f MB", (bytes / ONE_MB));
                 }
-                return bytes + "bytes";
+                return bytes + " bytes";
             }
         };
 
@@ -199,6 +224,10 @@ public final class DockerRestClient
             .withTag(tag)
             .exec(callback)
             .awaitCompletion();
+
+        final long elapsedMs = (System.nanoTime() - startTime) / 1_000_000;
+        LOGGER.info("Pull complete for {}:{} in {}.{}s",
+            repository, tag, elapsedMs / 1000, String.format("%03d", elapsedMs % 1000));
     }
 
     public void tagImage(
