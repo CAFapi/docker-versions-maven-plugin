@@ -30,9 +30,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Logs docker image pull progress in a manner similar to the {@code docker pull} CLI command: layers that are
- * already present locally, per-layer download/extraction progress, per-layer completion, and a blended overall
- * percentage across all layers currently known to be part of the pull.
+ * Logs docker image pull progress in a manner similar to the {@code docker pull} CLI command: image-level status
+ * lines, layers that are already present locally, per-layer download/extraction progress, per-layer completion,
+ * and a blended overall percentage across all layers currently known to be part of the pull.
  */
 public final class PullProgressCallback extends PullImageResultCallback
 {
@@ -44,14 +44,15 @@ public final class PullProgressCallback extends PullImageResultCallback
     private final String repository;
     private final String tag;
 
-    private final Map<String, Long> itemBytes = new ConcurrentHashMap<>();
-    private final Map<String, Long> totalBytes = new ConcurrentHashMap<>();
-    private final Set<String> countedItems = ConcurrentHashMap.newKeySet();
-    private final Set<String> loggedItems = ConcurrentHashMap.newKeySet();
-    private final Set<String> completedItems = ConcurrentHashMap.newKeySet();
-    private final Map<String, String> lastStatusByItem = new ConcurrentHashMap<>();
-    private final AtomicLong knownTotalBytesExpected = new AtomicLong(0L);
-    private final AtomicInteger pullPercentage = new AtomicInteger(0);
+    private final Map<String, Long> downloadedPerLayer = new ConcurrentHashMap<>();
+    private final Map<String, Long> layerSizes = new ConcurrentHashMap<>();
+    private final Set<String> registeredLayers = ConcurrentHashMap.newKeySet();
+    private final Set<String> announcedLayers = ConcurrentHashMap.newKeySet();
+    private final Set<String> downloadCompleteLayers = ConcurrentHashMap.newKeySet();
+    private final Set<String> pullCompleteLayers = ConcurrentHashMap.newKeySet();
+    private final Map<String, String> lastStatusPerLayer = new ConcurrentHashMap<>();
+    private final AtomicLong aggregateExpectedBytes = new AtomicLong(0L);
+    private final AtomicInteger lastLoggedMilestone = new AtomicInteger(0);
 
     public PullProgressCallback(final String repository, final String tag)
     {
@@ -83,22 +84,33 @@ public final class PullProgressCallback extends PullImageResultCallback
         super.onNext(item);
 
         final String status = item.getStatus();
-        final String itemId = item.getId();
+        final String layerId = item.getId();
 
-        if (itemId == null) {
+        // Image-level messages (e.g. "Status: Downloaded newer image...", "Digest: sha256:...") carry no layer id
+        if (layerId == null) {
+            if (status != null) {
+                LOGGER.info("{}", status);
+            }
             return;
         }
 
         if ("Already exists".equalsIgnoreCase(status)) {
-            if (loggedItems.add(itemId)) {
-                LOGGER.info("Already exists: {}", itemId);
+            if (announcedLayers.add(layerId)) {
+                LOGGER.info("Already exists: {}", layerId);
+            }
+            return;
+        }
+
+        if ("Download complete".equalsIgnoreCase(status)) {
+            if (downloadCompleteLayers.add(layerId)) {
+                LOGGER.info("Download complete: {} ({})", layerId, stringifyBytes(layerSizes.getOrDefault(layerId, 0L)));
             }
             return;
         }
 
         if ("Pull complete".equalsIgnoreCase(status)) {
-            if (completedItems.add(itemId)) {
-                LOGGER.info("Pull complete: {} ({})", itemId, stringifyBytes(totalBytes.getOrDefault(itemId, 0L)));
+            if (pullCompleteLayers.add(layerId)) {
+                LOGGER.info("Pull complete: {} ({})", layerId, stringifyBytes(layerSizes.getOrDefault(layerId, 0L)));
             }
             return;
         }
@@ -108,49 +120,48 @@ public final class PullProgressCallback extends PullImageResultCallback
         }
 
         final ResponseItem.ProgressDetail progressDetail = item.getProgressDetail();
-        final String previous = lastStatusByItem.get(itemId);
-        lastStatusByItem.put(itemId, status);
-        final long itemCurrent = Optional.ofNullable(progressDetail.getCurrent()).orElse(0L);
-        final long itemTotal = Optional.ofNullable(progressDetail.getTotal()).orElse(0L);
+        final String previousStatus = lastStatusPerLayer.get(layerId);
+        lastStatusPerLayer.put(layerId, status);
+        final long layerDownloaded = Optional.ofNullable(progressDetail.getCurrent()).orElse(0L);
+        final long layerSize = Optional.ofNullable(progressDetail.getTotal()).orElse(0L);
 
         if ("Extracting".equalsIgnoreCase(status)) {
-            final long pulledBytes = totalBytes.getOrDefault(itemId, 0L);
-            if (!"Extracting".equalsIgnoreCase(previous)) {
-                LOGGER.info("Extracting {} ({})", itemId, stringifyBytes(pulledBytes));
+            if (!"Extracting".equalsIgnoreCase(previousStatus)) {
+                LOGGER.info("Extracting {} ({})", layerId, stringifyBytes(layerSizes.getOrDefault(layerId, 0L)));
             }
         } else if ("Downloading".equalsIgnoreCase(status)) {
-            if (itemCurrent > 0) {
-                itemBytes.put(itemId, itemCurrent);
+            if (layerDownloaded > 0) {
+                downloadedPerLayer.put(layerId, layerDownloaded);
             }
 
-            // Add to aggregate total only on first progress for this item
-            if (itemTotal > 0 && countedItems.add(itemId)) {
-                totalBytes.put(itemId, itemTotal);
-                knownTotalBytesExpected.addAndGet(itemTotal);
+            // Add to aggregate total only on first progress for this layer
+            if (layerSize > 0 && registeredLayers.add(layerId)) {
+                layerSizes.put(layerId, layerSize);
+                aggregateExpectedBytes.addAndGet(layerSize);
             }
 
-            final long bytesDownloaded = itemBytes.values().stream().mapToLong(Long::longValue).sum();
-            if (knownTotalBytesExpected.get() > 0) {
-                final int percent = (int) Math.round(bytesDownloaded * 100.0 / knownTotalBytesExpected.get());
-                final int progress = (percent / 10) * 10;
-                if (LOGGER.isInfoEnabled() && progress > pullPercentage.get()) {
-                    pullPercentage.set(progress);
-                    // Fall back to this item's own (possibly zero) total when it hasn't been recorded yet, e.g.
+            final long totalDownloaded = downloadedPerLayer.values().stream().mapToLong(Long::longValue).sum();
+            if (aggregateExpectedBytes.get() > 0) {
+                final int percent = (int) Math.round(totalDownloaded * 100.0 / aggregateExpectedBytes.get());
+                final int milestone = (percent / 10) * 10;
+                if (LOGGER.isInfoEnabled() && milestone > lastLoggedMilestone.get()) {
+                    lastLoggedMilestone.set(milestone);
+                    // Fall back to this layer's own (possibly zero) size when it hasn't been recorded yet, e.g.
                     // when a registry omits the size on a layer's very first progress event.
-                    final long itemTotalBytes = totalBytes.getOrDefault(itemId, itemTotal);
-                    LOGGER.info("Pulling {} ({}) {}% of {} item{} completed, {} of {}",
-                        itemId,
-                        stringifyBytes(itemTotalBytes),
-                        progress,
-                        countedItems.size(),
-                        (countedItems.size() > 1) ? "s" : "",
-                        stringifyBytes(bytesDownloaded),
-                        stringifyBytes(knownTotalBytesExpected.get()));
+                    final long knownLayerSize = layerSizes.getOrDefault(layerId, layerSize);
+                    LOGGER.info("Pulling {} ({}) {}% of {} layer{} completed, {} of {}",
+                        layerId,
+                        stringifyBytes(knownLayerSize),
+                        milestone,
+                        registeredLayers.size(),
+                        (registeredLayers.size() > 1) ? "s" : "",
+                        stringifyBytes(totalDownloaded),
+                        stringifyBytes(aggregateExpectedBytes.get()));
                 }
             }
-            if (loggedItems.add(itemId)) {
-                // Ensures each item is logged at least once with its size
-                LOGGER.info("Pulling {} ({})", itemId, stringifyBytes(itemTotal));
+            if (announcedLayers.add(layerId)) {
+                // Ensures each layer is logged at least once with its size
+                LOGGER.info("Pulling {} ({})", layerId, stringifyBytes(layerSize));
             }
         }
     }

@@ -113,6 +113,31 @@ final class PullProgressCallbackTest
     }
 
     @Test
+    void testDownloadCompleteIsLoggedOncePerLayer() throws Exception
+    {
+        final PullProgressCallback callback = new PullProgressCallback("library/test", "latest");
+
+        callback.onNext(item("{\"id\":\"layerA\",\"status\":\"Downloading\","
+            + "\"progressDetail\":{\"current\":1000,\"total\":1000}}"));
+        callback.onNext(item("{\"id\":\"layerA\",\"status\":\"Download complete\"}"));
+        callback.onNext(item("{\"id\":\"layerA\",\"status\":\"Download complete\"}"));
+
+        final long count = loggedMessages().stream().filter(m -> m.startsWith("Download complete: layerA")).count();
+        assertEquals(1, count, "Expected 'Download complete' to be logged exactly once per layer, got: " + loggedMessages());
+    }
+
+    @Test
+    void testImageLevelMessagesAreLoggedVerbatim() throws Exception
+    {
+        final PullProgressCallback callback = new PullProgressCallback("library/test", "latest");
+
+        callback.onNext(item("{\"status\":\"Status: Downloaded newer image for library/test:latest\"}"));
+
+        assertTrue(loggedMessages().contains("Status: Downloaded newer image for library/test:latest"),
+            "Expected the image-level status to be logged verbatim, got: " + loggedMessages());
+    }
+
+    @Test
     void testOnCompleteLogsFinalSuccessMessage()
     {
         final PullProgressCallback callback = new PullProgressCallback("library/test", "latest");
