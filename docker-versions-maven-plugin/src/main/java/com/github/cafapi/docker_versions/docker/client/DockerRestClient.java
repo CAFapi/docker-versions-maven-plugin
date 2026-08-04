@@ -110,13 +110,16 @@ public final class DockerRestClient
 
             private static final double ONE_GB = 1_000_000_000.0;
             private static final double ONE_MB = 1_000_000.0;
-            private final Map<String, Long> itemBytes = new ConcurrentHashMap<>();
-            private final Map<String, Long> totalBytes = new ConcurrentHashMap<>();
-            private final Set<String> countedItems = ConcurrentHashMap.newKeySet();
-            private final Set<String> loggedItems = ConcurrentHashMap.newKeySet();
-            private final Map<String, String> lastStatusByItem = new ConcurrentHashMap<>();
-            private final AtomicLong knownTotalBytesExpected = new AtomicLong(0L);
-            private final AtomicInteger pullPercentage = new AtomicInteger(0);
+
+            private final Map<String, Long> downloadedPerLayer = new ConcurrentHashMap<>();
+            private final Map<String, Long> layerSizes = new ConcurrentHashMap<>();
+            private final Set<String> registeredLayers = ConcurrentHashMap.newKeySet();
+            private final Set<String> announcedLayers = ConcurrentHashMap.newKeySet();
+            private final Set<String> downloadCompleteLayers = ConcurrentHashMap.newKeySet();
+            private final Set<String> pullCompleteLayers = ConcurrentHashMap.newKeySet();
+            private final Map<String, String> lastStatusPerLayer = new ConcurrentHashMap<>();
+            private final AtomicLong aggregateExpectedBytes = new AtomicLong(0L);
+            private final AtomicInteger lastLoggedMilestone = new AtomicInteger(0);
 
             @Override
             public void onError(final Throwable throwable) {
@@ -126,36 +129,43 @@ public final class DockerRestClient
 
             /**
              * This method logs pull progress when images are pulled from docker.
-             * @param item the pull response item containing the status and progress information
+             * @param item the progress item reported by the docker daemon
              */
             @Override
             public void onNext(final PullResponseItem item) {
                 super.onNext(item);
 
                 final String status = item.getStatus();
+                final String layerId = item.getId();
+
                 if (status == null) {
                     return;
                 }
-
                 // Image-level messages (Digest, Status) have no layer ID
-                if (item.getId() == null) {
+                if (layerId == null) {
                     LOGGER.info("{}", status);
                     return;
                 }
 
-                final String itemId = item.getId();
-
-                // Log layer statuses that don't carry progress detail
                 if ("Already exists".equalsIgnoreCase(status)) {
-                    LOGGER.info("{}: Already exists", itemId);
+                    if (announcedLayers.add(layerId)) {
+                        LOGGER.info("{}: Already exists.", layerId);
+                    }
                     return;
                 }
-                if ("Pull complete".equalsIgnoreCase(status)) {
-                    LOGGER.info("{}: Pull complete", itemId);
-                    return;
-                }
+
                 if ("Download complete".equalsIgnoreCase(status)) {
-                    LOGGER.info("{}: Download complete", itemId);
+                    if (downloadCompleteLayers.add(layerId)) {
+                        LOGGER.info("{}: Download complete", layerId);
+                    }
+                    return;
+                }
+
+                if ("Pull complete".equalsIgnoreCase(status)) {
+                    // The layer has been fully downloaded and extracted, and is now ready to be used by the Docker daemon.
+                    if (pullCompleteLayers.add(layerId)) {
+                        LOGGER.info("{}: Pull complete", layerId);
+                    }
                     return;
                 }
 
@@ -164,44 +174,51 @@ public final class DockerRestClient
                 }
 
                 final ResponseItem.ProgressDetail progressDetail = item.getProgressDetail();
-                final String previous = lastStatusByItem.get(itemId);
-                lastStatusByItem.put(itemId, status);
-                final Long itemCurrent = Optional.ofNullable(progressDetail.getCurrent()).orElse(0L);
-                final Long itemTotal = Optional.ofNullable(progressDetail.getTotal()).orElse(0L);
+                final String previousStatus = lastStatusPerLayer.get(layerId);
+                lastStatusPerLayer.put(layerId, status);
+                final long layerDownloaded = Optional.ofNullable(progressDetail.getCurrent()).orElse(0L);
+                final long layerSize = Optional.ofNullable(progressDetail.getTotal()).orElse(0L);
 
                 if ("Extracting".equalsIgnoreCase(status)) {
-                    if (!"Extracting".equalsIgnoreCase(previous)) {
-                        final long layerSize = totalBytes.getOrDefault(itemId, 0L);
-                        LOGGER.info("{}: Extracting ({})", itemId, stringifyBytes(layerSize));
+                    // The compressed layer archive has finished downloading and is now being unzipped and written onto local disk.
+                    if (!"Extracting".equalsIgnoreCase(previousStatus)) {
+                        LOGGER.info("{}: Extracting ({})", layerId, stringifyBytes(layerSizes.getOrDefault(layerId, 0L)));
                     }
                 } else if ("Downloading".equalsIgnoreCase(status)) {
-                    if (itemCurrent > 0) {
-                        itemBytes.put(itemId, itemCurrent);
+                    // Compressed layer file is actively being transferred over the network from the container registry
+                    // (e.g., Docker Hub, ECR, GHCR) to local host machine.
+                    if (layerDownloaded > 0) {
+                        downloadedPerLayer.put(layerId, layerDownloaded);
                     }
 
-                    if (itemTotal > 0 && countedItems.add(itemId)) {
-                        totalBytes.put(itemId, itemTotal);
-                        knownTotalBytesExpected.addAndGet(itemTotal);
-                        pullPercentage.set(0);
+                    // Add to aggregate total only on first progress for this layer
+                    if (layerSize > 0 && registeredLayers.add(layerId)) {
+                        layerSizes.put(layerId, layerSize);
+                        aggregateExpectedBytes.addAndGet(layerSize);
                     }
 
-                    final long bytesDownloaded = itemBytes.values().stream().mapToLong(Long::longValue).sum();
-                    if (knownTotalBytesExpected.get() > 0) {
-                        final int percent = (int) Math.round(bytesDownloaded * 100.0 / knownTotalBytesExpected.get());
-                        final int progress = (percent / 10) * 10;
-                        if (LOGGER.isInfoEnabled() && progress > pullPercentage.get()) {
-                            pullPercentage.set(progress);
-                            LOGGER.info("{}: Downloading: {}% complete, {} of {} ({} layer{})",
-                                itemId,
-                                progress,
-                                stringifyBytes(bytesDownloaded),
-                                stringifyBytes(knownTotalBytesExpected.get()),
-                                countedItems.size(),
-                                countedItems.size() > 1 ? "s" : "");
+                    final long totalDownloaded = downloadedPerLayer.values().stream().mapToLong(Long::longValue).sum();
+                    if (aggregateExpectedBytes.get() > 0) {
+                        final int percent = (int) Math.round(totalDownloaded * 100.0 / aggregateExpectedBytes.get());
+                        final int milestone = (percent / 10) * 10;
+                        if (LOGGER.isInfoEnabled() && milestone > lastLoggedMilestone.get()) {
+                            lastLoggedMilestone.set(milestone);
+                            // Fall back to this layer's own (possibly zero) size when it hasn't been recorded yet, e.g.
+                            // when a registry omits the size on a layer's very first progress event.
+                            final long knownLayerSize = layerSizes.getOrDefault(layerId, layerSize);
+                            LOGGER.info("{}: Downloading ({}), {}% complete, {}/{} ({} layer{})",
+                                layerId,
+                                stringifyBytes(knownLayerSize),
+                                milestone,
+                                stringifyBytes(totalDownloaded),
+                                stringifyBytes(aggregateExpectedBytes.get()),
+                                registeredLayers.size(),
+                                (registeredLayers.size() > 1) ? "s" : "");
                         }
                     }
-                    if (loggedItems.add(itemId)) {
-                        LOGGER.info("{}: Downloading ({})", itemId, stringifyBytes(itemTotal));
+                    if (announcedLayers.add(layerId)) {
+                        // Ensures each layer is logged at least once with its size
+                        LOGGER.info("{}: Pulling {}", layerId, stringifyBytes(layerSize));
                     }
                 }
             }
@@ -211,12 +228,10 @@ public final class DockerRestClient
                 final long elapsedMs = (System.nanoTime() - startTime) / 1_000_000;
                 LOGGER.info("Done pulling {}:{} in {}.{}s",
                     repository, tag, elapsedMs / 1000, String.format("%03d", elapsedMs % 1000));
-                lastStatusByItem.clear(); // Clear all remaining layer tracking data
                 super.onComplete();
             }
 
-            private String stringifyBytes(final long bytes)
-            {
+            private String stringifyBytes(final long bytes) {
                 if (bytes >= ONE_GB) {
                     return String.format("%.2fGB", (bytes / ONE_GB));
                 } else if (bytes >= ONE_MB) {
