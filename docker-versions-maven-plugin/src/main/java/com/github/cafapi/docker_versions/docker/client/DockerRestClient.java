@@ -126,7 +126,7 @@ public final class DockerRestClient
 
             /**
              * This method logs pull progress when images are pulled from docker.
-             * @param item
+             * @param item the pull response item containing the status and progress information
              */
             @Override
             public void onNext(final PullResponseItem item) {
